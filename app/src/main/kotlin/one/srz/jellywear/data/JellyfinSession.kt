@@ -10,6 +10,8 @@ import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
+import org.jellyfin.sdk.model.UUID
+import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
  * Holds the current Jellyfin server connection, persisted across process
@@ -31,6 +33,8 @@ class JellyfinSession private constructor(context: Context) {
         private set
 
     val isLoggedIn: Boolean get() = api != null
+
+    val userId: UUID? get() = prefs.getString(KEY_USER_ID, null)?.toUUIDOrNull()
 
     init {
         restoreSession()

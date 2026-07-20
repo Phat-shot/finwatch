@@ -18,18 +18,33 @@ import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
 import org.jellyfin.sdk.api.client.exception.ApiClientException
-import org.jellyfin.sdk.api.client.extensions.userViewsApi
+import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.ItemSortBy
+import org.jellyfin.sdk.model.api.request.GetItemsRequest
+import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 @Composable
-fun LibraryScreen(session: JellyfinSession, onOpenLibrary: (String) -> Unit) {
-    var libraries by remember { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+fun ItemBrowserScreen(
+    session: JellyfinSession,
+    parentId: String,
+    onOpenFolder: (String) -> Unit,
+    onPlayItem: (String) -> Unit,
+) {
+    var children by remember(parentId) { mutableStateOf<List<BaseItemDto>?>(null) }
+    var error by remember(parentId) { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(parentId) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            libraries = api.userViewsApi.getUserViews().content.items
+            children = api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = session.userId,
+                    parentId = parentId.toUUIDOrNull(),
+                    recursive = false,
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                ),
+            ).content.items
         } catch (e: ApiClientException) {
             error = e.message
         }
@@ -45,16 +60,19 @@ fun LibraryScreen(session: JellyfinSession, onOpenLibrary: (String) -> Unit) {
             error != null -> item {
                 Text(text = error ?: stringResource(R.string.login_error_generic))
             }
-            libraries == null -> item {
+            children == null -> item {
                 Text(text = stringResource(R.string.library_loading))
             }
-            libraries.orEmpty().isEmpty() -> item {
+            children.orEmpty().isEmpty() -> item {
                 Text(text = stringResource(R.string.library_empty))
             }
-            else -> items(libraries.orEmpty()) { library ->
+            else -> items(children.orEmpty()) { child ->
                 Chip(
-                    onClick = { onOpenLibrary(library.id.toString()) },
-                    label = { Text(text = library.name ?: "?") },
+                    onClick = {
+                        val id = child.id.toString()
+                        if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
+                    },
+                    label = { Text(text = child.name ?: "?") },
                     colors = ChipDefaults.primaryChipColors(),
                     modifier = Modifier.fillMaxWidth(),
                 )

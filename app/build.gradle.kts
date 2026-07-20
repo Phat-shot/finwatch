@@ -73,6 +73,7 @@ dependencies {
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material:material-icons-core")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("androidx.wear.compose:compose-material:1.3.1")
@@ -83,9 +84,10 @@ dependencies {
     // Jellyfin server API client.
     implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
 
-    // Media3 for future Jellyfin audio/video playback (ExoPlayer + MediaSession).
+    // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 
     testImplementation("junit:junit:4.13.2")
 }
