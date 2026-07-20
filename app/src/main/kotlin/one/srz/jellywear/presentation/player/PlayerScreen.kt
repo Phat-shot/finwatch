@@ -37,6 +37,7 @@ import androidx.wear.compose.material.Text
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -47,15 +48,18 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.serializer.toUUID
 
+const val PLAYER_QUEUE_ID = "queue"
+
 @Composable
 fun PlayerScreen(session: JellyfinSession, itemId: String) {
     val context = LocalContext.current
-    var item by remember(itemId) { mutableStateOf<BaseItemDto?>(null) }
+    var queueItems by remember(itemId) { mutableStateOf<List<BaseItemDto>>(emptyList()) }
     var error by remember(itemId) { mutableStateOf<String?>(null) }
     var isPlaying by remember(itemId) { mutableStateOf(true) }
     var controller by remember(itemId) { mutableStateOf<MediaController?>(null) }
     var positionMs by remember(itemId) { mutableStateOf(0L) }
     var durationMs by remember(itemId) { mutableStateOf(0L) }
+    var currentIndex by remember(itemId) { mutableStateOf(0) }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession.
@@ -74,20 +78,25 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
     }
 
     LaunchedEffect(itemId) {
-        val api = session.api ?: return@LaunchedEffect
-        try {
-            item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
-        } catch (e: ApiClientException) {
-            error = e.message
+        if (itemId == PLAYER_QUEUE_ID) {
+            queueItems = PlaybackQueue.items
+        } else {
+            val api = session.api ?: return@LaunchedEffect
+            try {
+                val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
+                queueItems = listOf(item)
+            } catch (e: ApiClientException) {
+                error = e.message
+            }
         }
     }
 
-    LaunchedEffect(item, controller) {
+    LaunchedEffect(queueItems, controller) {
         val api = session.api
-        val currentItem = item
         val ctrl = controller
-        if (api != null && currentItem != null && ctrl != null && ctrl.currentMediaItem == null) {
-            ctrl.setMediaItem(MediaItem.fromUri(buildStreamUrl(api, currentItem)))
+        if (api != null && ctrl != null && queueItems.isNotEmpty() && ctrl.mediaItemCount == 0) {
+            val mediaItems = queueItems.map { MediaItem.fromUri(buildStreamUrl(api, it)) }
+            ctrl.setMediaItems(mediaItems)
             ctrl.prepare()
             ctrl.playWhenReady = true
         }
@@ -113,9 +122,12 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
         while (true) {
             positionMs = ctrl.currentPosition.coerceAtLeast(0L)
             durationMs = ctrl.duration.coerceAtLeast(0L)
+            currentIndex = ctrl.currentMediaItemIndex
             delay(500)
         }
     }
+
+    val currentItem = queueItems.getOrNull(currentIndex)
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when {
@@ -124,9 +136,9 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp),
             )
-            item == null -> CircularProgressIndicator()
+            queueItems.isEmpty() -> CircularProgressIndicator()
             else -> {
-                val isVideo = item?.mediaType == MediaType.VIDEO
+                val isVideo = currentItem?.mediaType == MediaType.VIDEO
                 if (isVideo) {
                     AndroidView(
                         factory = { ctx ->
@@ -141,7 +153,7 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (!isVideo) {
                         Text(
-                            text = item?.name ?: "",
+                            text = currentItem?.name ?: "",
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.title3,
                             modifier = Modifier.padding(bottom = 8.dp),

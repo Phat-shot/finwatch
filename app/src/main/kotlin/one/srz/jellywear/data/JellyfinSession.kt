@@ -8,13 +8,16 @@ import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
 import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
+import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
 import org.jellyfin.sdk.model.api.AuthenticationResult
+import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.QuickConnectResult
+import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
@@ -106,6 +109,15 @@ class JellyfinSession private constructor(context: Context) {
             putString(KEY_USER_ID, authResult.user?.id?.toString())
         }
         return Result.success(Unit)
+    }
+
+    /** Fetches items for [request] and returns them shuffled, or null on error/empty result. */
+    suspend fun fetchShuffledQueue(request: GetItemsRequest): List<BaseItemDto>? = try {
+        api?.itemsApi?.getItems(request)?.content?.items
+            ?.takeIf { it.isNotEmpty() }
+            ?.shuffled()
+    } catch (e: ApiClientException) {
+        null
     }
 
     fun logout() {

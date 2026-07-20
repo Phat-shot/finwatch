@@ -23,32 +23,35 @@ import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
+/** Albums by one artist, found via the artistIds filter (not folder parentage). */
 @Composable
-fun ItemBrowserScreen(
+fun ArtistAlbumsScreen(
     session: JellyfinSession,
-    parentId: String,
-    onOpenFolder: (String) -> Unit,
-    onPlayItem: (String) -> Unit,
+    artistId: String,
+    onOpenAlbum: (String) -> Unit,
     onShufflePlay: () -> Unit,
 ) {
-    var children by remember(parentId) { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember(parentId) { mutableStateOf<String?>(null) }
+    var albums by remember(artistId) { mutableStateOf<List<BaseItemDto>?>(null) }
+    var error by remember(artistId) { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 
-    LaunchedEffect(parentId) {
+    LaunchedEffect(artistId) {
         val api = session.api ?: return@LaunchedEffect
+        val id = artistId.toUUIDOrNull() ?: return@LaunchedEffect
         try {
-            children = api.itemsApi.getItems(
+            albums = api.itemsApi.getItems(
                 GetItemsRequest(
                     userId = session.userId,
-                    parentId = parentId.toUUIDOrNull(),
-                    recursive = false,
+                    recursive = true,
+                    artistIds = listOf(id),
+                    includeItemTypes = listOf(BaseItemKind.MUSIC_ALBUM),
                     sortBy = listOf(ItemSortBy.SORT_NAME),
                 ),
             ).content.items
@@ -64,34 +67,32 @@ fun ItemBrowserScreen(
     ) {
         item {
             ListHeader {
-                Text(text = stringResource(R.string.library_title))
+                Text(text = stringResource(R.string.category_music))
             }
         }
         when {
             error != null -> item {
                 Text(text = error ?: stringResource(R.string.login_error_generic))
             }
-            children == null -> item {
+            albums == null -> item {
                 Text(text = stringResource(R.string.library_loading))
             }
-            children.orEmpty().isEmpty() -> item {
+            albums.orEmpty().isEmpty() -> item {
                 Text(text = stringResource(R.string.library_empty))
             }
-            else -> items(children.orEmpty()) { child ->
-                val id = child.id.toString()
+            else -> items(albums.orEmpty()) { album ->
+                val id = album.id.toString()
                 ShuffleableChip(
-                    text = child.name ?: "?",
-                    onClick = {
-                        if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
-                    },
+                    text = album.name ?: "?",
+                    onClick = { onOpenAlbum(id) },
                     onLongClick = {
                         scope.launch {
                             val queue = session.fetchShuffledQueue(
                                 GetItemsRequest(
                                     userId = session.userId,
-                                    parentId = child.id,
+                                    parentId = album.id,
                                     recursive = true,
-                                    mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
+                                    mediaTypes = listOf(MediaType.AUDIO),
                                 ),
                             )
                             if (queue != null) {

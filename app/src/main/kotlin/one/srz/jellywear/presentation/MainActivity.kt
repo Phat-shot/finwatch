@@ -11,14 +11,20 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.home.HomeScreen
+import one.srz.jellywear.presentation.library.ArtistAlbumsScreen
+import one.srz.jellywear.presentation.library.Category
+import one.srz.jellywear.presentation.library.CategoryScreen
 import one.srz.jellywear.presentation.library.ItemBrowserScreen
-import one.srz.jellywear.presentation.library.LibraryScreen
 import one.srz.jellywear.presentation.login.LoginScreen
+import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
 import one.srz.jellywear.presentation.player.PlayerScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
 
 private const val ROUTE_LOGIN = "login"
-private const val ROUTE_LIBRARY = "library"
+private const val ROUTE_HOME = "home"
+private const val ROUTE_CATEGORY = "category/{type}"
+private const val ROUTE_ARTIST = "artist/{artistId}"
 private const val ROUTE_BROWSE = "browse/{parentId}"
 private const val ROUTE_PLAYER = "player/{itemId}"
 
@@ -46,23 +52,48 @@ fun JellywearApp(session: JellyfinSession) {
         val navController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
             navController = navController,
-            startDestination = if (session.isLoggedIn) ROUTE_LIBRARY else ROUTE_LOGIN,
+            startDestination = if (session.isLoggedIn) ROUTE_HOME else ROUTE_LOGIN,
         ) {
             composable(ROUTE_LOGIN) {
                 LoginScreen(
                     session = session,
                     onLoggedIn = {
-                        navController.navigate(ROUTE_LIBRARY) {
+                        navController.navigate(ROUTE_HOME) {
                             popUpTo(ROUTE_LOGIN) { inclusive = true }
                         }
                     },
                 )
             }
-            composable(ROUTE_LIBRARY) {
-                LibraryScreen(
+            composable(ROUTE_HOME) {
+                HomeScreen(
                     session = session,
-                    onOpenLibrary = { id -> navController.navigate("browse/$id") },
+                    onOpenCategory = { category -> navController.navigate("category/${category.route}") },
+                    onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
                 )
+            }
+            composable(ROUTE_CATEGORY) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("type")?.let(Category::fromRoute)
+                if (category != null) {
+                    CategoryScreen(
+                        session = session,
+                        category = category,
+                        onOpenArtist = { id -> navController.navigate("artist/$id") },
+                        onOpenFolder = { id -> navController.navigate("browse/$id") },
+                        onPlayItem = { id -> navController.navigate("player/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                    )
+                }
+            }
+            composable(ROUTE_ARTIST) { backStackEntry ->
+                val artistId = backStackEntry.arguments?.getString("artistId")
+                if (artistId != null) {
+                    ArtistAlbumsScreen(
+                        session = session,
+                        artistId = artistId,
+                        onOpenAlbum = { id -> navController.navigate("browse/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                    )
+                }
             }
             composable(ROUTE_BROWSE) { backStackEntry ->
                 val parentId = backStackEntry.arguments?.getString("parentId")
@@ -72,6 +103,7 @@ fun JellywearApp(session: JellyfinSession) {
                         parentId = parentId,
                         onOpenFolder = { id -> navController.navigate("browse/$id") },
                         onPlayItem = { id -> navController.navigate("player/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
                     )
                 }
             }

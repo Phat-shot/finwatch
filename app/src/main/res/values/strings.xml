@@ -14,4 +14,9 @@
     <string name="library_title">Library</string>
     <string name="library_loading">Loading…</string>
     <string name="library_empty">No libraries found</string>
+
+    <string name="category_music">Music</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_series">Series</string>
+    <string name="category_movies">Movies</string>
 </resources>
