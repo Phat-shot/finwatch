@@ -83,6 +83,11 @@ dependencies {
 
     // Jellyfin server API client.
     implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
+    // jellyfin-core's HTTP client logs via kotlin-logging's SLF4J backend,
+    // which needs a binding on the classpath or it crashes with
+    // NoClassDefFoundError on Android (no SLF4J implementation by default).
+    // slf4j-simple writes to stdout/stderr, which logcat captures.
+    implementation("org.slf4j:slf4j-simple:2.0.17")
 
     // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
     // Pinned below 1.5.0: from there on media3 requires compileSdk 35+/36+,

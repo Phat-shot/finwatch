@@ -45,7 +45,8 @@ class JellyfinSession private constructor(context: Context) {
     }
 
     suspend fun login(serverUrl: String, username: String, password: String): Result<Unit> = try {
-        val normalizedUrl = serverUrl.trim().trimEnd('/')
+        val trimmedUrl = serverUrl.trim().trimEnd('/')
+        val normalizedUrl = if (trimmedUrl.contains("://")) trimmedUrl else "http://$trimmedUrl"
         val client = jellyfin.createApi(baseUrl = normalizedUrl)
         val authResult = client.userApi.authenticateUserByName(
             username = username,
@@ -66,6 +67,9 @@ class JellyfinSession private constructor(context: Context) {
             Result.success(Unit)
         }
     } catch (e: ApiClientException) {
+        Result.failure(e)
+    } catch (e: IllegalArgumentException) {
+        // e.g. a server URL that OkHttp's URL parser rejects outright.
         Result.failure(e)
     }
 
