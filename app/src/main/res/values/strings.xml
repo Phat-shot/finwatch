@@ -8,6 +8,8 @@
     <string name="login_prompt_password">Password</string>
     <string name="login_error_generic">Couldn\'t sign in</string>
     <string name="login_retry_hint">Tap to retry</string>
+    <string name="login_quick_connect_hint">Enter this code on your phone or computer, in Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_timeout">Quick Connect timed out</string>
 
     <string name="library_title">Library</string>
     <string name="library_loading">Loading…</string>

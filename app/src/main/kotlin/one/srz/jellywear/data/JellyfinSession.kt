@@ -7,10 +7,14 @@ import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
+import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
+import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
+import org.jellyfin.sdk.model.api.AuthenticationResult
+import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
@@ -44,33 +48,64 @@ class JellyfinSession private constructor(context: Context) {
         api = jellyfin.createApi(baseUrl = serverUrl, accessToken = token)
     }
 
-    suspend fun login(serverUrl: String, username: String, password: String): Result<Unit> = try {
-        val trimmedUrl = serverUrl.trim().trimEnd('/')
-        val normalizedUrl = if (trimmedUrl.contains("://")) trimmedUrl else "http://$trimmedUrl"
-        val client = jellyfin.createApi(baseUrl = normalizedUrl)
+    /** Builds an unauthenticated client bound to [serverUrl], normalizing a missing scheme to http://. */
+    fun buildClient(serverUrl: String): ApiClient {
+        val trimmed = serverUrl.trim().trimEnd('/')
+        val normalizedUrl = if (trimmed.contains("://")) trimmed else "http://$trimmed"
+        return jellyfin.createApi(baseUrl = normalizedUrl)
+    }
+
+    suspend fun login(client: ApiClient, username: String, password: String): Result<Unit> = try {
         val authResult = client.userApi.authenticateUserByName(
             username = username,
             password = password,
         ).content
-
-        val token = authResult.accessToken
-        if (token == null) {
-            Result.failure(IllegalStateException("Server did not return an access token"))
-        } else {
-            client.update(accessToken = token)
-            api = client
-            prefs.edit {
-                putString(KEY_SERVER_URL, normalizedUrl)
-                putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
-                putString(KEY_USER_ID, authResult.user?.id?.toString())
-            }
-            Result.success(Unit)
-        }
+        completeLogin(client, authResult)
     } catch (e: ApiClientException) {
         Result.failure(e)
     } catch (e: IllegalArgumentException) {
         // e.g. a server URL that OkHttp's URL parser rejects outright.
         Result.failure(e)
+    }
+
+    suspend fun isQuickConnectEnabled(client: ApiClient): Boolean = try {
+        client.quickConnectApi.getQuickConnectEnabled().content
+    } catch (e: ApiClientException) {
+        false
+    } catch (e: IllegalArgumentException) {
+        false
+    }
+
+    suspend fun initiateQuickConnect(client: ApiClient): Result<QuickConnectResult> = try {
+        Result.success(client.quickConnectApi.initiateQuickConnect().content)
+    } catch (e: ApiClientException) {
+        Result.failure(e)
+    }
+
+    /** Polls once. Result.success(false) means "still waiting", Result.success(true) means logged in. */
+    suspend fun pollQuickConnect(client: ApiClient, secret: String): Result<Boolean> = try {
+        val state = client.quickConnectApi.getQuickConnectState(secret).content
+        if (!state.authenticated) {
+            Result.success(false)
+        } else {
+            val authResult = client.userApi.authenticateWithQuickConnect(secret).content
+            completeLogin(client, authResult).map { true }
+        }
+    } catch (e: ApiClientException) {
+        Result.failure(e)
+    }
+
+    private fun completeLogin(client: ApiClient, authResult: AuthenticationResult): Result<Unit> {
+        val token = authResult.accessToken
+            ?: return Result.failure(IllegalStateException("Server did not return an access token"))
+        client.update(accessToken = token)
+        api = client
+        prefs.edit {
+            putString(KEY_SERVER_URL, client.baseUrl)
+            putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
+            putString(KEY_USER_ID, authResult.user?.id?.toString())
+        }
+        return Result.success(Unit)
     }
 
     fun logout() {
