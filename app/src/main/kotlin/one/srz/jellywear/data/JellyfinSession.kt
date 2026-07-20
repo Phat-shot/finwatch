@@ -15,11 +15,8 @@ import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
  * Holds the current Jellyfin server connection, persisted across process
- * restarts via SharedPreferences.
- *
- * The access token is stored in plain SharedPreferences for now. That's a
- * known simplification for this early scaffold stage -- move it to
- * Keystore-backed encrypted storage before any real-world/public use.
+ * restarts via SharedPreferences. The access token itself is encrypted at
+ * rest with an Android Keystore-backed key, see [SecureTokenStore].
  */
 class JellyfinSession private constructor(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -42,7 +39,8 @@ class JellyfinSession private constructor(context: Context) {
 
     private fun restoreSession() {
         val serverUrl = prefs.getString(KEY_SERVER_URL, null) ?: return
-        val token = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return
+        val encryptedToken = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return
+        val token = SecureTokenStore.decrypt(encryptedToken) ?: return
         api = jellyfin.createApi(baseUrl = serverUrl, accessToken = token)
     }
 
@@ -62,7 +60,7 @@ class JellyfinSession private constructor(context: Context) {
             api = client
             prefs.edit {
                 putString(KEY_SERVER_URL, normalizedUrl)
-                putString(KEY_ACCESS_TOKEN, token)
+                putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
                 putString(KEY_USER_ID, authResult.user?.id?.toString())
             }
             Result.success(Unit)

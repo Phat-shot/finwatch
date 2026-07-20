@@ -1,5 +1,6 @@
 package one.srz.jellywear.presentation.player
 
+import android.content.ComponentName
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -31,8 +34,10 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import kotlinx.coroutines.delay
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.playback.PlaybackService
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.audioApi
@@ -48,8 +53,25 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
     var item by remember(itemId) { mutableStateOf<BaseItemDto?>(null) }
     var error by remember(itemId) { mutableStateOf<String?>(null) }
     var isPlaying by remember(itemId) { mutableStateOf(true) }
+    var controller by remember(itemId) { mutableStateOf<MediaController?>(null) }
+    var positionMs by remember(itemId) { mutableStateOf(0L) }
+    var durationMs by remember(itemId) { mutableStateOf(0L) }
 
-    val player = remember(itemId) { ExoPlayer.Builder(context).build() }
+    // Connects to (and starts, if needed) PlaybackService so playback keeps
+    // running in the background via its MediaSession.
+    DisposableEffect(itemId) {
+        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+        controllerFuture.addListener(
+            { controller = controllerFuture.get() },
+            ContextCompat.getMainExecutor(context),
+        )
+
+        onDispose {
+            MediaController.releaseFuture(controllerFuture)
+            controller = null
+        }
+    }
 
     LaunchedEffect(itemId) {
         val api = session.api ?: return@LaunchedEffect
@@ -60,26 +82,38 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
         }
     }
 
-    LaunchedEffect(item) {
+    LaunchedEffect(item, controller) {
         val api = session.api
         val currentItem = item
-        if (api != null && currentItem != null) {
-            player.setMediaItem(MediaItem.fromUri(buildStreamUrl(api, currentItem)))
-            player.prepare()
-            player.playWhenReady = true
+        val ctrl = controller
+        if (api != null && currentItem != null && ctrl != null && ctrl.currentMediaItem == null) {
+            ctrl.setMediaItem(MediaItem.fromUri(buildStreamUrl(api, currentItem)))
+            ctrl.prepare()
+            ctrl.playWhenReady = true
         }
     }
 
-    DisposableEffect(player) {
-        val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(playing: Boolean) {
-                isPlaying = playing
+    DisposableEffect(controller) {
+        val ctrl = controller
+        if (ctrl == null) {
+            onDispose { }
+        } else {
+            val listener = object : Player.Listener {
+                override fun onIsPlayingChanged(playing: Boolean) {
+                    isPlaying = playing
+                }
             }
+            ctrl.addListener(listener)
+            onDispose { ctrl.removeListener(listener) }
         }
-        player.addListener(listener)
-        onDispose {
-            player.removeListener(listener)
-            player.release()
+    }
+
+    LaunchedEffect(controller) {
+        val ctrl = controller ?: return@LaunchedEffect
+        while (true) {
+            positionMs = ctrl.currentPosition.coerceAtLeast(0L)
+            durationMs = ctrl.duration.coerceAtLeast(0L)
+            delay(500)
         }
     }
 
@@ -97,10 +131,10 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                     AndroidView(
                         factory = { ctx ->
                             PlayerView(ctx).apply {
-                                this.player = player
                                 useController = false
                             }
                         },
+                        update = { view -> view.player = controller },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -114,7 +148,7 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                         )
                     }
                     Button(
-                        onClick = { if (player.isPlaying) player.pause() else player.play() },
+                        onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
                         colors = ButtonDefaults.iconButtonColors(),
                     ) {
                         Icon(
@@ -122,10 +156,24 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                             contentDescription = null,
                         )
                     }
+                    if (durationMs > 0) {
+                        Text(
+                            text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
+                            style = MaterialTheme.typography.caption2,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun formatMillis(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
 }
 
 private fun buildStreamUrl(api: ApiClient, item: BaseItemDto): String {

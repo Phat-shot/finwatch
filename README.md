@@ -1,11 +1,20 @@
 # jellywear
 
-A Jellyfin client for Wear OS — audio library playback and a video demo
-screen, built with Kotlin + Jetpack Compose for Wear OS + Media3.
+A Jellyfin client for Wear OS — audio library playback and video, built
+with Kotlin + Jetpack Compose for Wear OS + Media3.
 
-This repo currently holds the project scaffold (buildable skeleton app +
-CI) that the actual Jellyfin integration (login, audio library browsing,
-playback, video demo) will be built on top of.
+## Features
+
+- Sign in to a Jellyfin server (server URL / username / password, entered
+  via Wear OS's `RemoteInput` text entry — see `presentation/login`).
+  The access token is encrypted at rest with an Android Keystore-backed
+  AES key (`data/SecureTokenStore.kt`), not stored in plaintext.
+- Browse your libraries and drill into folders (`presentation/library`).
+- Play audio or video (`presentation/player`, `playback/PlaybackService.kt`):
+  ExoPlayer via a `MediaSessionService`, so playback keeps running with
+  system media controls after the app leaves the foreground (screen off,
+  navigating elsewhere on the watch). Video gets a `PlayerView` surface,
+  audio gets a play/pause control and a position/duration readout.
 
 ## Branches
 
@@ -57,9 +66,11 @@ Requires JDK 17 and the Android SDK (compileSdk 34).
 python3 scripts/generate_launcher_icons.py
 ```
 
-## Roadmap
+## Known gaps
 
-- Jellyfin server login / connection management
-- Audio library browsing and playback (Media3/ExoPlayer)
-- Video `/demo/` playback screen
-- Release signing via a real keystore
+- No seek control — playback position is shown but not scrubbable yet.
+- Browsing is a generic folder view, not a music-tailored layout (no
+  dedicated artist/album grid, no album art).
+- Release signing still uses the Gradle debug signing config (see
+  "CI" above) — swap in a real keystore via repo secrets before a public
+  release.
