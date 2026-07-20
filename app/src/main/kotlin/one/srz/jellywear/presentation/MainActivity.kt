@@ -3,43 +3,49 @@ package one.srz.jellywear.presentation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import one.srz.jellywear.R
+import androidx.wear.compose.navigation.SwipeDismissableNavHost
+import androidx.wear.compose.navigation.composable
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.library.LibraryScreen
+import one.srz.jellywear.presentation.login.LoginScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
+
+private const val ROUTE_LOGIN = "login"
+private const val ROUTE_LIBRARY = "library"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val session = JellyfinSession.getInstance(applicationContext)
         setContent {
-            JellywearApp()
+            JellywearApp(session = session)
         }
     }
 }
 
 @Composable
-fun JellywearApp() {
+fun JellywearApp(session: JellyfinSession) {
     JellywearTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(all = 16.dp),
-            contentAlignment = Alignment.Center,
+        val navController = rememberSwipeDismissableNavController()
+        SwipeDismissableNavHost(
+            navController = navController,
+            startDestination = if (session.isLoggedIn) ROUTE_LIBRARY else ROUTE_LOGIN,
         ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.title2,
-                textAlign = TextAlign.Center,
-            )
+            composable(ROUTE_LOGIN) {
+                LoginScreen(
+                    session = session,
+                    onLoggedIn = {
+                        navController.navigate(ROUTE_LIBRARY) {
+                            popUpTo(ROUTE_LOGIN) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(ROUTE_LIBRARY) {
+                LibraryScreen(session = session)
+            }
         }
     }
 }

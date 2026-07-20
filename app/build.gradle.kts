@@ -54,6 +54,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -76,6 +77,11 @@ dependencies {
 
     implementation("androidx.wear.compose:compose-material:1.3.1")
     implementation("androidx.wear.compose:compose-foundation:1.3.1")
+    implementation("androidx.wear.compose:compose-navigation:1.3.1")
+    implementation("androidx.wear:wear-input:1.2.0")
+
+    // Jellyfin server API client.
+    implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
 
     // Media3 for future Jellyfin audio/video playback (ExoPlayer + MediaSession).
     implementation("androidx.media3:media3-exoplayer:1.3.1")

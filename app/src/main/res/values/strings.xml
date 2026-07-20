@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">jellywear</string>
+
+    <string name="login_title">Sign in to jellywear</string>
+    <string name="login_prompt_server">Server URL</string>
+    <string name="login_prompt_username">Username</string>
+    <string name="login_prompt_password">Password</string>
+    <string name="login_error_generic">Couldn\'t sign in</string>
+    <string name="login_retry_hint">Tap to retry</string>
+
+    <string name="library_title">Library</string>
+    <string name="library_loading">Loading…</string>
+    <string name="library_empty">No libraries found</string>
 </resources>
