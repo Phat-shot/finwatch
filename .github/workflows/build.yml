@@ -1,0 +1,91 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, test]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install icon badge dependencies
+        run: pip install pillow
+
+      - name: Resolve build variant for this branch
+        id: variant
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "flavor=Prod" >> "$GITHUB_OUTPUT"
+            echo "flavor_lower=prod" >> "$GITHUB_OUTPUT"
+            echo "tag=v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "release_name=jellywear v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
+            echo "flavor=Beta" >> "$GITHUB_OUTPUT"
+            echo "flavor_lower=beta" >> "$GITHUB_OUTPUT"
+            echo "tag=v${{ github.run_number }}-test" >> "$GITHUB_OUTPUT"
+            echo "release_name=jellywear beta v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unsupported branch: ${{ github.ref }}" >&2
+            exit 1
+          fi
+
+      - name: Stamp BETA badge on launcher icon
+        if: steps.variant.outputs.flavor_lower == 'beta'
+        run: python3 scripts/badge_launcher_icon.py
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build ${{ steps.variant.outputs.flavor }} release APK
+        run: ./gradlew assemble${{ steps.variant.outputs.flavor }}Release -PappVersionCode=${{ github.run_number }} --no-daemon
+
+      - name: Locate APK
+        id: apk
+        run: |
+          apk_path=$(find app/build/outputs/apk/${{ steps.variant.outputs.flavor_lower }}/release -name '*.apk' | head -n1)
+          if [ -z "$apk_path" ]; then
+            echo "No APK produced" >&2
+            exit 1
+          fi
+          echo "path=$apk_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.variant.outputs.flavor_lower }}-apk
+          path: ${{ steps.apk.outputs.path }}
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.variant.outputs.tag }}
+          name: ${{ steps.variant.outputs.release_name }}
+          prerelease: ${{ steps.variant.outputs.prerelease }}
+          files: ${{ steps.apk.outputs.path }}

@@ -1,0 +1,19 @@
+*.iml
+.claude/settings.local.json
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+.idea/
+.DS_Store
+
+# Generated at CI-time by scripts/badge_launcher_icon.py, not committed.
+app/src/beta/res/mipmap-*/
+
+*.apk
+*.aab
+*.ap_
+*.dex
