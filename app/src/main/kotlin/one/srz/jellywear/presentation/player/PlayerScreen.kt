@@ -25,9 +25,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.IconButton
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
@@ -112,7 +113,10 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
-                    IconButton(onClick = { if (player.isPlaying) player.pause() else player.play() }) {
+                    Button(
+                        onClick = { if (player.isPlaying) player.pause() else player.play() },
+                        colors = ButtonDefaults.iconButtonColors(),
+                    ) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = null,
