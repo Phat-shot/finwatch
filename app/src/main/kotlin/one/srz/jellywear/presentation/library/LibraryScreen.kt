@@ -18,7 +18,7 @@ import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
 import org.jellyfin.sdk.api.client.exception.ApiClientException
-import org.jellyfin.sdk.api.client.extensions.userViewApi
+import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 
 @Composable
@@ -29,7 +29,7 @@ fun LibraryScreen(session: JellyfinSession) {
     LaunchedEffect(Unit) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            libraries = api.userViewApi.getUserViews().content.items
+            libraries = api.userViewsApi.getUserViews().content.items
         } catch (e: ApiClientException) {
             error = e.message
         }
