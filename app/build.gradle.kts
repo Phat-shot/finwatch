@@ -63,16 +63,6 @@ android {
     }
 }
 
-androidComponents {
-    onVariants(selector().all()) { variant ->
-        variant.outputs.forEach { output ->
-            val versionCode = output.versionCode.orNull ?: 1
-            val suffix = if (variant.flavorName == "beta") "-test" else ""
-            output.outputFileName.set("jellywear-v$versionCode$suffix.apk")
-        }
-    }
-}
-
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")

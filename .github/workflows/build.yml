@@ -66,15 +66,22 @@ jobs:
       - name: Build ${{ steps.variant.outputs.flavor }} release APK
         run: ./gradlew assemble${{ steps.variant.outputs.flavor }}Release -PappVersionCode=${{ github.run_number }} --no-daemon
 
-      - name: Locate APK
+      - name: Locate and rename APK
         id: apk
         run: |
-          apk_path=$(find app/build/outputs/apk/${{ steps.variant.outputs.flavor_lower }}/release -name '*.apk' | head -n1)
-          if [ -z "$apk_path" ]; then
+          built_apk=$(find app/build/outputs/apk/${{ steps.variant.outputs.flavor_lower }}/release -name '*.apk' | head -n1)
+          if [ -z "$built_apk" ]; then
             echo "No APK produced" >&2
             exit 1
           fi
-          echo "path=$apk_path" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.variant.outputs.flavor_lower }}" = "beta" ]; then
+            final_name="jellywear-v${{ github.run_number }}-test.apk"
+          else
+            final_name="jellywear-v${{ github.run_number }}.apk"
+          fi
+          final_path="$(dirname "$built_apk")/$final_name"
+          mv "$built_apk" "$final_path"
+          echo "path=$final_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
