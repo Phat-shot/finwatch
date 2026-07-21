@@ -1,5 +1,6 @@
 package one.srz.jellywear.presentation.library
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.wear.compose.material.Text
  * Modifier.combinedClickable instead. Tap opens the item, long-press
  * shuffle-plays everything under it.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ShuffleableChip(
     text: String,
