@@ -48,6 +48,7 @@ fun LoginScreen(
 ) {
     var step by remember { mutableStateOf(LoginStep.SERVER) }
     var client by remember { mutableStateOf<ApiClient?>(null) }
+    var serverUrlHadExplicitScheme by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var quickConnectCode by remember { mutableStateOf<String?>(null) }
     var quickConnectSecret by remember { mutableStateOf<String?>(null) }
@@ -78,6 +79,7 @@ fun LoginScreen(
 
         when (step) {
             LoginStep.SERVER -> {
+                serverUrlHadExplicitScheme = text.contains("://")
                 step = LoginStep.CONNECTING
                 scope.launch {
                     session.buildVerifiedClient(text).fold(
@@ -104,7 +106,29 @@ fun LoginScreen(
                 } else {
                     step = LoginStep.SIGNING_IN
                     scope.launch {
-                        session.login(currentClient, username, text).fold(
+                        var result = session.login(currentClient, username, text)
+
+                        // The connectivity check in buildVerifiedClient is a
+                        // GET, which some reverse proxies transparently
+                        // redirect http -> https -- letting the check pass
+                        // even though this login POST hits the same
+                        // redirect and loses its body, failing where the
+                        // GET didn't. One more try on the other scheme
+                        // before giving up, but only if the user didn't
+                        // type a scheme explicitly (respect their choice).
+                        if (result.isFailure && !serverUrlHadExplicitScheme) {
+                            val flippedClient = currentClient.baseUrl
+                                ?.let { session.buildClientWithFlippedScheme(it) }
+                            if (flippedClient != null) {
+                                val retryResult = session.login(flippedClient, username, text)
+                                if (retryResult.isSuccess) {
+                                    client = flippedClient
+                                    result = retryResult
+                                }
+                            }
+                        }
+
+                        result.fold(
                             onSuccess = { onLoggedIn() },
                             onFailure = { error ->
                                 errorMessage = error.message ?: genericError
