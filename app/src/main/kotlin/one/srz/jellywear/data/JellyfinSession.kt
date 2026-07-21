@@ -50,17 +50,20 @@ class JellyfinSession private constructor(context: Context) {
 
     val username: String? get() = prefs.getString(KEY_USERNAME, null)
 
-    val serverUrl: String? get() = prefs.getString(KEY_SERVER_URL, null)
+    // lowercase() here too, not just when it's written -- installs updated
+    // from before that normalization existed still have the original-case
+    // value stored.
+    val serverUrl: String? get() = prefs.getString(KEY_SERVER_URL, null)?.lowercase()
 
     init {
         restoreSession()
     }
 
     private fun restoreSession() {
-        val serverUrl = prefs.getString(KEY_SERVER_URL, null) ?: return
+        val storedServerUrl = prefs.getString(KEY_SERVER_URL, null)?.lowercase() ?: return
         val encryptedToken = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return
         val token = SecureTokenStore.decrypt(encryptedToken) ?: return
-        api = jellyfin.createApi(baseUrl = serverUrl, accessToken = token)
+        api = jellyfin.createApi(baseUrl = storedServerUrl, accessToken = token)
     }
 
     /**

@@ -1,6 +1,7 @@
 package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -63,6 +65,7 @@ import org.jellyfin.sdk.model.serializer.toUUID
 
 const val PLAYER_QUEUE_ID = "queue"
 private const val CONTROLS_AUTO_HIDE_MS = 3000L
+private const val AUDIO_AUTO_BACKGROUND_MS = 10_000L
 
 @Composable
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
@@ -84,6 +87,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // starting.
     var hasSetMediaItems by remember(itemId) { mutableStateOf(false) }
     var controlsVisible by remember(itemId) { mutableStateOf(true) }
+    var interactionTick by remember(itemId) { mutableStateOf(0) }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession.
@@ -119,7 +123,19 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         val api = session.api
         val ctrl = controller
         if (api != null && ctrl != null && queueItems.isNotEmpty() && !hasSetMediaItems) {
-            val mediaItems = queueItems.map { MediaItem.fromUri(buildStreamUrl(api, it)) }
+            val mediaItems = queueItems.map { queueItem ->
+                MediaItem.Builder()
+                    .setUri(buildStreamUrl(api, queueItem, preferences.transcodeEnabled))
+                    // So the foreground-service notification shows the
+                    // track/episode title (and Wear renders it as its
+                    // native media-playback card) instead of a blank one.
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(queueItem.name)
+                            .build(),
+                    )
+                    .build()
+            }
             ctrl.setMediaItems(mediaItems)
             ctrl.prepare()
             ctrl.playWhenReady = true
@@ -174,18 +190,27 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         }
     }
 
+    // For audio, return to the watch face after 10s of no interaction --
+    // apps can't force the display off directly, but backgrounding the
+    // activity lets the system's own idle/ambient timeout take over while
+    // playback keeps going through the MediaSession. Any tap resets it.
+    val activity = context as? ComponentActivity
+    LaunchedEffect(isVideo, interactionTick) {
+        if (!isVideo) {
+            delay(AUDIO_AUTO_BACKGROUND_MS)
+            activity?.moveTaskToBack(true)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .then(
-                if (isVideo) {
-                    Modifier.pointerInput(itemId) {
-                        detectTapGestures { controlsVisible = !controlsVisible }
-                    }
-                } else {
-                    Modifier
-                },
-            ),
+            .pointerInput(itemId, isVideo) {
+                detectTapGestures {
+                    if (isVideo) controlsVisible = !controlsVisible
+                    interactionTick++
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         when {
@@ -288,12 +313,31 @@ private fun formatMillis(millis: Long): String {
     return "%d:%02d".format(minutes, seconds)
 }
 
-private fun buildStreamUrl(api: ApiClient, item: BaseItemDto): String {
+private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean): String {
     val deviceId = api.deviceInfo.id
     val base = if (item.mediaType == MediaType.VIDEO) {
-        api.videosApi.getVideoStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+        if (transcode) {
+            api.videosApi.getVideoStreamUrl(
+                itemId = item.id,
+                static = false,
+                deviceId = deviceId,
+                videoBitRate = AppPreferences.TRANSCODE_VIDEO_BITRATE,
+                audioBitRate = AppPreferences.TRANSCODE_AUDIO_BITRATE,
+            )
+        } else {
+            api.videosApi.getVideoStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+        }
     } else {
-        api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+        if (transcode) {
+            api.audioApi.getAudioStreamUrl(
+                itemId = item.id,
+                static = false,
+                deviceId = deviceId,
+                audioBitRate = AppPreferences.TRANSCODE_AUDIO_BITRATE,
+            )
+        } else {
+            api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+        }
     }
     val separator = if (base.contains("?")) "&" else "?"
     return "$base$separator${ApiClient.QUERY_ACCESS_TOKEN}=${api.accessToken}"
