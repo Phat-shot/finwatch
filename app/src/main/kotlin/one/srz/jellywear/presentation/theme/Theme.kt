@@ -5,15 +5,15 @@ import androidx.wear.compose.material.Colors
 import androidx.wear.compose.material.MaterialTheme
 
 private val JellywearColors = Colors(
-    primary = Purple,
-    primaryVariant = PurpleVariant,
-    secondary = Highlight,
+    primary = NeonAccent,
+    primaryVariant = NeonAccentDim,
+    secondary = NeonAccent,
     background = Background,
     surface = Surface,
-    onPrimary = OnPrimary,
-    onSecondary = OnPrimary,
-    onBackground = OnPrimary,
-    onSurface = OnPrimary,
+    onPrimary = OnAccent,
+    onSecondary = OnAccent,
+    onBackground = TextAnthracite,
+    onSurface = TextAnthracite,
 )
 
 @Composable

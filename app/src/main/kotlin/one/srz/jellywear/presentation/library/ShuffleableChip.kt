@@ -33,7 +33,7 @@ fun ShuffleableChip(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
-            .background(MaterialTheme.colors.primary, RoundedCornerShape(50))
+            .background(MaterialTheme.colors.surface, RoundedCornerShape(50))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart,
@@ -41,6 +41,7 @@ fun ShuffleableChip(
         Text(
             text = text,
             style = MaterialTheme.typography.button,
+            color = MaterialTheme.colors.onSurface,
         )
     }
 }

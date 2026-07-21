@@ -27,6 +27,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -144,6 +145,9 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                         factory = { ctx ->
                             PlayerView(ctx).apply {
                                 useController = false
+                                // Fill the round screen's width -- corners get
+                                // cropped, but the watch bezel hides those anyway.
+                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                             }
                         },
                         update = { view -> view.player = controller },
