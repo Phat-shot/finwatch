@@ -25,36 +25,48 @@ import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
+/**
+ * Flat, server-wide list of everything of [category]'s item kind -- e.g.
+ * Movies aggregates every movie library, not just one. Music routes to
+ * [ArtistAlbumsScreen] instead of the generic folder browser, since
+ * Jellyfin artists aren't a real folder parent of their albums.
+ */
 @Composable
-fun ItemBrowserScreen(
+fun CategoryScreen(
     session: JellyfinSession,
     preferences: AppPreferences,
-    parentId: String,
+    category: Category,
+    onOpenArtist: (String) -> Unit,
     onOpenFolder: (String) -> Unit,
     onPlayItem: (String) -> Unit,
     onShufflePlay: () -> Unit,
 ) {
-    var children by remember(parentId) { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember(parentId) { mutableStateOf<String?>(null) }
+    var elements by remember(category) { mutableStateOf<List<BaseItemDto>?>(null) }
+    var error by remember(category) { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 
-    LaunchedEffect(parentId) {
+    LaunchedEffect(category) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            children = api.itemsApi.getItems(
-                GetItemsRequest(
-                    userId = session.userId,
-                    parentId = parentId.toUUIDOrNull(),
-                    recursive = false,
-                    sortBy = listOf(ItemSortBy.SORT_NAME),
-                ),
-            ).content.items
+            elements = when (category) {
+                Category.AUDIO -> session.fetchAudiobooks()
+                Category.FAVORITES -> session.fetchFavoriteMusic()
+                else -> api.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        recursive = true,
+                        includeItemTypes = listOf(category.itemKind),
+                        sortBy = listOf(ItemSortBy.SORT_NAME),
+                    ),
+                ).content.items
+            }
         } catch (e: ApiClientException) {
             error = e.message
         }
@@ -67,37 +79,49 @@ fun ItemBrowserScreen(
     ) {
         item {
             ListHeader {
-                Text(text = stringResource(R.string.library_title))
+                Text(text = stringResource(category.titleRes))
             }
         }
         when {
             error != null -> item {
                 Text(text = error ?: stringResource(R.string.login_error_generic))
             }
-            children == null -> item {
+            elements == null -> item {
                 Text(text = stringResource(R.string.library_loading))
             }
-            children.orEmpty().isEmpty() -> item {
+            elements.orEmpty().isEmpty() -> item {
                 Text(text = stringResource(R.string.library_empty))
             }
-            else -> items(children.orEmpty()) { child ->
-                val id = child.id.toString()
+            else -> items(elements.orEmpty()) { element ->
+                val id = element.id.toString()
                 ShuffleableChip(
-                    text = child.name ?: "?",
-                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(child.id) else null,
+                    text = element.name ?: "?",
+                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(element.id) else null,
                     onClick = {
-                        if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
+                        when {
+                            category == Category.MUSIC -> onOpenArtist(id)
+                            element.isFolder == true -> onOpenFolder(id)
+                            else -> onPlayItem(id)
+                        }
                     },
                     onLongClick = {
                         scope.launch {
-                            val queue = session.fetchShuffledQueue(
+                            val request = if (category == Category.MUSIC) {
                                 GetItemsRequest(
                                     userId = session.userId,
-                                    parentId = child.id,
+                                    artistIds = listOf(element.id),
+                                    recursive = true,
+                                    includeItemTypes = listOf(BaseItemKind.AUDIO),
+                                )
+                            } else {
+                                GetItemsRequest(
+                                    userId = session.userId,
+                                    parentId = id.toUUIDOrNull(),
                                     recursive = true,
                                     mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
-                                ),
-                            )
+                                )
+                            }
+                            val queue = session.fetchShuffledQueue(request)
                             if (queue != null) {
                                 PlaybackQueue.items = queue
                                 onShufflePlay()

@@ -96,3 +96,19 @@ jobs:
           name: ${{ steps.variant.outputs.release_name }}
           prerelease: ${{ steps.variant.outputs.prerelease }}
           files: ${{ steps.apk.outputs.path }}
+
+      # main only: mirror the same release into the public jellywear-release
+      # repo, so anyone can grab the latest APK without access to this
+      # private repo. Needs a fine-grained PAT (Contents: read/write, scoped
+      # to just that repo) in the RELEASE_REPO_TOKEN secret -- the default
+      # GITHUB_TOKEN can't push to a different repository.
+      - name: Publish to public jellywear-release repo
+        if: steps.variant.outputs.flavor_lower == 'prod'
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: Phat-shot/jellywear-release
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          tag_name: ${{ steps.variant.outputs.tag }}
+          name: ${{ steps.variant.outputs.release_name }}
+          prerelease: false
+          files: ${{ steps.apk.outputs.path }}

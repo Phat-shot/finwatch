@@ -7,10 +7,25 @@ import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
+import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
+import org.jellyfin.sdk.api.client.extensions.imageApi
+import org.jellyfin.sdk.api.client.extensions.itemsApi
+import org.jellyfin.sdk.api.client.extensions.quickConnectApi
+import org.jellyfin.sdk.api.client.extensions.systemApi
 import org.jellyfin.sdk.api.client.extensions.userApi
+import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
+import org.jellyfin.sdk.model.api.AuthenticationResult
+import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.BaseItemKind
+import org.jellyfin.sdk.model.api.CollectionType
+import org.jellyfin.sdk.model.api.ImageType
+import org.jellyfin.sdk.model.api.ItemSortBy
+import org.jellyfin.sdk.model.api.MediaType
+import org.jellyfin.sdk.model.api.QuickConnectResult
+import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
@@ -33,6 +48,10 @@ class JellyfinSession private constructor(context: Context) {
 
     val userId: UUID? get() = prefs.getString(KEY_USER_ID, null)?.toUUIDOrNull()
 
+    val username: String? get() = prefs.getString(KEY_USERNAME, null)
+
+    val serverUrl: String? get() = prefs.getString(KEY_SERVER_URL, null)
+
     init {
         restoreSession()
     }
@@ -44,29 +63,177 @@ class JellyfinSession private constructor(context: Context) {
         api = jellyfin.createApi(baseUrl = serverUrl, accessToken = token)
     }
 
-    suspend fun login(serverUrl: String, username: String, password: String): Result<Unit> = try {
-        val normalizedUrl = serverUrl.trim().trimEnd('/')
-        val client = jellyfin.createApi(baseUrl = normalizedUrl)
+    /**
+     * Builds an unauthenticated client bound to [serverUrl] and verifies it
+     * can actually reach a Jellyfin server. If the user didn't type a
+     * scheme, tries http:// first and falls back to https:// (many
+     * reverse-proxied Jellyfin servers are https-only) before giving up.
+     */
+    suspend fun buildVerifiedClient(serverUrl: String): Result<ApiClient> {
+        val trimmed = serverUrl.trim().trimEnd('/')
+        val hasExplicitScheme = trimmed.contains("://")
+
+        val primaryClient = jellyfin.createApi(baseUrl = if (hasExplicitScheme) trimmed else "http://$trimmed")
+        val primaryError = pingServer(primaryClient)
+        if (primaryError == null) return Result.success(primaryClient)
+
+        if (!hasExplicitScheme) {
+            val fallbackClient = jellyfin.createApi(baseUrl = "https://$trimmed")
+            val fallbackError = pingServer(fallbackClient)
+            if (fallbackError == null) return Result.success(fallbackClient)
+        }
+
+        return Result.failure(primaryError)
+    }
+
+    /** Null on success, the failure otherwise. */
+    private suspend fun pingServer(client: ApiClient): Throwable? = try {
+        client.systemApi.getPublicSystemInfo()
+        null
+    } catch (e: ApiClientException) {
+        e
+    } catch (e: IllegalArgumentException) {
+        e
+    }
+
+    suspend fun login(client: ApiClient, username: String, password: String): Result<Unit> = try {
         val authResult = client.userApi.authenticateUserByName(
             username = username,
             password = password,
         ).content
+        completeLogin(client, authResult)
+    } catch (e: ApiClientException) {
+        Result.failure(e)
+    } catch (e: IllegalArgumentException) {
+        // e.g. a server URL that OkHttp's URL parser rejects outright.
+        Result.failure(e)
+    }
 
-        val token = authResult.accessToken
-        if (token == null) {
-            Result.failure(IllegalStateException("Server did not return an access token"))
+    suspend fun isQuickConnectEnabled(client: ApiClient): Boolean = try {
+        client.quickConnectApi.getQuickConnectEnabled().content
+    } catch (e: ApiClientException) {
+        false
+    } catch (e: IllegalArgumentException) {
+        false
+    }
+
+    suspend fun initiateQuickConnect(client: ApiClient): Result<QuickConnectResult> = try {
+        Result.success(client.quickConnectApi.initiateQuickConnect().content)
+    } catch (e: ApiClientException) {
+        Result.failure(e)
+    }
+
+    /** Polls once. Result.success(false) means "still waiting", Result.success(true) means logged in. */
+    suspend fun pollQuickConnect(client: ApiClient, secret: String): Result<Boolean> = try {
+        val state = client.quickConnectApi.getQuickConnectState(secret).content
+        if (!state.authenticated) {
+            Result.success(false)
         } else {
-            client.update(accessToken = token)
-            api = client
-            prefs.edit {
-                putString(KEY_SERVER_URL, normalizedUrl)
-                putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
-                putString(KEY_USER_ID, authResult.user?.id?.toString())
-            }
-            Result.success(Unit)
+            val authResult = client.userApi.authenticateWithQuickConnect(secret).content
+            completeLogin(client, authResult).map { true }
         }
     } catch (e: ApiClientException) {
         Result.failure(e)
+    }
+
+    private fun completeLogin(client: ApiClient, authResult: AuthenticationResult): Result<Unit> {
+        val token = authResult.accessToken
+            ?: return Result.failure(IllegalStateException("Server did not return an access token"))
+        client.update(accessToken = token)
+        api = client
+        prefs.edit {
+            putString(KEY_SERVER_URL, client.baseUrl)
+            putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
+            putString(KEY_USER_ID, authResult.user?.id?.toString())
+            putString(KEY_USERNAME, authResult.user?.name)
+        }
+        return Result.success(Unit)
+    }
+
+    /** Fetches items for [request] and returns them shuffled, or null on error/empty result. */
+    suspend fun fetchShuffledQueue(request: GetItemsRequest): List<BaseItemDto>? = try {
+        api?.itemsApi?.getItems(request)?.content?.items
+            ?.takeIf { it.isNotEmpty() }
+            ?.shuffled()
+    } catch (e: ApiClientException) {
+        null
+    }
+
+    /**
+     * Audiobooks aren't reliably tagged as BaseItemKind.AUDIO_BOOK on every
+     * server, so instead of filtering by kind, this finds the user's
+     * "Books" library views and lists every audio item underneath them.
+     */
+    suspend fun fetchAudiobooks(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            val bookLibraries = currentApi.userViewsApi.getUserViews(userId = userId).content.items
+                .filter { it.collectionType == CollectionType.BOOKS }
+            bookLibraries.flatMap { library ->
+                currentApi.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = userId,
+                        parentId = library.id,
+                        recursive = true,
+                        mediaTypes = listOf(MediaType.AUDIO),
+                    ),
+                ).content.items
+            }
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
+    }
+
+    /** Favorited songs, server-wide. */
+    suspend fun fetchFavoriteMusic(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            currentApi.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = userId,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.AUDIO),
+                    isFavorite = true,
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                ),
+            ).content.items
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
+    }
+
+    /** All tracks across every playlist, server-wide (for the Playlists tile's shuffle-all). */
+    suspend fun fetchPlaylistTracks(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            val playlists = currentApi.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = userId,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.PLAYLIST),
+                ),
+            ).content.items
+            playlists.flatMap { playlist ->
+                currentApi.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = userId,
+                        parentId = playlist.id,
+                        recursive = true,
+                        mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
+                    ),
+                ).content.items
+            }
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
+    }
+
+    /** Primary-image URL for [itemId], sized for a small chip thumbnail, or null if not logged in. */
+    fun imageUrl(itemId: UUID): String? {
+        val currentApi = api ?: return null
+        val url = currentApi.imageApi.getItemImageUrl(itemId = itemId, imageType = ImageType.PRIMARY, maxWidth = 120)
+        val separator = if (url.contains("?")) "&" else "?"
+        return "$url$separator${ApiClient.QUERY_ACCESS_TOKEN}=${currentApi.accessToken}"
     }
 
     fun logout() {
@@ -79,6 +246,7 @@ class JellyfinSession private constructor(context: Context) {
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_USER_ID = "user_id"
+        private const val KEY_USERNAME = "username"
 
         @Volatile
         private var instance: JellyfinSession? = null

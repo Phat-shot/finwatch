@@ -1,13 +1,17 @@
 package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +33,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -34,9 +41,13 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -47,15 +58,20 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.serializer.toUUID
 
+const val PLAYER_QUEUE_ID = "queue"
+
 @Composable
-fun PlayerScreen(session: JellyfinSession, itemId: String) {
+fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
-    var item by remember(itemId) { mutableStateOf<BaseItemDto?>(null) }
+    var queueItems by remember(itemId) { mutableStateOf<List<BaseItemDto>>(emptyList()) }
     var error by remember(itemId) { mutableStateOf<String?>(null) }
     var isPlaying by remember(itemId) { mutableStateOf(true) }
     var controller by remember(itemId) { mutableStateOf<MediaController?>(null) }
     var positionMs by remember(itemId) { mutableStateOf(0L) }
     var durationMs by remember(itemId) { mutableStateOf(0L) }
+    var currentIndex by remember(itemId) { mutableStateOf(0) }
+    var hasNext by remember(itemId) { mutableStateOf(false) }
+    var hasPrevious by remember(itemId) { mutableStateOf(false) }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession.
@@ -74,20 +90,25 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
     }
 
     LaunchedEffect(itemId) {
-        val api = session.api ?: return@LaunchedEffect
-        try {
-            item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
-        } catch (e: ApiClientException) {
-            error = e.message
+        if (itemId == PLAYER_QUEUE_ID) {
+            queueItems = PlaybackQueue.items
+        } else {
+            val api = session.api ?: return@LaunchedEffect
+            try {
+                val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
+                queueItems = listOf(item)
+            } catch (e: ApiClientException) {
+                error = e.message
+            }
         }
     }
 
-    LaunchedEffect(item, controller) {
+    LaunchedEffect(queueItems, controller) {
         val api = session.api
-        val currentItem = item
         val ctrl = controller
-        if (api != null && currentItem != null && ctrl != null && ctrl.currentMediaItem == null) {
-            ctrl.setMediaItem(MediaItem.fromUri(buildStreamUrl(api, currentItem)))
+        if (api != null && ctrl != null && queueItems.isNotEmpty() && ctrl.mediaItemCount == 0) {
+            val mediaItems = queueItems.map { MediaItem.fromUri(buildStreamUrl(api, it)) }
+            ctrl.setMediaItems(mediaItems)
             ctrl.prepare()
             ctrl.playWhenReady = true
         }
@@ -113,9 +134,14 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
         while (true) {
             positionMs = ctrl.currentPosition.coerceAtLeast(0L)
             durationMs = ctrl.duration.coerceAtLeast(0L)
+            currentIndex = ctrl.currentMediaItemIndex
+            hasNext = ctrl.hasNextMediaItem()
+            hasPrevious = ctrl.hasPreviousMediaItem()
             delay(500)
         }
     }
+
+    val currentItem = queueItems.getOrNull(currentIndex)
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when {
@@ -124,14 +150,38 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp),
             )
-            item == null -> CircularProgressIndicator()
+            queueItems.isEmpty() -> CircularProgressIndicator()
             else -> {
-                val isVideo = item?.mediaType == MediaType.VIDEO
+                val isVideo = currentItem?.mediaType == MediaType.VIDEO
+                if (!isVideo &&
+                    preferences.coverArtMode == CoverArtMode.FOLDERS_AND_PLAYBACK &&
+                    currentItem != null
+                ) {
+                    AsyncImage(
+                        model = session.imageUrl(currentItem.id),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.55f)),
+                    )
+                }
                 if (isVideo) {
                     AndroidView(
                         factory = { ctx ->
                             PlayerView(ctx).apply {
                                 useController = false
+                                // Fill the round screen's width only (not
+                                // height) -- ZOOM fills whichever dimension
+                                // needs less scaling, which for wide video on
+                                // a square/round screen means it fills height
+                                // and crops the sides. FIXED_WIDTH fills the
+                                // width and crops/letterboxes top and bottom
+                                // instead, which is what we want here.
+                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
                             }
                         },
                         update = { view -> view.player = controller },
@@ -141,20 +191,37 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (!isVideo) {
                         Text(
-                            text = item?.name ?: "",
+                            text = currentItem?.name ?: "",
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.title3,
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
-                    Button(
-                        onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
-                        colors = ButtonDefaults.iconButtonColors(),
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Button(
+                            onClick = { controller?.seekToPrevious() },
+                            enabled = hasPrevious,
+                            colors = ButtonDefaults.iconButtonColors(),
+                        ) {
+                            Icon(imageVector = Icons.Filled.SkipPrevious, contentDescription = null)
+                        }
+                        Button(
+                            onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
+                            colors = ButtonDefaults.iconButtonColors(),
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                contentDescription = null,
+                            )
+                        }
+                        Button(
+                            onClick = { controller?.seekToNext() },
+                            enabled = hasNext,
+                            colors = ButtonDefaults.iconButtonColors(),
+                        ) {
+                            Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
+                        }
                     }
                     if (durationMs > 0) {
                         Text(

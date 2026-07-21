@@ -1,6 +1,8 @@
 package one.srz.jellywear.presentation
 
 import android.Manifest
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,21 +12,53 @@ import androidx.compose.runtime.Composable
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import java.util.Locale
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.home.HomeScreen
+import one.srz.jellywear.presentation.library.ArtistAlbumsScreen
+import one.srz.jellywear.presentation.library.Category
+import one.srz.jellywear.presentation.library.CategoryScreen
 import one.srz.jellywear.presentation.library.ItemBrowserScreen
-import one.srz.jellywear.presentation.library.LibraryScreen
 import one.srz.jellywear.presentation.login.LoginScreen
+import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
 import one.srz.jellywear.presentation.player.PlayerScreen
+import one.srz.jellywear.presentation.settings.ColorPickerScreen
+import one.srz.jellywear.presentation.settings.ColorPickerTarget
+import one.srz.jellywear.presentation.settings.CoverArtModeScreen
+import one.srz.jellywear.presentation.settings.LanguageScreen
+import one.srz.jellywear.presentation.settings.SettingsScreen
+import one.srz.jellywear.presentation.settings.ThemeModeScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
 
 private const val ROUTE_LOGIN = "login"
-private const val ROUTE_LIBRARY = "library"
+private const val ROUTE_HOME = "home"
+private const val ROUTE_CATEGORY = "category/{type}"
+private const val ROUTE_ARTIST = "artist/{artistId}"
 private const val ROUTE_BROWSE = "browse/{parentId}"
 private const val ROUTE_PLAYER = "player/{itemId}"
+private const val ROUTE_SETTINGS = "settings"
+private const val ROUTE_COLOR_PICKER = "colorpicker/{target}"
+private const val ROUTE_THEME_MODE = "thememode"
+private const val ROUTE_COVER_ART_MODE = "coverartmode"
+private const val ROUTE_LANGUAGE = "language"
 
 class MainActivity : ComponentActivity() {
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    override fun attachBaseContext(newBase: Context) {
+        val languageTag = AppPreferences.getInstance(newBase).languageTag
+        val context = if (languageTag != null) {
+            val locale = Locale.forLanguageTag(languageTag)
+            val configuration = Configuration(newBase.resources.configuration)
+            configuration.setLocale(locale)
+            newBase.createConfigurationContext(configuration)
+        } else {
+            newBase
+        }
+        super.attachBaseContext(context)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,52 +68,124 @@ class MainActivity : ComponentActivity() {
         }
 
         val session = JellyfinSession.getInstance(applicationContext)
+        val preferences = AppPreferences.getInstance(applicationContext)
         setContent {
-            JellywearApp(session = session)
+            JellywearApp(session = session, preferences = preferences)
         }
     }
 }
 
 @Composable
-fun JellywearApp(session: JellyfinSession) {
-    JellywearTheme {
+fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
+    JellywearTheme(preferences = preferences) {
         val navController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
             navController = navController,
-            startDestination = if (session.isLoggedIn) ROUTE_LIBRARY else ROUTE_LOGIN,
+            startDestination = if (session.isLoggedIn) ROUTE_HOME else ROUTE_LOGIN,
         ) {
             composable(ROUTE_LOGIN) {
                 LoginScreen(
                     session = session,
                     onLoggedIn = {
-                        navController.navigate(ROUTE_LIBRARY) {
+                        navController.navigate(ROUTE_HOME) {
                             popUpTo(ROUTE_LOGIN) { inclusive = true }
                         }
                     },
                 )
             }
-            composable(ROUTE_LIBRARY) {
-                LibraryScreen(
+            composable(ROUTE_HOME) {
+                HomeScreen(
                     session = session,
-                    onOpenLibrary = { id -> navController.navigate("browse/$id") },
+                    onOpenCategory = { category -> navController.navigate("category/${category.route}") },
+                    onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                    onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
                 )
+            }
+            composable(ROUTE_CATEGORY) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("type")?.let(Category::fromRoute)
+                if (category != null) {
+                    CategoryScreen(
+                        session = session,
+                        preferences = preferences,
+                        category = category,
+                        onOpenArtist = { id -> navController.navigate("artist/$id") },
+                        onOpenFolder = { id -> navController.navigate("browse/$id") },
+                        onPlayItem = { id -> navController.navigate("player/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                    )
+                }
+            }
+            composable(ROUTE_ARTIST) { backStackEntry ->
+                val artistId = backStackEntry.arguments?.getString("artistId")
+                if (artistId != null) {
+                    ArtistAlbumsScreen(
+                        session = session,
+                        preferences = preferences,
+                        artistId = artistId,
+                        onOpenAlbum = { id -> navController.navigate("browse/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                    )
+                }
             }
             composable(ROUTE_BROWSE) { backStackEntry ->
                 val parentId = backStackEntry.arguments?.getString("parentId")
                 if (parentId != null) {
                     ItemBrowserScreen(
                         session = session,
+                        preferences = preferences,
                         parentId = parentId,
                         onOpenFolder = { id -> navController.navigate("browse/$id") },
                         onPlayItem = { id -> navController.navigate("player/$id") },
+                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
                     )
                 }
             }
             composable(ROUTE_PLAYER) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getString("itemId")
                 if (itemId != null) {
-                    PlayerScreen(session = session, itemId = itemId)
+                    PlayerScreen(session = session, preferences = preferences, itemId = itemId)
                 }
+            }
+            composable(ROUTE_SETTINGS) {
+                SettingsScreen(
+                    session = session,
+                    preferences = preferences,
+                    onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
+                    onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
+                    onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
+                    onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
+                    onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
+                    onLoggedOut = {
+                        navController.navigate(ROUTE_LOGIN) {
+                            popUpTo(ROUTE_HOME) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(ROUTE_COLOR_PICKER) { backStackEntry ->
+                val target = backStackEntry.arguments?.getString("target")?.let(ColorPickerTarget::fromRoute)
+                if (target != null) {
+                    ColorPickerScreen(
+                        target = target,
+                        preferences = preferences,
+                        onDone = { navController.popBackStack() },
+                    )
+                }
+            }
+            composable(ROUTE_THEME_MODE) {
+                ThemeModeScreen(
+                    preferences = preferences,
+                    onDone = { navController.popBackStack() },
+                )
+            }
+            composable(ROUTE_COVER_ART_MODE) {
+                CoverArtModeScreen(
+                    preferences = preferences,
+                    onDone = { navController.popBackStack() },
+                )
+            }
+            composable(ROUTE_LANGUAGE) {
+                LanguageScreen(preferences = preferences)
             }
         }
     }

@@ -8,8 +8,48 @@
     <string name="login_prompt_password">Password</string>
     <string name="login_error_generic">Couldn\'t sign in</string>
     <string name="login_retry_hint">Tap to retry</string>
+    <string name="login_quick_connect_hint">Enter this code on your phone or computer, in Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_timeout">Quick Connect timed out</string>
 
     <string name="library_title">Library</string>
     <string name="library_loading">Loading…</string>
     <string name="library_empty">No libraries found</string>
+
+    <string name="category_music">Music</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_series">Series</string>
+    <string name="category_movies">Movies</string>
+    <string name="category_favorites">Favorites</string>
+    <string name="category_playlists">Playlists</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_tile">Settings</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_server">Server: %1$s</string>
+    <string name="settings_account">Account: %1$s</string>
+    <string name="settings_theme_mode">Theme</string>
+    <string name="settings_cover_art">Cover art</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_font_color">Font color</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_logout">Log out</string>
+
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_system">System</string>
+
+    <string name="cover_art_mode_off">Off</string>
+    <string name="cover_art_mode_folders">Folders</string>
+    <string name="cover_art_mode_folders_and_playback">Folders + playback</string>
+
+    <string name="color_neon_yellow_green">Neon yellow-green</string>
+    <string name="color_cyan">Cyan</string>
+    <string name="color_magenta">Magenta</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_red">Red</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_anthracite">Anthracite</string>
+    <string name="color_light_gray">Light gray</string>
+    <string name="color_white">White</string>
+    <string name="color_dark_gray">Dark gray</string>
 </resources>

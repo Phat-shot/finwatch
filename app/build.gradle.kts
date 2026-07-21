@@ -18,6 +18,19 @@ android {
         versionName = "1.${versionCode}"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Fixed, committed keystore instead of the machine-local default
+            // (~/.android/debug.keystore) -- otherwise every CI run signs
+            // with a different key and Android refuses to install an update
+            // over a previous build ("signatures do not match").
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     flavorDimensions += "channel"
     productFlavors {
         create("prod") {
@@ -76,13 +89,22 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    implementation("androidx.wear.compose:compose-material:1.3.1")
-    implementation("androidx.wear.compose:compose-foundation:1.3.1")
-    implementation("androidx.wear.compose:compose-navigation:1.3.1")
+    // 1.4.0 for ScalingLazyColumn's built-in rotaryScrollableBehavior (crown scrolling).
+    implementation("androidx.wear.compose:compose-material:1.4.0")
+    implementation("androidx.wear.compose:compose-foundation:1.4.0")
+    implementation("androidx.wear.compose:compose-navigation:1.4.0")
     implementation("androidx.wear:wear-input:1.2.0")
+
+    // Cover/album art thumbnails.
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Jellyfin server API client.
     implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
+    // jellyfin-core's HTTP client logs via kotlin-logging's SLF4J backend,
+    // which needs a binding on the classpath or it crashes with
+    // NoClassDefFoundError on Android (no SLF4J implementation by default).
+    // slf4j-simple writes to stdout/stderr, which logcat captures.
+    implementation("org.slf4j:slf4j-simple:2.0.17")
 
     // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
     // Pinned below 1.5.0: from there on media3 requires compileSdk 35+/36+,
