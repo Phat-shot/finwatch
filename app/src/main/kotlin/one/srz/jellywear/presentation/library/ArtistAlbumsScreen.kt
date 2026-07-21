@@ -18,6 +18,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -33,6 +34,7 @@ import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 @Composable
 fun ArtistAlbumsScreen(
     session: JellyfinSession,
+    preferences: AppPreferences,
     artistId: String,
     onOpenAlbum: (String) -> Unit,
     onShufflePlay: () -> Unit,
@@ -84,6 +86,7 @@ fun ArtistAlbumsScreen(
                 val id = album.id.toString()
                 ShuffleableChip(
                     text = album.name ?: "?",
+                    imageUrl = if (preferences.showCoverArt) session.imageUrl(album.id) else null,
                     onClick = { onOpenAlbum(id) },
                     onLongClick = {
                         scope.launch {

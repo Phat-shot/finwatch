@@ -18,6 +18,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -38,6 +39,7 @@ import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 @Composable
 fun CategoryScreen(
     session: JellyfinSession,
+    preferences: AppPreferences,
     category: Category,
     onOpenArtist: (String) -> Unit,
     onOpenFolder: (String) -> Unit,
@@ -93,6 +95,7 @@ fun CategoryScreen(
                 val id = element.id.toString()
                 ShuffleableChip(
                     text = element.name ?: "?",
+                    imageUrl = if (preferences.showCoverArt) session.imageUrl(element.id) else null,
                     onClick = {
                         when {
                             category == Category.MUSIC -> onOpenArtist(id)

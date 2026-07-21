@@ -84,6 +84,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                 if (category != null) {
                     CategoryScreen(
                         session = session,
+                        preferences = preferences,
                         category = category,
                         onOpenArtist = { id -> navController.navigate("artist/$id") },
                         onOpenFolder = { id -> navController.navigate("browse/$id") },
@@ -97,6 +98,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                 if (artistId != null) {
                     ArtistAlbumsScreen(
                         session = session,
+                        preferences = preferences,
                         artistId = artistId,
                         onOpenAlbum = { id -> navController.navigate("browse/$id") },
                         onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
@@ -108,6 +110,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                 if (parentId != null) {
                     ItemBrowserScreen(
                         session = session,
+                        preferences = preferences,
                         parentId = parentId,
                         onOpenFolder = { id -> navController.navigate("browse/$id") },
                         onPlayItem = { id -> navController.navigate("player/$id") },

@@ -57,7 +57,8 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_FONT_COLOR = "font_color"
         private const val KEY_COVER_ART = "show_cover_art"
 
-        const val DEFAULT_ACCENT = 0xFFCCFF00.toInt()
+        // 10% less green than the original #CCFF00.
+        const val DEFAULT_ACCENT = 0xFFCCE600.toInt()
         const val DEFAULT_FONT_COLOR = 0xFF6F7578.toInt()
 
         @Volatile

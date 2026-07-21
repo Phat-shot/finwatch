@@ -8,6 +8,7 @@ import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
 import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
+import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.userApi
@@ -19,6 +20,7 @@ import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.CollectionType
 import org.jellyfin.sdk.model.api.MediaType
+import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
@@ -151,6 +153,14 @@ class JellyfinSession private constructor(context: Context) {
         } catch (e: ApiClientException) {
             emptyList()
         }
+    }
+
+    /** Primary-image URL for [itemId], sized for a small chip thumbnail, or null if not logged in. */
+    fun imageUrl(itemId: UUID): String? {
+        val currentApi = api ?: return null
+        val url = currentApi.imageApi.getItemImageUrl(itemId = itemId, imageType = ImageType.PRIMARY, maxWidth = 120)
+        val separator = if (url.contains("?")) "&" else "?"
+        return "$url$separator${ApiClient.QUERY_ACCESS_TOKEN}=${currentApi.accessToken}"
     }
 
     fun logout() {

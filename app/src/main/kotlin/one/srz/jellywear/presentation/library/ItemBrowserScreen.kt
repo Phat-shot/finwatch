@@ -18,6 +18,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -31,6 +32,7 @@ import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 @Composable
 fun ItemBrowserScreen(
     session: JellyfinSession,
+    preferences: AppPreferences,
     parentId: String,
     onOpenFolder: (String) -> Unit,
     onPlayItem: (String) -> Unit,
@@ -81,6 +83,7 @@ fun ItemBrowserScreen(
                 val id = child.id.toString()
                 ShuffleableChip(
                     text = child.name ?: "?",
+                    imageUrl = if (preferences.showCoverArt) session.imageUrl(child.id) else null,
                     onClick = {
                         if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
                     },

@@ -95,6 +95,9 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.4.0")
     implementation("androidx.wear:wear-input:1.2.0")
 
+    // Cover/album art thumbnails.
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
     // Jellyfin server API client.
     implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
     // jellyfin-core's HTTP client logs via kotlin-logging's SLF4J backend,

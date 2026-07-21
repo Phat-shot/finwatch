@@ -14,7 +14,7 @@ val OnAccent = Color(0xFF000000)
 
 /** Preset accent colors (icon tint) the user can pick from in Settings. */
 val AccentColorPresets = listOf(
-    0xFFCCFF00.toInt() to "Neon yellow-green",
+    0xFFCCE600.toInt() to "Neon yellow-green",
     0xFF00E5FF.toInt() to "Cyan",
     0xFFFF00E5.toInt() to "Magenta",
     0xFFFF9500.toInt() to "Orange",
