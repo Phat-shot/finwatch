@@ -31,6 +31,7 @@
     <string name="settings_font_color">لون الخط</string>
     <string name="settings_language">اللغة</string>
     <string name="settings_transcode">إعادة الترميز</string>
+    <string name="settings_speaker_output">مكبر صوت الساعة</string>
     <string name="settings_logout">تسجيل الخروج</string>
 
     <string name="theme_mode_dark">داكن</string>

@@ -31,6 +31,7 @@
     <string name="settings_font_color">Couleur du texte</string>
     <string name="settings_language">Langue</string>
     <string name="settings_transcode">Transcodage</string>
+    <string name="settings_speaker_output">Haut-parleur de la montre</string>
     <string name="settings_logout">Déconnexion</string>
 
     <string name="theme_mode_dark">Sombre</string>
