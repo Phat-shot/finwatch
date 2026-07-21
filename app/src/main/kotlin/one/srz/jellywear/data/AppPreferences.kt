@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 
+enum class ThemeMode { DARK, LIGHT, SYSTEM }
+
 /**
  * User-configurable appearance/behavior settings, persisted in
  * SharedPreferences and exposed as Compose state so the whole app
@@ -14,7 +16,9 @@ import androidx.core.content.edit
 class AppPreferences private constructor(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    var isDarkMode by mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, true))
+    var themeMode by mutableStateOf(
+        ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME_MODE, ThemeMode.DARK.ordinal)) { ThemeMode.DARK },
+    )
         private set
 
     var accentColorArgb by mutableStateOf(prefs.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT))
@@ -26,13 +30,13 @@ class AppPreferences private constructor(context: Context) {
     var showCoverArt by mutableStateOf(prefs.getBoolean(KEY_COVER_ART, false))
         private set
 
-    // Named update* rather than set* -- a `var isDarkMode ... private set`
-    // property already compiles to a JVM setDarkMode(Z) accessor (same for
-    // showCoverArt), so a same-named function here is a platform signature
-    // clash even though the generated one is private.
-    fun updateDarkMode(value: Boolean) {
-        isDarkMode = value
-        prefs.edit { putBoolean(KEY_DARK_MODE, value) }
+    // Named update* rather than set* -- a `var showCoverArt ... private set`
+    // property already compiles to a JVM setShowCoverArt(Z) accessor, so a
+    // same-named function here is a platform signature clash even though
+    // the generated one is private.
+    fun updateThemeMode(mode: ThemeMode) {
+        themeMode = mode
+        prefs.edit { putInt(KEY_THEME_MODE, mode.ordinal) }
     }
 
     fun setAccentColor(argb: Int) {
@@ -52,7 +56,7 @@ class AppPreferences private constructor(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "app_preferences"
-        private const val KEY_DARK_MODE = "dark_mode"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FONT_COLOR = "font_color"
         private const val KEY_COVER_ART = "show_cover_art"

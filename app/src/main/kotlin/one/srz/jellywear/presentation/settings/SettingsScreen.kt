@@ -22,6 +22,7 @@ import one.srz.jellywear.data.JellyfinSession
 fun SettingsScreen(
     session: JellyfinSession,
     preferences: AppPreferences,
+    onOpenThemeModePicker: () -> Unit,
     onOpenAccentColorPicker: () -> Unit,
     onOpenFontColorPicker: () -> Unit,
     onLoggedOut: () -> Unit,
@@ -57,11 +58,11 @@ fun SettingsScreen(
             )
         }
         item {
-            ToggleChip(
-                label = { Text(text = stringResource(R.string.settings_dark_mode)) },
-                checked = preferences.isDarkMode,
-                toggleControl = { Switch(checked = preferences.isDarkMode) },
-                onCheckedChange = { preferences.updateDarkMode(it) },
+            Chip(
+                onClick = onOpenThemeModePicker,
+                label = { Text(text = stringResource(R.string.settings_theme_mode)) },
+                secondaryLabel = { Text(text = stringResource(preferences.themeMode.labelRes())) },
+                colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

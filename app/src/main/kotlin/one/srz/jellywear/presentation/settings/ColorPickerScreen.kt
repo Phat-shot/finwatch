@@ -62,7 +62,7 @@ fun ColorPickerScreen(
                 Text(text = stringResource(titleRes))
             }
         }
-        items(presets) { (argb, name) ->
+        items(presets) { (argb, nameRes) ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,7 +84,7 @@ fun ColorPickerScreen(
                         .background(Color(argb), CircleShape),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = name)
+                Text(text = stringResource(nameRes))
             }
         }
     }

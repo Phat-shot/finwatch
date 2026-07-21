@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_title">Iniciar sesión en jellywear</string>
+    <string name="login_prompt_server">URL del servidor</string>
+    <string name="login_prompt_username">Usuario</string>
+    <string name="login_prompt_password">Contraseña</string>
+    <string name="login_error_generic">No se pudo iniciar sesión</string>
+    <string name="login_retry_hint">Toca para reintentar</string>
+    <string name="login_quick_connect_hint">Introduce este código en tu teléfono u ordenador, en Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_timeout">Quick Connect ha expirado</string>
+
+    <string name="library_title">Biblioteca</string>
+    <string name="library_loading">Cargando…</string>
+    <string name="library_empty">No se encontraron bibliotecas</string>
+
+    <string name="category_music">Música</string>
+    <string name="category_audio">Audiolibros</string>
+    <string name="category_series">Series</string>
+    <string name="category_movies">Películas</string>
+    <string name="category_favorites">Favoritos</string>
+
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_tile">Ajustes</string>
+    <string name="settings_version">Versión %1$s</string>
+    <string name="settings_server">Servidor: %1$s</string>
+    <string name="settings_account">Cuenta: %1$s</string>
+    <string name="settings_theme_mode">Tema</string>
+    <string name="settings_cover_art">Carátulas</string>
+    <string name="settings_accent_color">Color de acento</string>
+    <string name="settings_font_color">Color de texto</string>
+    <string name="settings_logout">Cerrar sesión</string>
+
+    <string name="theme_mode_dark">Oscuro</string>
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_system">Sistema</string>
+
+    <string name="color_neon_yellow_green">Verde-amarillo neón</string>
+    <string name="color_cyan">Cian</string>
+    <string name="color_magenta">Magenta</string>
+    <string name="color_orange">Naranja</string>
+    <string name="color_red">Rojo</string>
+    <string name="color_blue">Azul</string>
+    <string name="color_anthracite">Antracita</string>
+    <string name="color_light_gray">Gris claro</string>
+    <string name="color_white">Blanco</string>
+    <string name="color_dark_gray">Gris oscuro</string>
+</resources>

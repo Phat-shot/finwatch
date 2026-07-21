@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
@@ -45,6 +46,7 @@ private fun Category.icon(): ImageVector = when (this) {
     Category.AUDIO -> Icons.Filled.Headphones
     Category.SERIES -> Icons.Filled.Tv
     Category.MOVIES -> Icons.Filled.Movie
+    Category.FAVORITES -> Icons.Filled.Favorite
 }
 
 @Composable
@@ -74,20 +76,28 @@ fun HomeScreen(
                 onClick = { onOpenCategory(category) },
                 onLongClick = {
                     scope.launch {
-                        val queue = if (category == Category.AUDIO) {
-                            session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
-                        } else {
-                            val playableKind = when (category) {
-                                Category.MUSIC -> BaseItemKind.AUDIO
-                                Category.SERIES -> BaseItemKind.EPISODE
-                                Category.MOVIES -> BaseItemKind.MOVIE
-                                Category.AUDIO -> error("handled above")
-                            }
-                            session.fetchShuffledQueue(
+                        val queue = when (category) {
+                            Category.AUDIO -> session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
+                            Category.FAVORITES -> session.fetchFavoriteMusic().shuffled().takeIf { it.isNotEmpty() }
+                            Category.MUSIC -> session.fetchShuffledQueue(
                                 GetItemsRequest(
                                     userId = session.userId,
                                     recursive = true,
-                                    includeItemTypes = listOf(playableKind),
+                                    includeItemTypes = listOf(BaseItemKind.AUDIO),
+                                ),
+                            )
+                            Category.SERIES -> session.fetchShuffledQueue(
+                                GetItemsRequest(
+                                    userId = session.userId,
+                                    recursive = true,
+                                    includeItemTypes = listOf(BaseItemKind.EPISODE),
+                                ),
+                            )
+                            Category.MOVIES -> session.fetchShuffledQueue(
+                                GetItemsRequest(
+                                    userId = session.userId,
+                                    recursive = true,
+                                    includeItemTypes = listOf(BaseItemKind.MOVIE),
                                 ),
                             )
                         }

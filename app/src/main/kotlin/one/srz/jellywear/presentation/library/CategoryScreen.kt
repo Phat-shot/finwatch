@@ -54,10 +54,10 @@ fun CategoryScreen(
     LaunchedEffect(category) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            elements = if (category == Category.AUDIO) {
-                session.fetchAudiobooks()
-            } else {
-                api.itemsApi.getItems(
+            elements = when (category) {
+                Category.AUDIO -> session.fetchAudiobooks()
+                Category.FAVORITES -> session.fetchFavoriteMusic()
+                else -> api.itemsApi.getItems(
                     GetItemsRequest(
                         userId = session.userId,
                         recursive = true,

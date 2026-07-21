@@ -18,9 +18,11 @@ import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
 import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.CollectionType
-import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.ImageType
+import org.jellyfin.sdk.model.api.ItemSortBy
+import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
@@ -150,6 +152,24 @@ class JellyfinSession private constructor(context: Context) {
                     ),
                 ).content.items
             }
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
+    }
+
+    /** Favorited songs, server-wide. */
+    suspend fun fetchFavoriteMusic(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            currentApi.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = userId,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.AUDIO),
+                    isFavorite = true,
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                ),
+            ).content.items
         } catch (e: ApiClientException) {
             emptyList()
         }

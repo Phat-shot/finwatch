@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_title">تسجيل الدخول إلى jellywear</string>
+    <string name="login_prompt_server">رابط الخادم</string>
+    <string name="login_prompt_username">اسم المستخدم</string>
+    <string name="login_prompt_password">كلمة المرور</string>
+    <string name="login_error_generic">تعذر تسجيل الدخول</string>
+    <string name="login_retry_hint">اضغط للمحاولة مرة أخرى</string>
+    <string name="login_quick_connect_hint">أدخل هذا الرمز على هاتفك أو حاسوبك، في Jellyfin ← Quick Connect</string>
+    <string name="login_quick_connect_timeout">انتهت مهلة Quick Connect</string>
+
+    <string name="library_title">المكتبة</string>
+    <string name="library_loading">جارٍ التحميل…</string>
+    <string name="library_empty">لم يتم العثور على مكتبات</string>
+
+    <string name="category_music">الموسيقى</string>
+    <string name="category_audio">الكتب الصوتية</string>
+    <string name="category_series">المسلسلات</string>
+    <string name="category_movies">الأفلام</string>
+    <string name="category_favorites">المفضلة</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_tile">الإعدادات</string>
+    <string name="settings_version">الإصدار %1$s</string>
+    <string name="settings_server">الخادم: %1$s</string>
+    <string name="settings_account">الحساب: %1$s</string>
+    <string name="settings_theme_mode">المظهر</string>
+    <string name="settings_cover_art">أغلفة الألبومات</string>
+    <string name="settings_accent_color">لون التمييز</string>
+    <string name="settings_font_color">لون الخط</string>
+    <string name="settings_logout">تسجيل الخروج</string>
+
+    <string name="theme_mode_dark">داكن</string>
+    <string name="theme_mode_light">فاتح</string>
+    <string name="theme_mode_system">النظام</string>
+
+    <string name="color_neon_yellow_green">أخضر-أصفر نيون</string>
+    <string name="color_cyan">سماوي</string>
+    <string name="color_magenta">أرجواني</string>
+    <string name="color_orange">برتقالي</string>
+    <string name="color_red">أحمر</string>
+    <string name="color_blue">أزرق</string>
+    <string name="color_anthracite">أنثراسيت</string>
+    <string name="color_light_gray">رمادي فاتح</string>
+    <string name="color_white">أبيض</string>
+    <string name="color_dark_gray">رمادي داكن</string>
+</resources>
