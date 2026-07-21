@@ -3,11 +3,14 @@ package one.srz.jellywear.presentation.player
 import android.content.ComponentName
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +64,8 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
     var positionMs by remember(itemId) { mutableStateOf(0L) }
     var durationMs by remember(itemId) { mutableStateOf(0L) }
     var currentIndex by remember(itemId) { mutableStateOf(0) }
+    var hasNext by remember(itemId) { mutableStateOf(false) }
+    var hasPrevious by remember(itemId) { mutableStateOf(false) }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession.
@@ -124,6 +129,8 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
             positionMs = ctrl.currentPosition.coerceAtLeast(0L)
             durationMs = ctrl.duration.coerceAtLeast(0L)
             currentIndex = ctrl.currentMediaItemIndex
+            hasNext = ctrl.hasNextMediaItem()
+            hasPrevious = ctrl.hasPreviousMediaItem()
             delay(500)
         }
     }
@@ -168,14 +175,31 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
-                    Button(
-                        onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
-                        colors = ButtonDefaults.iconButtonColors(),
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Button(
+                            onClick = { controller?.seekToPrevious() },
+                            enabled = hasPrevious,
+                            colors = ButtonDefaults.iconButtonColors(),
+                        ) {
+                            Icon(imageVector = Icons.Filled.SkipPrevious, contentDescription = null)
+                        }
+                        Button(
+                            onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
+                            colors = ButtonDefaults.iconButtonColors(),
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                contentDescription = null,
+                            )
+                        }
+                        Button(
+                            onClick = { controller?.seekToNext() },
+                            enabled = hasNext,
+                            colors = ButtonDefaults.iconButtonColors(),
+                        ) {
+                            Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
+                        }
                     }
                     if (durationMs > 0) {
                         Text(

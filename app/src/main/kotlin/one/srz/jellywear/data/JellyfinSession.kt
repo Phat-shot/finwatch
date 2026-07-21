@@ -43,6 +43,10 @@ class JellyfinSession private constructor(context: Context) {
 
     val userId: UUID? get() = prefs.getString(KEY_USER_ID, null)?.toUUIDOrNull()
 
+    val username: String? get() = prefs.getString(KEY_USERNAME, null)
+
+    val serverUrl: String? get() = prefs.getString(KEY_SERVER_URL, null)
+
     init {
         restoreSession()
     }
@@ -110,6 +114,7 @@ class JellyfinSession private constructor(context: Context) {
             putString(KEY_SERVER_URL, client.baseUrl)
             putString(KEY_ACCESS_TOKEN, SecureTokenStore.encrypt(token))
             putString(KEY_USER_ID, authResult.user?.id?.toString())
+            putString(KEY_USERNAME, authResult.user?.name)
         }
         return Result.success(Unit)
     }
@@ -158,6 +163,7 @@ class JellyfinSession private constructor(context: Context) {
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_USER_ID = "user_id"
+        private const val KEY_USERNAME = "username"
 
         @Volatile
         private var instance: JellyfinSession? = null

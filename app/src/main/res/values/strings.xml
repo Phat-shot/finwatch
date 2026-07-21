@@ -19,4 +19,15 @@
     <string name="category_audio">Audio</string>
     <string name="category_series">Series</string>
     <string name="category_movies">Movies</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_tile">Settings</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_server">Server: %1$s</string>
+    <string name="settings_account">Account: %1$s</string>
+    <string name="settings_dark_mode">Dark mode</string>
+    <string name="settings_cover_art">Cover art</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_font_color">Font color</string>
+    <string name="settings_logout">Log out</string>
 </resources>

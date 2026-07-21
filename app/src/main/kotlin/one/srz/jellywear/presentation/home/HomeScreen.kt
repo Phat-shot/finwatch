@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +52,7 @@ fun HomeScreen(
     session: JellyfinSession,
     onOpenCategory: (Category) -> Unit,
     onShufflePlay: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
@@ -95,6 +97,14 @@ fun HomeScreen(
                         }
                     }
                 },
+            )
+        }
+        item {
+            CategoryIconTile(
+                icon = Icons.Filled.Settings,
+                label = stringResource(R.string.settings_tile),
+                onClick = onOpenSettings,
+                onLongClick = { },
             )
         }
     }
