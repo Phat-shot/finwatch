@@ -1,7 +1,12 @@
 package one.srz.jellywear.playback
 
+import android.app.KeyguardManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -14,6 +19,23 @@ import one.srz.jellywear.presentation.MainActivity
  */
 class PlaybackService : MediaSessionService() {
     private lateinit var mediaSession: MediaSession
+
+    // Background playback is the point of this service for normal
+    // listening (screen off/ambient while music keeps going). But if the
+    // device actually locks -- the user has a lock configured and it just
+    // engaged, not just an idle timeout -- assume they're done and stop,
+    // freeing the wake lock/foreground service/decoder instead of
+    // draining the battery unattended.
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(receiverContext: Context, intent: Intent) {
+            if (intent.action != Intent.ACTION_SCREEN_OFF) return
+            val keyguardManager = receiverContext.getSystemService(KEYGUARD_SERVICE) as? KeyguardManager
+            if (keyguardManager?.isKeyguardLocked == true) {
+                mediaSession.player.stop()
+                stopSelf()
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -30,11 +52,19 @@ class PlaybackService : MediaSessionService() {
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(sessionActivity)
             .build()
+
+        ContextCompat.registerReceiver(
+            this,
+            screenOffReceiver,
+            IntentFilter(Intent.ACTION_SCREEN_OFF),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
     override fun onDestroy() {
+        unregisterReceiver(screenOffReceiver)
         mediaSession.run {
             player.release()
             release()

@@ -10,7 +10,9 @@ import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ListHeader
+import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ToggleChip
 import one.srz.jellywear.BuildConfig
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
@@ -79,6 +81,15 @@ fun SettingsScreen(
                 label = { Text(text = stringResource(R.string.settings_language)) },
                 secondaryLabel = { Text(text = languageDisplayName(preferences.languageTag)) },
                 colors = ChipDefaults.primaryChipColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            ToggleChip(
+                label = { Text(text = stringResource(R.string.settings_transcode)) },
+                checked = preferences.transcodeEnabled,
+                toggleControl = { Switch(checked = preferences.transcodeEnabled) },
+                onCheckedChange = { preferences.updateTranscodeEnabled(it) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

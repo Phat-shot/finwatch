@@ -38,6 +38,10 @@ class AppPreferences private constructor(context: Context) {
     var languageTag by mutableStateOf(prefs.getString(KEY_LANGUAGE_TAG, null))
         private set
 
+    /** Server-side transcode to a watch-appropriate bitrate instead of direct play. */
+    var transcodeEnabled by mutableStateOf(prefs.getBoolean(KEY_TRANSCODE, false))
+        private set
+
     // Named update* rather than set* -- a `var themeMode ... private set`
     // property already compiles to a JVM setThemeMode(...) accessor, so a
     // same-named function here is a platform signature clash even though
@@ -67,6 +71,11 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putString(KEY_LANGUAGE_TAG, tag) }
     }
 
+    fun updateTranscodeEnabled(value: Boolean) {
+        transcodeEnabled = value
+        prefs.edit { putBoolean(KEY_TRANSCODE, value) }
+    }
+
     companion object {
         private const val PREFS_NAME = "app_preferences"
         private const val KEY_THEME_MODE = "theme_mode"
@@ -74,6 +83,14 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_FONT_COLOR = "font_color"
         private const val KEY_COVER_ART_MODE = "cover_art_mode"
         private const val KEY_LANGUAGE_TAG = "language_tag"
+        private const val KEY_TRANSCODE = "transcode_enabled"
+
+        // Sized for a watch screen and typically Bluetooth-tethered
+        // bandwidth: well past the point of visible improvement at this
+        // display size, comfortably below what most phone-tethered
+        // connections struggle with.
+        const val TRANSCODE_VIDEO_BITRATE = 1_500_000
+        const val TRANSCODE_AUDIO_BITRATE = 128_000
 
         // 10% less green than the original #CCFF00.
         const val DEFAULT_ACCENT = 0xFFCCE600.toInt()
