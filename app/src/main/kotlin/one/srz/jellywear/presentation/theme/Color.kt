@@ -11,8 +11,7 @@ val Background = Color(0xFF000000)
 // stays legible on top of it (neon is reserved for icon glyphs).
 val Surface = Color(0xFF161616)
 
-// Anthracite text -- deliberately dark/muted against the black background;
-// nudged a bit lighter than true anthracite (~#2B2E30) so it stays legible
-// at Wear OS text sizes.
-val TextAnthracite = Color(0xFF4A4E50)
+// Anthracite text -- 50% brighter than the first pass (#4A4E50), which read
+// too dark against pure black.
+val TextAnthracite = Color(0xFF6F7578)
 val OnAccent = Color(0xFF000000)

@@ -11,11 +11,14 @@ import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.userApi
+import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
 import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.CollectionType
+import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
@@ -118,6 +121,31 @@ class JellyfinSession private constructor(context: Context) {
             ?.shuffled()
     } catch (e: ApiClientException) {
         null
+    }
+
+    /**
+     * Audiobooks aren't reliably tagged as BaseItemKind.AUDIO_BOOK on every
+     * server, so instead of filtering by kind, this finds the user's
+     * "Books" library views and lists every audio item underneath them.
+     */
+    suspend fun fetchAudiobooks(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            val bookLibraries = currentApi.userViewsApi.getUserViews(userId = userId).content.items
+                .filter { it.collectionType == CollectionType.BOOKS }
+            bookLibraries.flatMap { library ->
+                currentApi.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = userId,
+                        parentId = library.id,
+                        recursive = true,
+                        mediaTypes = listOf(MediaType.AUDIO),
+                    ),
+                ).content.items
+            }
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
     }
 
     fun logout() {

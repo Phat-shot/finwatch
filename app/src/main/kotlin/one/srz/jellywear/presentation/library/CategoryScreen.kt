@@ -52,14 +52,18 @@ fun CategoryScreen(
     LaunchedEffect(category) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            elements = api.itemsApi.getItems(
-                GetItemsRequest(
-                    userId = session.userId,
-                    recursive = true,
-                    includeItemTypes = listOf(category.itemKind),
-                    sortBy = listOf(ItemSortBy.SORT_NAME),
-                ),
-            ).content.items
+            elements = if (category == Category.AUDIO) {
+                session.fetchAudiobooks()
+            } else {
+                api.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        recursive = true,
+                        includeItemTypes = listOf(category.itemKind),
+                        sortBy = listOf(ItemSortBy.SORT_NAME),
+                    ),
+                ).content.items
+            }
         } catch (e: ApiClientException) {
             error = e.message
         }

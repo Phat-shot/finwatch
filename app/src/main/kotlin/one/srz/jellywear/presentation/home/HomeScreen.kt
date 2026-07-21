@@ -72,19 +72,23 @@ fun HomeScreen(
                 onClick = { onOpenCategory(category) },
                 onLongClick = {
                     scope.launch {
-                        val playableKind = when (category) {
-                            Category.MUSIC -> BaseItemKind.AUDIO
-                            Category.SERIES -> BaseItemKind.EPISODE
-                            Category.AUDIO -> BaseItemKind.AUDIO_BOOK
-                            Category.MOVIES -> BaseItemKind.MOVIE
+                        val queue = if (category == Category.AUDIO) {
+                            session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
+                        } else {
+                            val playableKind = when (category) {
+                                Category.MUSIC -> BaseItemKind.AUDIO
+                                Category.SERIES -> BaseItemKind.EPISODE
+                                Category.MOVIES -> BaseItemKind.MOVIE
+                                Category.AUDIO -> error("handled above")
+                            }
+                            session.fetchShuffledQueue(
+                                GetItemsRequest(
+                                    userId = session.userId,
+                                    recursive = true,
+                                    includeItemTypes = listOf(playableKind),
+                                ),
+                            )
                         }
-                        val queue = session.fetchShuffledQueue(
-                            GetItemsRequest(
-                                userId = session.userId,
-                                recursive = true,
-                                includeItemTypes = listOf(playableKind),
-                            ),
-                        )
                         if (queue != null) {
                             PlaybackQueue.items = queue
                             onShufflePlay()

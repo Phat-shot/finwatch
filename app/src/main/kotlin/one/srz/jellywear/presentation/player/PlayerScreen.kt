@@ -145,9 +145,14 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
                         factory = { ctx ->
                             PlayerView(ctx).apply {
                                 useController = false
-                                // Fill the round screen's width -- corners get
-                                // cropped, but the watch bezel hides those anyway.
-                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                // Fill the round screen's width only (not
+                                // height) -- ZOOM fills whichever dimension
+                                // needs less scaling, which for wide video on
+                                // a square/round screen means it fills height
+                                // and crops the sides. FIXED_WIDTH fills the
+                                // width and crops/letterboxes top and bottom
+                                // instead, which is what we want here.
+                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
                             }
                         },
                         update = { view -> view.player = controller },
