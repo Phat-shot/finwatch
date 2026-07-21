@@ -18,6 +18,19 @@ android {
         versionName = "1.${versionCode}"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Fixed, committed keystore instead of the machine-local default
+            // (~/.android/debug.keystore) -- otherwise every CI run signs
+            // with a different key and Android refuses to install an update
+            // over a previous build ("signatures do not match").
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     flavorDimensions += "channel"
     productFlavors {
         create("prod") {
