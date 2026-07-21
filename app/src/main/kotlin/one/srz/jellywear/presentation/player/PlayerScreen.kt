@@ -2,6 +2,7 @@ package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,8 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +62,7 @@ import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.serializer.toUUID
 
 const val PLAYER_QUEUE_ID = "queue"
+private const val CONTROLS_AUTO_HIDE_MS = 3000L
 
 @Composable
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
@@ -72,6 +76,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     var currentIndex by remember(itemId) { mutableStateOf(0) }
     var hasNext by remember(itemId) { mutableStateOf(false) }
     var hasPrevious by remember(itemId) { mutableStateOf(false) }
+    // Whether *this* visit to the player has already handed its queue to
+    // the controller. The underlying ExoPlayer lives in PlaybackService for
+    // the whole process, so checking its mediaItemCount to decide "is this
+    // fresh" doesn't work -- it's never 0 again once anything has ever
+    // played, silently preventing every later item (audio or video) from
+    // starting.
+    var hasSetMediaItems by remember(itemId) { mutableStateOf(false) }
+    var controlsVisible by remember(itemId) { mutableStateOf(true) }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession.
@@ -106,11 +118,12 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     LaunchedEffect(queueItems, controller) {
         val api = session.api
         val ctrl = controller
-        if (api != null && ctrl != null && queueItems.isNotEmpty() && ctrl.mediaItemCount == 0) {
+        if (api != null && ctrl != null && queueItems.isNotEmpty() && !hasSetMediaItems) {
             val mediaItems = queueItems.map { MediaItem.fromUri(buildStreamUrl(api, it)) }
             ctrl.setMediaItems(mediaItems)
             ctrl.prepare()
             ctrl.playWhenReady = true
+            hasSetMediaItems = true
         }
     }
 
@@ -142,8 +155,39 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     }
 
     val currentItem = queueItems.getOrNull(currentIndex)
+    val isVideo = currentItem?.mediaType == MediaType.VIDEO
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    // Keep the screen on for video (there's nothing to look at otherwise);
+    // let the normal timeout apply for audio.
+    val view = LocalView.current
+    DisposableEffect(isVideo) {
+        view.keepScreenOn = isVideo
+        onDispose { view.keepScreenOn = false }
+    }
+
+    // Auto-hide video controls after a few seconds; tapping the video
+    // toggles them back. Audio controls always stay visible.
+    LaunchedEffect(controlsVisible, isVideo) {
+        if (isVideo && controlsVisible) {
+            delay(CONTROLS_AUTO_HIDE_MS)
+            controlsVisible = false
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(
+                if (isVideo) {
+                    Modifier.pointerInput(itemId) {
+                        detectTapGestures { controlsVisible = !controlsVisible }
+                    }
+                } else {
+                    Modifier
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
         when {
             error != null -> Text(
                 text = error ?: stringResource(R.string.login_error_generic),
@@ -152,7 +196,6 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             )
             queueItems.isEmpty() -> CircularProgressIndicator()
             else -> {
-                val isVideo = currentItem?.mediaType == MediaType.VIDEO
                 if (!isVideo &&
                     preferences.coverArtMode == CoverArtMode.FOLDERS_AND_PLAYBACK &&
                     currentItem != null
@@ -184,51 +227,53 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
                             }
                         },
-                        update = { view -> view.player = controller },
+                        update = { playerView -> playerView.player = controller },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (!isVideo) {
-                        Text(
-                            text = currentItem?.name ?: "",
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.title3,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(
-                            onClick = { controller?.seekToPrevious() },
-                            enabled = hasPrevious,
-                            colors = ButtonDefaults.iconButtonColors(),
-                        ) {
-                            Icon(imageVector = Icons.Filled.SkipPrevious, contentDescription = null)
-                        }
-                        Button(
-                            onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
-                            colors = ButtonDefaults.iconButtonColors(),
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = null,
+                if (!isVideo || controlsVisible) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (!isVideo) {
+                            Text(
+                                text = currentItem?.name ?: "",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.title3,
+                                modifier = Modifier.padding(bottom = 8.dp),
                             )
                         }
-                        Button(
-                            onClick = { controller?.seekToNext() },
-                            enabled = hasNext,
-                            colors = ButtonDefaults.iconButtonColors(),
-                        ) {
-                            Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Button(
+                                onClick = { controller?.seekToPrevious() },
+                                enabled = hasPrevious,
+                                colors = ButtonDefaults.iconButtonColors(),
+                            ) {
+                                Icon(imageVector = Icons.Filled.SkipPrevious, contentDescription = null)
+                            }
+                            Button(
+                                onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
+                                colors = ButtonDefaults.iconButtonColors(),
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                            ) {
+                                Icon(
+                                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = null,
+                                )
+                            }
+                            Button(
+                                onClick = { controller?.seekToNext() },
+                                enabled = hasNext,
+                                colors = ButtonDefaults.iconButtonColors(),
+                            ) {
+                                Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
+                            }
                         }
-                    }
-                    if (durationMs > 0) {
-                        Text(
-                            text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
-                            style = MaterialTheme.typography.caption2,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
+                        if (durationMs > 0) {
+                            Text(
+                                text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
+                                style = MaterialTheme.typography.caption2,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                     }
                 }
             }
