@@ -11,6 +11,7 @@ import org.jellyfin.sdk.api.client.extensions.authenticateWithQuickConnect
 import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.quickConnectApi
+import org.jellyfin.sdk.api.client.extensions.systemApi
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.createJellyfin
@@ -62,11 +63,37 @@ class JellyfinSession private constructor(context: Context) {
         api = jellyfin.createApi(baseUrl = serverUrl, accessToken = token)
     }
 
-    /** Builds an unauthenticated client bound to [serverUrl], normalizing a missing scheme to http://. */
-    fun buildClient(serverUrl: String): ApiClient {
+    /**
+     * Builds an unauthenticated client bound to [serverUrl] and verifies it
+     * can actually reach a Jellyfin server. If the user didn't type a
+     * scheme, tries http:// first and falls back to https:// (many
+     * reverse-proxied Jellyfin servers are https-only) before giving up.
+     */
+    suspend fun buildVerifiedClient(serverUrl: String): Result<ApiClient> {
         val trimmed = serverUrl.trim().trimEnd('/')
-        val normalizedUrl = if (trimmed.contains("://")) trimmed else "http://$trimmed"
-        return jellyfin.createApi(baseUrl = normalizedUrl)
+        val hasExplicitScheme = trimmed.contains("://")
+
+        val primaryClient = jellyfin.createApi(baseUrl = if (hasExplicitScheme) trimmed else "http://$trimmed")
+        val primaryError = pingServer(primaryClient)
+        if (primaryError == null) return Result.success(primaryClient)
+
+        if (!hasExplicitScheme) {
+            val fallbackClient = jellyfin.createApi(baseUrl = "https://$trimmed")
+            val fallbackError = pingServer(fallbackClient)
+            if (fallbackError == null) return Result.success(fallbackClient)
+        }
+
+        return Result.failure(primaryError)
+    }
+
+    /** Null on success, the failure otherwise. */
+    private suspend fun pingServer(client: ApiClient): Throwable? = try {
+        client.systemApi.getPublicSystemInfo()
+        null
+    } catch (e: ApiClientException) {
+        e
+    } catch (e: IllegalArgumentException) {
+        e
     }
 
     suspend fun login(client: ApiClient, username: String, password: String): Result<Unit> = try {

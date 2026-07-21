@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
@@ -63,6 +66,11 @@ fun ColorPickerScreen(
             }
         }
         items(presets) { (argb, nameRes) ->
+            val selected = if (target == ColorPickerTarget.ACCENT) {
+                preferences.accentColorArgb == argb
+            } else {
+                preferences.fontColorArgb == argb
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,6 +93,10 @@ fun ColorPickerScreen(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = stringResource(nameRes))
+                if (selected) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(imageVector = Icons.Filled.Check, contentDescription = null)
+                }
             }
         }
     }

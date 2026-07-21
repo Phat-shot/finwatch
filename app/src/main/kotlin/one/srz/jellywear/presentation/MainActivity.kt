@@ -1,6 +1,8 @@
 package one.srz.jellywear.presentation
 
 import android.Manifest
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import java.util.Locale
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.presentation.home.HomeScreen
@@ -23,6 +26,7 @@ import one.srz.jellywear.presentation.player.PlayerScreen
 import one.srz.jellywear.presentation.settings.ColorPickerScreen
 import one.srz.jellywear.presentation.settings.ColorPickerTarget
 import one.srz.jellywear.presentation.settings.CoverArtModeScreen
+import one.srz.jellywear.presentation.settings.LanguageScreen
 import one.srz.jellywear.presentation.settings.SettingsScreen
 import one.srz.jellywear.presentation.settings.ThemeModeScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
@@ -37,10 +41,24 @@ private const val ROUTE_SETTINGS = "settings"
 private const val ROUTE_COLOR_PICKER = "colorpicker/{target}"
 private const val ROUTE_THEME_MODE = "thememode"
 private const val ROUTE_COVER_ART_MODE = "coverartmode"
+private const val ROUTE_LANGUAGE = "language"
 
 class MainActivity : ComponentActivity() {
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    override fun attachBaseContext(newBase: Context) {
+        val languageTag = AppPreferences.getInstance(newBase).languageTag
+        val context = if (languageTag != null) {
+            val locale = Locale.forLanguageTag(languageTag)
+            val configuration = Configuration(newBase.resources.configuration)
+            configuration.setLocale(locale)
+            newBase.createConfigurationContext(configuration)
+        } else {
+            newBase
+        }
+        super.attachBaseContext(context)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,6 +154,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                     onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
                     onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
                     onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
+                    onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
                     onLoggedOut = {
                         navController.navigate(ROUTE_LOGIN) {
                             popUpTo(ROUTE_HOME) { inclusive = true }
@@ -164,6 +183,9 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                     preferences = preferences,
                     onDone = { navController.popBackStack() },
                 )
+            }
+            composable(ROUTE_LANGUAGE) {
+                LanguageScreen(preferences = preferences)
             }
         }
     }

@@ -1,6 +1,8 @@
 package one.srz.jellywear.presentation.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -10,6 +12,7 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
@@ -37,12 +40,18 @@ fun CoverArtModeScreen(preferences: AppPreferences, onDone: () -> Unit) {
             }
         }
         items(CoverArtMode.entries) { mode ->
+            val selected = preferences.coverArtMode == mode
             Chip(
                 onClick = {
                     preferences.updateCoverArtMode(mode)
                     onDone()
                 },
                 label = { Text(text = stringResource(mode.labelRes())) },
+                icon = if (selected) {
+                    { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+                } else {
+                    null
+                },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -34,6 +34,10 @@ class AppPreferences private constructor(context: Context) {
     )
         private set
 
+    /** BCP-47 language tag (e.g. "de"), or null to follow the system language. */
+    var languageTag by mutableStateOf(prefs.getString(KEY_LANGUAGE_TAG, null))
+        private set
+
     // Named update* rather than set* -- a `var themeMode ... private set`
     // property already compiles to a JVM setThemeMode(...) accessor, so a
     // same-named function here is a platform signature clash even though
@@ -58,12 +62,18 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putInt(KEY_COVER_ART_MODE, mode.ordinal) }
     }
 
+    fun updateLanguageTag(tag: String?) {
+        languageTag = tag
+        prefs.edit { putString(KEY_LANGUAGE_TAG, tag) }
+    }
+
     companion object {
         private const val PREFS_NAME = "app_preferences"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FONT_COLOR = "font_color"
         private const val KEY_COVER_ART_MODE = "cover_art_mode"
+        private const val KEY_LANGUAGE_TAG = "language_tag"
 
         // 10% less green than the original #CCFF00.
         const val DEFAULT_ACCENT = 0xFFCCE600.toInt()

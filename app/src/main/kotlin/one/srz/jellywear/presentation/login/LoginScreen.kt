@@ -38,7 +38,7 @@ private const val QUICK_CONNECT_POLL_INTERVAL_MS = 3000L
 private const val QUICK_CONNECT_MAX_ATTEMPTS = 60 // ~3 minutes
 
 private enum class LoginStep {
-    SERVER, CHECKING, QUICK_CONNECT, USERNAME, PASSWORD, CONNECTING, ERROR
+    SERVER, CONNECTING, CHECKING, QUICK_CONNECT, USERNAME, PASSWORD, SIGNING_IN, ERROR
 }
 
 @Composable
@@ -78,8 +78,19 @@ fun LoginScreen(
 
         when (step) {
             LoginStep.SERVER -> {
-                client = session.buildClient(text)
-                step = LoginStep.CHECKING
+                step = LoginStep.CONNECTING
+                scope.launch {
+                    session.buildVerifiedClient(text).fold(
+                        onSuccess = { verifiedClient ->
+                            client = verifiedClient
+                            step = LoginStep.CHECKING
+                        },
+                        onFailure = { error ->
+                            errorMessage = error.message ?: genericError
+                            step = LoginStep.ERROR
+                        },
+                    )
+                }
             }
             LoginStep.USERNAME -> {
                 username = text
@@ -91,7 +102,7 @@ fun LoginScreen(
                     errorMessage = genericError
                     step = LoginStep.ERROR
                 } else {
-                    step = LoginStep.CONNECTING
+                    step = LoginStep.SIGNING_IN
                     scope.launch {
                         session.login(currentClient, username, text).fold(
                             onSuccess = { onLoggedIn() },
@@ -103,7 +114,9 @@ fun LoginScreen(
                     }
                 }
             }
-            LoginStep.CHECKING, LoginStep.QUICK_CONNECT, LoginStep.CONNECTING, LoginStep.ERROR -> Unit
+            LoginStep.CONNECTING, LoginStep.CHECKING, LoginStep.QUICK_CONNECT,
+            LoginStep.SIGNING_IN, LoginStep.ERROR,
+            -> Unit
         }
     }
 
@@ -160,7 +173,7 @@ fun LoginScreen(
                     }
                 }
             }
-            LoginStep.CONNECTING, LoginStep.ERROR -> Unit
+            LoginStep.CONNECTING, LoginStep.SIGNING_IN, LoginStep.ERROR -> Unit
         }
     }
 
@@ -172,7 +185,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (step) {
-            LoginStep.CHECKING, LoginStep.CONNECTING -> CircularProgressIndicator()
+            LoginStep.CONNECTING, LoginStep.CHECKING, LoginStep.SIGNING_IN -> CircularProgressIndicator()
             LoginStep.QUICK_CONNECT -> {
                 Text(
                     text = quickConnectCode ?: "",

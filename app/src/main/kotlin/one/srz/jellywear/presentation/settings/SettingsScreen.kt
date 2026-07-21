@@ -24,6 +24,7 @@ fun SettingsScreen(
     onOpenCoverArtModePicker: () -> Unit,
     onOpenAccentColorPicker: () -> Unit,
     onOpenFontColorPicker: () -> Unit,
+    onOpenLanguagePicker: () -> Unit,
     onLoggedOut: () -> Unit,
 ) {
     val listState = rememberScalingLazyListState()
@@ -37,24 +38,6 @@ fun SettingsScreen(
             ListHeader {
                 Text(text = stringResource(R.string.settings_title))
             }
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_server, session.serverUrl ?: "-"),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_account, session.username ?: "-"),
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
         item {
             Chip(
@@ -92,12 +75,39 @@ fun SettingsScreen(
         }
         item {
             Chip(
+                onClick = onOpenLanguagePicker,
+                label = { Text(text = stringResource(R.string.settings_language)) },
+                secondaryLabel = { Text(text = languageDisplayName(preferences.languageTag)) },
+                colors = ChipDefaults.primaryChipColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Chip(
                 onClick = {
                     session.logout()
                     onLoggedOut()
                 },
                 label = { Text(text = stringResource(R.string.settings_logout)) },
                 colors = ChipDefaults.primaryChipColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Text(
+                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Text(
+                text = stringResource(R.string.settings_server, session.serverUrl ?: "-"),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Text(
+                text = stringResource(R.string.settings_account, session.username ?: "-"),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
