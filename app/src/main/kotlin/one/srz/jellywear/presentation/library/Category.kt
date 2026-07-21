@@ -9,6 +9,7 @@ enum class Category(val route: String, val titleRes: Int, val itemKind: BaseItem
     SERIES("series", R.string.category_series, BaseItemKind.SERIES),
     MOVIES("movies", R.string.category_movies, BaseItemKind.MOVIE),
     FAVORITES("favorites", R.string.category_favorites, BaseItemKind.AUDIO),
+    PLAYLISTS("playlists", R.string.category_playlists, BaseItemKind.PLAYLIST),
     ;
 
     companion object {

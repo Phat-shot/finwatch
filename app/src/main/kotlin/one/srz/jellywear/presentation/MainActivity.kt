@@ -22,6 +22,7 @@ import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
 import one.srz.jellywear.presentation.player.PlayerScreen
 import one.srz.jellywear.presentation.settings.ColorPickerScreen
 import one.srz.jellywear.presentation.settings.ColorPickerTarget
+import one.srz.jellywear.presentation.settings.CoverArtModeScreen
 import one.srz.jellywear.presentation.settings.SettingsScreen
 import one.srz.jellywear.presentation.settings.ThemeModeScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
@@ -35,6 +36,7 @@ private const val ROUTE_PLAYER = "player/{itemId}"
 private const val ROUTE_SETTINGS = "settings"
 private const val ROUTE_COLOR_PICKER = "colorpicker/{target}"
 private const val ROUTE_THEME_MODE = "thememode"
+private const val ROUTE_COVER_ART_MODE = "coverartmode"
 
 class MainActivity : ComponentActivity() {
     private val requestNotificationPermission =
@@ -123,7 +125,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
             composable(ROUTE_PLAYER) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getString("itemId")
                 if (itemId != null) {
-                    PlayerScreen(session = session, itemId = itemId)
+                    PlayerScreen(session = session, preferences = preferences, itemId = itemId)
                 }
             }
             composable(ROUTE_SETTINGS) {
@@ -131,6 +133,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
                     session = session,
                     preferences = preferences,
                     onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
+                    onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
                     onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
                     onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
                     onLoggedOut = {
@@ -152,6 +155,12 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
             }
             composable(ROUTE_THEME_MODE) {
                 ThemeModeScreen(
+                    preferences = preferences,
+                    onDone = { navController.popBackStack() },
+                )
+            }
+            composable(ROUTE_COVER_ART_MODE) {
+                CoverArtModeScreen(
                     preferences = preferences,
                     onDone = { navController.popBackStack() },
                 )

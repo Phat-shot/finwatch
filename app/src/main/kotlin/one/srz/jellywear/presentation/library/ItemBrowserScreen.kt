@@ -19,6 +19,7 @@ import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -83,7 +84,7 @@ fun ItemBrowserScreen(
                 val id = child.id.toString()
                 ShuffleableChip(
                     text = child.name ?: "?",
-                    imageUrl = if (preferences.showCoverArt) session.imageUrl(child.id) else null,
+                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(child.id) else null,
                     onClick = {
                         if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
                     },

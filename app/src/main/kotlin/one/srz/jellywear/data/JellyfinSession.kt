@@ -175,6 +175,32 @@ class JellyfinSession private constructor(context: Context) {
         }
     }
 
+    /** All tracks across every playlist, server-wide (for the Playlists tile's shuffle-all). */
+    suspend fun fetchPlaylistTracks(): List<BaseItemDto> {
+        val currentApi = api ?: return emptyList()
+        return try {
+            val playlists = currentApi.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = userId,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.PLAYLIST),
+                ),
+            ).content.items
+            playlists.flatMap { playlist ->
+                currentApi.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = userId,
+                        parentId = playlist.id,
+                        recursive = true,
+                        mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
+                    ),
+                ).content.items
+            }
+        } catch (e: ApiClientException) {
+            emptyList()
+        }
+    }
+
     /** Primary-image URL for [itemId], sized for a small chip thumbnail, or null if not logged in. */
     fun imageUrl(itemId: UUID): String? {
         val currentApi = api ?: return null

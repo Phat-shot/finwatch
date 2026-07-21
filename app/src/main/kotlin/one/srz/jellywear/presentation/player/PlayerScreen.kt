@@ -1,6 +1,7 @@
 package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -38,8 +41,11 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
@@ -55,7 +61,7 @@ import org.jellyfin.sdk.model.serializer.toUUID
 const val PLAYER_QUEUE_ID = "queue"
 
 @Composable
-fun PlayerScreen(session: JellyfinSession, itemId: String) {
+fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
     var queueItems by remember(itemId) { mutableStateOf<List<BaseItemDto>>(emptyList()) }
     var error by remember(itemId) { mutableStateOf<String?>(null) }
@@ -147,6 +153,22 @@ fun PlayerScreen(session: JellyfinSession, itemId: String) {
             queueItems.isEmpty() -> CircularProgressIndicator()
             else -> {
                 val isVideo = currentItem?.mediaType == MediaType.VIDEO
+                if (!isVideo &&
+                    preferences.coverArtMode == CoverArtMode.FOLDERS_AND_PLAYBACK &&
+                    currentItem != null
+                ) {
+                    AsyncImage(
+                        model = session.imageUrl(currentItem.id),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.55f)),
+                    )
+                }
                 if (isVideo) {
                     AndroidView(
                         factory = { ctx ->

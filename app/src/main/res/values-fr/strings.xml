@@ -18,6 +18,7 @@
     <string name="category_series">Séries</string>
     <string name="category_movies">Films</string>
     <string name="category_favorites">Favoris</string>
+    <string name="category_playlists">Playlists</string>
 
     <string name="settings_title">Paramètres</string>
     <string name="settings_tile">Paramètres</string>
@@ -33,6 +34,10 @@
     <string name="theme_mode_dark">Sombre</string>
     <string name="theme_mode_light">Clair</string>
     <string name="theme_mode_system">Système</string>
+
+    <string name="cover_art_mode_off">Désactivé</string>
+    <string name="cover_art_mode_folders">Dossiers</string>
+    <string name="cover_art_mode_folders_and_playback">Dossiers + lecture</string>
 
     <string name="color_neon_yellow_green">Vert-jaune néon</string>
     <string name="color_cyan">Cyan</string>

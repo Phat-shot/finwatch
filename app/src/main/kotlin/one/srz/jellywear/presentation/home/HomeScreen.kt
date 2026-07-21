@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ private fun Category.icon(): ImageVector = when (this) {
     Category.SERIES -> Icons.Filled.Tv
     Category.MOVIES -> Icons.Filled.Movie
     Category.FAVORITES -> Icons.Filled.Favorite
+    Category.PLAYLISTS -> Icons.Filled.QueueMusic
 }
 
 @Composable
@@ -79,6 +81,7 @@ fun HomeScreen(
                         val queue = when (category) {
                             Category.AUDIO -> session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
                             Category.FAVORITES -> session.fetchFavoriteMusic().shuffled().takeIf { it.isNotEmpty() }
+                            Category.PLAYLISTS -> session.fetchPlaylistTracks().shuffled().takeIf { it.isNotEmpty() }
                             Category.MUSIC -> session.fetchShuffledQueue(
                                 GetItemsRequest(
                                     userId = session.userId,

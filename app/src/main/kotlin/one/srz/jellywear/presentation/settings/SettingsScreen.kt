@@ -10,9 +10,7 @@ import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ListHeader
-import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.ToggleChip
 import one.srz.jellywear.BuildConfig
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
@@ -23,6 +21,7 @@ fun SettingsScreen(
     session: JellyfinSession,
     preferences: AppPreferences,
     onOpenThemeModePicker: () -> Unit,
+    onOpenCoverArtModePicker: () -> Unit,
     onOpenAccentColorPicker: () -> Unit,
     onOpenFontColorPicker: () -> Unit,
     onLoggedOut: () -> Unit,
@@ -67,11 +66,11 @@ fun SettingsScreen(
             )
         }
         item {
-            ToggleChip(
+            Chip(
+                onClick = onOpenCoverArtModePicker,
                 label = { Text(text = stringResource(R.string.settings_cover_art)) },
-                checked = preferences.showCoverArt,
-                toggleControl = { Switch(checked = preferences.showCoverArt) },
-                onCheckedChange = { preferences.updateShowCoverArt(it) },
+                secondaryLabel = { Text(text = stringResource(preferences.coverArtMode.labelRes())) },
+                colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

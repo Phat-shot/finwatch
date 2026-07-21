@@ -19,6 +19,7 @@ import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
@@ -95,7 +96,7 @@ fun CategoryScreen(
                 val id = element.id.toString()
                 ShuffleableChip(
                     text = element.name ?: "?",
-                    imageUrl = if (preferences.showCoverArt) session.imageUrl(element.id) else null,
+                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(element.id) else null,
                     onClick = {
                         when {
                             category == Category.MUSIC -> onOpenArtist(id)

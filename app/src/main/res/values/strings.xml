@@ -20,6 +20,7 @@
     <string name="category_series">Series</string>
     <string name="category_movies">Movies</string>
     <string name="category_favorites">Favorites</string>
+    <string name="category_playlists">Playlists</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_tile">Settings</string>
@@ -35,6 +36,10 @@
     <string name="theme_mode_dark">Dark</string>
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_system">System</string>
+
+    <string name="cover_art_mode_off">Off</string>
+    <string name="cover_art_mode_folders">Folders</string>
+    <string name="cover_art_mode_folders_and_playback">Folders + playback</string>
 
     <string name="color_neon_yellow_green">Neon yellow-green</string>
     <string name="color_cyan">Cyan</string>

@@ -8,6 +8,8 @@ import androidx.core.content.edit
 
 enum class ThemeMode { DARK, LIGHT, SYSTEM }
 
+enum class CoverArtMode { OFF, FOLDERS, FOLDERS_AND_PLAYBACK }
+
 /**
  * User-configurable appearance/behavior settings, persisted in
  * SharedPreferences and exposed as Compose state so the whole app
@@ -27,11 +29,13 @@ class AppPreferences private constructor(context: Context) {
     var fontColorArgb by mutableStateOf(prefs.getInt(KEY_FONT_COLOR, DEFAULT_FONT_COLOR))
         private set
 
-    var showCoverArt by mutableStateOf(prefs.getBoolean(KEY_COVER_ART, false))
+    var coverArtMode by mutableStateOf(
+        CoverArtMode.entries.getOrElse(prefs.getInt(KEY_COVER_ART_MODE, CoverArtMode.OFF.ordinal)) { CoverArtMode.OFF },
+    )
         private set
 
-    // Named update* rather than set* -- a `var showCoverArt ... private set`
-    // property already compiles to a JVM setShowCoverArt(Z) accessor, so a
+    // Named update* rather than set* -- a `var themeMode ... private set`
+    // property already compiles to a JVM setThemeMode(...) accessor, so a
     // same-named function here is a platform signature clash even though
     // the generated one is private.
     fun updateThemeMode(mode: ThemeMode) {
@@ -49,9 +53,9 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putInt(KEY_FONT_COLOR, argb) }
     }
 
-    fun updateShowCoverArt(value: Boolean) {
-        showCoverArt = value
-        prefs.edit { putBoolean(KEY_COVER_ART, value) }
+    fun updateCoverArtMode(mode: CoverArtMode) {
+        coverArtMode = mode
+        prefs.edit { putInt(KEY_COVER_ART_MODE, mode.ordinal) }
     }
 
     companion object {
@@ -59,7 +63,7 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FONT_COLOR = "font_color"
-        private const val KEY_COVER_ART = "show_cover_art"
+        private const val KEY_COVER_ART_MODE = "cover_art_mode"
 
         // 10% less green than the original #CCFF00.
         const val DEFAULT_ACCENT = 0xFFCCE600.toInt()
