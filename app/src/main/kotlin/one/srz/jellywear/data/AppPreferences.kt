@@ -26,7 +26,11 @@ class AppPreferences private constructor(context: Context) {
     var showCoverArt by mutableStateOf(prefs.getBoolean(KEY_COVER_ART, false))
         private set
 
-    fun setDarkMode(value: Boolean) {
+    // Named update* rather than set* -- a `var isDarkMode ... private set`
+    // property already compiles to a JVM setDarkMode(Z) accessor (same for
+    // showCoverArt), so a same-named function here is a platform signature
+    // clash even though the generated one is private.
+    fun updateDarkMode(value: Boolean) {
         isDarkMode = value
         prefs.edit { putBoolean(KEY_DARK_MODE, value) }
     }
@@ -41,7 +45,7 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putInt(KEY_FONT_COLOR, argb) }
     }
 
-    fun setShowCoverArt(value: Boolean) {
+    fun updateShowCoverArt(value: Boolean) {
         showCoverArt = value
         prefs.edit { putBoolean(KEY_COVER_ART, value) }
     }

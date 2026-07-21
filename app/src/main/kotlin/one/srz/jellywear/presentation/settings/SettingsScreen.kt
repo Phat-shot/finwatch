@@ -61,7 +61,7 @@ fun SettingsScreen(
                 label = { Text(text = stringResource(R.string.settings_dark_mode)) },
                 checked = preferences.isDarkMode,
                 toggleControl = { Switch(checked = preferences.isDarkMode) },
-                onCheckedChange = { preferences.setDarkMode(it) },
+                onCheckedChange = { preferences.updateDarkMode(it) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -70,7 +70,7 @@ fun SettingsScreen(
                 label = { Text(text = stringResource(R.string.settings_cover_art)) },
                 checked = preferences.showCoverArt,
                 toggleControl = { Switch(checked = preferences.showCoverArt) },
-                onCheckedChange = { preferences.setShowCoverArt(it) },
+                onCheckedChange = { preferences.updateShowCoverArt(it) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
