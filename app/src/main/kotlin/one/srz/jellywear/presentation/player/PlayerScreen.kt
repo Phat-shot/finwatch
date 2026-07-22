@@ -7,8 +7,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -23,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -174,10 +179,15 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     val isVideo = currentItem?.mediaType == MediaType.VIDEO
 
     // Keep the screen on for video (there's nothing to look at otherwise);
-    // let the normal timeout apply for audio.
+    // let the normal timeout apply for audio. Also keep it on while the
+    // item's type is still unknown (before the first fetch resolves) --
+    // otherwise a slow network response lets the watch's short default
+    // timeout turn the screen off mid-load, which can tear down the
+    // video surface before ExoPlayer ever gets to start playback.
     val view = LocalView.current
-    DisposableEffect(isVideo) {
-        view.keepScreenOn = isVideo
+    val keepScreenOn = currentItem == null || isVideo
+    DisposableEffect(keepScreenOn) {
+        view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
     }
 
@@ -257,7 +267,10 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     )
                 }
                 if (!isVideo || controlsVisible) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
                         if (!isVideo) {
                             Text(
                                 text = currentItem?.name ?: "",
@@ -293,6 +306,24 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                             }
                         }
                         if (durationMs > 0) {
+                            val progress = (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 28.dp)
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.25f)),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(progress)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(MaterialTheme.colors.primary),
+                                )
+                            }
                             Text(
                                 text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
                                 style = MaterialTheme.typography.caption2,

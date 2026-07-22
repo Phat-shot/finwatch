@@ -1,6 +1,7 @@
 package one.srz.jellywear.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import androidx.compose.runtime.getValue
@@ -8,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.core.content.getSystemService
+import one.srz.jellywear.presentation.library.Category
 
 enum class ThemeMode { DARK, LIGHT, SYSTEM }
 
@@ -49,6 +51,10 @@ class AppPreferences private constructor(context: Context) {
     var speakerOutputEnabled by mutableStateOf(prefs.getBoolean(KEY_SPEAKER_OUTPUT, false))
         private set
 
+    /** Which category tiles show up on the compact launcher (Settings > Libraries). All shown by default. */
+    var visibleCategories by mutableStateOf(loadVisibleCategories(prefs))
+        private set
+
     // Named update* rather than set* -- a `var themeMode ... private set`
     // property already compiles to a JVM setThemeMode(...) accessor, so a
     // same-named function here is a platform signature clash even though
@@ -88,6 +94,13 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putBoolean(KEY_SPEAKER_OUTPUT, value) }
     }
 
+    fun isCategoryVisible(category: Category): Boolean = category in visibleCategories
+
+    fun updateCategoryVisibility(category: Category, visible: Boolean) {
+        visibleCategories = if (visible) visibleCategories + category else visibleCategories - category
+        prefs.edit { putStringSet(KEY_VISIBLE_CATEGORIES, visibleCategories.map { it.route }.toSet()) }
+    }
+
     companion object {
         // Exposed so PlaybackService can listen for changes to this file
         // directly (SharedPreferences.OnSharedPreferenceChangeListener)
@@ -102,6 +115,7 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_COVER_ART_MODE = "cover_art_mode"
         private const val KEY_LANGUAGE_TAG = "language_tag"
         private const val KEY_TRANSCODE = "transcode_enabled"
+        private const val KEY_VISIBLE_CATEGORIES = "visible_categories"
 
         // Sized for a watch screen and typically Bluetooth-tethered
         // bandwidth: well past the point of visible improvement at this
@@ -130,5 +144,15 @@ class AppPreferences private constructor(context: Context) {
         }
 
         fun hasBuiltInSpeaker(context: Context): Boolean = findBuiltInSpeaker(context) != null
+
+        // SharedPreferences.getStringSet's returned set must not be held onto/mutated
+        // directly (the framework may reuse or mutate it internally) -- mapping it into
+        // a fresh Set<Category> up front avoids that aliasing bug and drops any
+        // now-unknown routes.
+        private fun loadVisibleCategories(prefs: SharedPreferences): Set<Category> {
+            val storedRoutes = prefs.getStringSet(KEY_VISIBLE_CATEGORIES, null)
+                ?: return Category.entries.toSet()
+            return storedRoutes.mapNotNull(Category::fromRoute).toSet()
+        }
     }
 }
