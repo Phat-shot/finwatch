@@ -25,6 +25,9 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_server">Serveur : %1$s</string>
     <string name="settings_account">Compte : %1$s</string>
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_playback">Lecture</string>
+    <string name="settings_libraries">Bibliothèques</string>
     <string name="settings_theme_mode">Thème</string>
     <string name="settings_cover_art">Pochettes</string>
     <string name="settings_accent_color">Couleur d\'accent</string>

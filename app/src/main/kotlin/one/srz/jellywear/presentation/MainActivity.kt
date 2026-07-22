@@ -23,10 +23,13 @@ import one.srz.jellywear.presentation.library.ItemBrowserScreen
 import one.srz.jellywear.presentation.login.LoginScreen
 import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
 import one.srz.jellywear.presentation.player.PlayerScreen
+import one.srz.jellywear.presentation.settings.AppearanceSettingsScreen
 import one.srz.jellywear.presentation.settings.ColorPickerScreen
 import one.srz.jellywear.presentation.settings.ColorPickerTarget
 import one.srz.jellywear.presentation.settings.CoverArtModeScreen
 import one.srz.jellywear.presentation.settings.LanguageScreen
+import one.srz.jellywear.presentation.settings.LibrarySettingsScreen
+import one.srz.jellywear.presentation.settings.PlaybackSettingsScreen
 import one.srz.jellywear.presentation.settings.SettingsScreen
 import one.srz.jellywear.presentation.settings.ThemeModeScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
@@ -38,6 +41,9 @@ private const val ROUTE_ARTIST = "artist/{artistId}"
 private const val ROUTE_BROWSE = "browse/{parentId}"
 private const val ROUTE_PLAYER = "player/{itemId}"
 private const val ROUTE_SETTINGS = "settings"
+private const val ROUTE_SETTINGS_APPEARANCE = "settings/appearance"
+private const val ROUTE_SETTINGS_PLAYBACK = "settings/playback"
+private const val ROUTE_SETTINGS_LIBRARIES = "settings/libraries"
 private const val ROUTE_COLOR_PICKER = "colorpicker/{target}"
 private const val ROUTE_THEME_MODE = "thememode"
 private const val ROUTE_COVER_ART_MODE = "coverartmode"
@@ -96,6 +102,7 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
             composable(ROUTE_HOME) {
                 HomeScreen(
                     session = session,
+                    preferences = preferences,
                     onOpenCategory = { category -> navController.navigate("category/${category.route}") },
                     onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
                     onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
@@ -149,18 +156,31 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
             composable(ROUTE_SETTINGS) {
                 SettingsScreen(
                     session = session,
-                    preferences = preferences,
-                    onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
-                    onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
-                    onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
-                    onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
-                    onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
+                    onOpenAppearance = { navController.navigate(ROUTE_SETTINGS_APPEARANCE) },
+                    onOpenPlayback = { navController.navigate(ROUTE_SETTINGS_PLAYBACK) },
+                    onOpenLibraries = { navController.navigate(ROUTE_SETTINGS_LIBRARIES) },
                     onLoggedOut = {
                         navController.navigate(ROUTE_LOGIN) {
                             popUpTo(ROUTE_HOME) { inclusive = true }
                         }
                     },
                 )
+            }
+            composable(ROUTE_SETTINGS_APPEARANCE) {
+                AppearanceSettingsScreen(
+                    preferences = preferences,
+                    onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
+                    onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
+                    onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
+                    onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
+                    onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
+                )
+            }
+            composable(ROUTE_SETTINGS_PLAYBACK) {
+                PlaybackSettingsScreen(preferences = preferences)
+            }
+            composable(ROUTE_SETTINGS_LIBRARIES) {
+                LibrarySettingsScreen(preferences = preferences)
             }
             composable(ROUTE_COLOR_PICKER) { backStackEntry ->
                 val target = backStackEntry.arguments?.getString("target")?.let(ColorPickerTarget::fromRoute)

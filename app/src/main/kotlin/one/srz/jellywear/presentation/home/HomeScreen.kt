@@ -3,14 +3,12 @@ package one.srz.jellywear.presentation.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Headphones
@@ -23,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,11 +35,15 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.presentation.library.Category
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
+
+private const val ICON_TILE_SIZE_DP = 52
+private const val ICON_SIZE_DP = 26
 
 private fun Category.icon(): ImageVector = when (this) {
     Category.MUSIC -> Icons.Filled.MusicNote
@@ -51,15 +54,57 @@ private fun Category.icon(): ImageVector = when (this) {
     Category.PLAYLISTS -> Icons.Filled.QueueMusic
 }
 
+/**
+ * Compact icon-grid launcher: the visible category tiles (configurable in
+ * Settings > Libraries) plus Settings, two per row, no text labels -- meant
+ * to be scannable/tappable at a glance rather than a long scrolling list.
+ */
 @Composable
 fun HomeScreen(
     session: JellyfinSession,
+    preferences: AppPreferences,
     onOpenCategory: (Category) -> Unit,
     onShufflePlay: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
+    val visibleCategories = Category.entries.filter { preferences.isCategoryVisible(it) }
+
+    fun shufflePlay(category: Category) {
+        scope.launch {
+            val queue = when (category) {
+                Category.AUDIO -> session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
+                Category.FAVORITES -> session.fetchFavoriteMusic().shuffled().takeIf { it.isNotEmpty() }
+                Category.PLAYLISTS -> session.fetchPlaylistTracks().shuffled().takeIf { it.isNotEmpty() }
+                Category.MUSIC -> session.fetchShuffledQueue(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        recursive = true,
+                        includeItemTypes = listOf(BaseItemKind.AUDIO),
+                    ),
+                )
+                Category.SERIES -> session.fetchShuffledQueue(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        recursive = true,
+                        includeItemTypes = listOf(BaseItemKind.EPISODE),
+                    ),
+                )
+                Category.MOVIES -> session.fetchShuffledQueue(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        recursive = true,
+                        includeItemTypes = listOf(BaseItemKind.MOVIE),
+                    ),
+                )
+            }
+            if (queue != null) {
+                PlaybackQueue.items = queue
+                onShufflePlay()
+            }
+        }
+    }
 
     ScalingLazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -71,86 +116,58 @@ fun HomeScreen(
                 Text(text = stringResource(R.string.app_name))
             }
         }
-        items(Category.entries) { category ->
-            CategoryIconTile(
-                icon = category.icon(),
-                label = stringResource(category.titleRes),
-                onClick = { onOpenCategory(category) },
-                onLongClick = {
-                    scope.launch {
-                        val queue = when (category) {
-                            Category.AUDIO -> session.fetchAudiobooks().shuffled().takeIf { it.isNotEmpty() }
-                            Category.FAVORITES -> session.fetchFavoriteMusic().shuffled().takeIf { it.isNotEmpty() }
-                            Category.PLAYLISTS -> session.fetchPlaylistTracks().shuffled().takeIf { it.isNotEmpty() }
-                            Category.MUSIC -> session.fetchShuffledQueue(
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    recursive = true,
-                                    includeItemTypes = listOf(BaseItemKind.AUDIO),
-                                ),
-                            )
-                            Category.SERIES -> session.fetchShuffledQueue(
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    recursive = true,
-                                    includeItemTypes = listOf(BaseItemKind.EPISODE),
-                                ),
-                            )
-                            Category.MOVIES -> session.fetchShuffledQueue(
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    recursive = true,
-                                    includeItemTypes = listOf(BaseItemKind.MOVIE),
-                                ),
-                            )
-                        }
-                        if (queue != null) {
-                            PlaybackQueue.items = queue
-                            onShufflePlay()
-                        }
-                    }
-                },
-            )
+        items(visibleCategories.chunked(2)) { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                row.forEach { category ->
+                    CompactIconTile(
+                        icon = category.icon(),
+                        contentDescription = stringResource(category.titleRes),
+                        onClick = { onOpenCategory(category) },
+                        onLongClick = { shufflePlay(category) },
+                    )
+                }
+            }
         }
         item {
-            CategoryIconTile(
-                icon = Icons.Filled.Settings,
-                label = stringResource(R.string.settings_tile),
-                onClick = onOpenSettings,
-                onLongClick = { },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                CompactIconTile(
+                    icon = Icons.Filled.Settings,
+                    contentDescription = stringResource(R.string.settings_tile),
+                    onClick = onOpenSettings,
+                    onLongClick = { },
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CategoryIconTile(
+private fun CompactIconTile(
     icon: ImageVector,
-    label: String,
+    contentDescription: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(MaterialTheme.colors.surface, RoundedCornerShape(50))
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .size(ICON_TILE_SIZE_DP.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colors.surface)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = label,
+            contentDescription = contentDescription,
             tint = MaterialTheme.colors.primary,
-            modifier = Modifier.size(28.dp),
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.button,
-            color = MaterialTheme.colors.onSurface,
+            modifier = Modifier.size(ICON_SIZE_DP.dp),
         )
     }
 }

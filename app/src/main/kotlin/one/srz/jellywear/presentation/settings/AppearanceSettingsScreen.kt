@@ -11,17 +11,17 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
-import one.srz.jellywear.BuildConfig
 import one.srz.jellywear.R
-import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.data.AppPreferences
 
 @Composable
-fun SettingsScreen(
-    session: JellyfinSession,
-    onOpenAppearance: () -> Unit,
-    onOpenPlayback: () -> Unit,
-    onOpenLibraries: () -> Unit,
-    onLoggedOut: () -> Unit,
+fun AppearanceSettingsScreen(
+    preferences: AppPreferences,
+    onOpenThemeModePicker: () -> Unit,
+    onOpenCoverArtModePicker: () -> Unit,
+    onOpenAccentColorPicker: () -> Unit,
+    onOpenFontColorPicker: () -> Unit,
+    onOpenLanguagePicker: () -> Unit,
 ) {
     val listState = rememberScalingLazyListState()
 
@@ -32,59 +32,49 @@ fun SettingsScreen(
     ) {
         item {
             ListHeader {
-                Text(text = stringResource(R.string.settings_title))
+                Text(text = stringResource(R.string.settings_appearance))
             }
         }
         item {
             Chip(
-                onClick = onOpenAppearance,
-                label = { Text(text = stringResource(R.string.settings_appearance)) },
+                onClick = onOpenThemeModePicker,
+                label = { Text(text = stringResource(R.string.settings_theme_mode)) },
+                secondaryLabel = { Text(text = stringResource(preferences.themeMode.labelRes())) },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         item {
             Chip(
-                onClick = onOpenPlayback,
-                label = { Text(text = stringResource(R.string.settings_playback)) },
+                onClick = onOpenCoverArtModePicker,
+                label = { Text(text = stringResource(R.string.settings_cover_art)) },
+                secondaryLabel = { Text(text = stringResource(preferences.coverArtMode.labelRes())) },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         item {
             Chip(
-                onClick = onOpenLibraries,
-                label = { Text(text = stringResource(R.string.settings_libraries)) },
+                onClick = onOpenAccentColorPicker,
+                label = { Text(text = stringResource(R.string.settings_accent_color)) },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         item {
             Chip(
-                onClick = {
-                    session.logout()
-                    onLoggedOut()
-                },
-                label = { Text(text = stringResource(R.string.settings_logout)) },
+                onClick = onOpenFontColorPicker,
+                label = { Text(text = stringResource(R.string.settings_font_color)) },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         item {
-            Text(
-                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_server, session.serverUrl ?: "-"),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_account, session.username ?: "-"),
+            Chip(
+                onClick = onOpenLanguagePicker,
+                label = { Text(text = stringResource(R.string.settings_language)) },
+                secondaryLabel = { Text(text = languageDisplayName(preferences.languageTag)) },
+                colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
