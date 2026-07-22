@@ -65,12 +65,19 @@ import org.jellyfin.sdk.api.client.extensions.audioApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.api.client.extensions.videosApi
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.MediaStreamType
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.serializer.toUUID
 
 const val PLAYER_QUEUE_ID = "queue"
 private const val CONTROLS_AUTO_HIDE_MS = 3000L
 private const val AUDIO_AUTO_BACKGROUND_MS = 10_000L
+
+// Audio codecs the watch can decode directly. Anything else (AC3/EAC3, DTS,
+// TrueHD, ...) direct-plays picture-only -- the codec support Jellyfin
+// negotiates via a full device profile, which this app doesn't build, so we
+// approximate it here from the item's own stream info instead.
+private val COMPATIBLE_AUDIO_CODECS = setOf("aac", "mp3", "flac", "opus", "vorbis")
 
 @Composable
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
@@ -354,21 +361,30 @@ private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean
                 deviceId = deviceId,
                 videoBitRate = AppPreferences.TRANSCODE_VIDEO_BITRATE,
                 audioBitRate = AppPreferences.TRANSCODE_AUDIO_BITRATE,
+                audioCodec = "aac",
             )
         } else {
-            api.videosApi.getVideoStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+            val streams = item.mediaStreams
+            val audioCodec = streams?.firstOrNull { it.type == MediaStreamType.AUDIO }?.codec?.lowercase()
+            if (streams != null && audioCodec != null && audioCodec !in COMPATIBLE_AUDIO_CODECS) {
+                // Direct play would be picture-only: remux the container and
+                // transcode just the audio track to AAC, leaving the (already
+                // watch-compatible) video stream copied as-is.
+                val videoCodec = streams.firstOrNull { it.type == MediaStreamType.VIDEO }?.codec
+                api.videosApi.getVideoStreamUrl(
+                    itemId = item.id,
+                    static = false,
+                    deviceId = deviceId,
+                    videoCodec = videoCodec,
+                    audioCodec = "aac",
+                )
+            } else {
+                api.videosApi.getVideoStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
+            }
         }
     } else {
-        if (transcode) {
-            api.audioApi.getAudioStreamUrl(
-                itemId = item.id,
-                static = false,
-                deviceId = deviceId,
-                audioBitRate = AppPreferences.TRANSCODE_AUDIO_BITRATE,
-            )
-        } else {
-            api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
-        }
+        // Transcoding only ever applies to video -- audio-only items always direct play.
+        api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
     }
     val separator = if (base.contains("?")) "&" else "?"
     return "$base$separator${ApiClient.QUERY_ACCESS_TOKEN}=${api.accessToken}"

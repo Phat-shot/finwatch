@@ -22,6 +22,7 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.CollectionType
 import org.jellyfin.sdk.model.api.ImageType
+import org.jellyfin.sdk.model.api.ItemFields
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.QuickConnectResult
@@ -178,7 +179,14 @@ class JellyfinSession private constructor(context: Context) {
 
     /** Fetches items for [request] and returns them shuffled, or null on error/empty result. */
     suspend fun fetchShuffledQueue(request: GetItemsRequest): List<BaseItemDto>? = try {
-        api?.itemsApi?.getItems(request)?.content?.items
+        // MediaStreams isn't in the list endpoint's default field set (unlike
+        // the single-item detail endpoint) -- the player needs it to detect
+        // watch-incompatible audio codecs in video files, so request it
+        // explicitly regardless of what the caller asked for.
+        val requestWithMediaStreams = request.copy(
+            fields = (request.fields.orEmpty() + ItemFields.MEDIA_STREAMS).distinct(),
+        )
+        api?.itemsApi?.getItems(requestWithMediaStreams)?.content?.items
             ?.takeIf { it.isNotEmpty() }
             ?.shuffled()
     } catch (e: ApiClientException) {
