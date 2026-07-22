@@ -33,6 +33,7 @@
     <string name="settings_font_color">Font color</string>
     <string name="settings_language">Language</string>
     <string name="settings_transcode">Transcode</string>
+    <string name="settings_speaker_output">Watch speaker</string>
     <string name="settings_logout">Log out</string>
 
     <string name="theme_mode_dark">Dark</string>

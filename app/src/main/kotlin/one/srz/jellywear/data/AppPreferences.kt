@@ -1,10 +1,13 @@
 package one.srz.jellywear.data
 
 import android.content.Context
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
+import androidx.core.content.getSystemService
 
 enum class ThemeMode { DARK, LIGHT, SYSTEM }
 
@@ -42,6 +45,10 @@ class AppPreferences private constructor(context: Context) {
     var transcodeEnabled by mutableStateOf(prefs.getBoolean(KEY_TRANSCODE, false))
         private set
 
+    /** Route audio to the watch's built-in speaker instead of a connected Bluetooth device. */
+    var speakerOutputEnabled by mutableStateOf(prefs.getBoolean(KEY_SPEAKER_OUTPUT, false))
+        private set
+
     // Named update* rather than set* -- a `var themeMode ... private set`
     // property already compiles to a JVM setThemeMode(...) accessor, so a
     // same-named function here is a platform signature clash even though
@@ -76,8 +83,19 @@ class AppPreferences private constructor(context: Context) {
         prefs.edit { putBoolean(KEY_TRANSCODE, value) }
     }
 
+    fun updateSpeakerOutputEnabled(value: Boolean) {
+        speakerOutputEnabled = value
+        prefs.edit { putBoolean(KEY_SPEAKER_OUTPUT, value) }
+    }
+
     companion object {
-        private const val PREFS_NAME = "app_preferences"
+        // Exposed so PlaybackService can listen for changes to this file
+        // directly (SharedPreferences.OnSharedPreferenceChangeListener)
+        // without depending on this class's Compose state, which a
+        // background Service can't observe.
+        const val PREFS_NAME = "app_preferences"
+        const val KEY_SPEAKER_OUTPUT = "speaker_output_enabled"
+
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FONT_COLOR = "font_color"
@@ -103,5 +121,14 @@ class AppPreferences private constructor(context: Context) {
             instance ?: synchronized(this) {
                 instance ?: AppPreferences(context).also { instance = it }
             }
+
+        /** The watch's built-in speaker output device, or null if it doesn't have one. */
+        fun findBuiltInSpeaker(context: Context): AudioDeviceInfo? {
+            val audioManager = context.getSystemService<AudioManager>() ?: return null
+            return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+        }
+
+        fun hasBuiltInSpeaker(context: Context): Boolean = findBuiltInSpeaker(context) != null
     }
 }

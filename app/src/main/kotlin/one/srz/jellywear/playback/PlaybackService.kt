@@ -6,10 +6,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import androidx.core.content.ContextCompat
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.presentation.MainActivity
 
 /**
@@ -17,7 +20,9 @@ import one.srz.jellywear.presentation.MainActivity
  * running (with system media controls) after the app leaves the
  * foreground -- e.g. the watch screen turns off while listening.
  */
+@UnstableApi
 class PlaybackService : MediaSessionService() {
+    private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
 
     // Background playback is the point of this service for normal
@@ -37,10 +42,21 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    // Applies the Settings > speaker-output toggle live, including while
+    // something is already playing -- this Service can't observe
+    // AppPreferences' Compose state directly, but it's backed by the same
+    // SharedPreferences file the UI writes to, so a plain change listener
+    // works across the two.
+    private val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+        if (key == AppPreferences.KEY_SPEAKER_OUTPUT) {
+            applyPreferredAudioDevice(prefs.getBoolean(key, false))
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
-        val player = ExoPlayer.Builder(this).build()
+        player = ExoPlayer.Builder(this).build()
 
         val sessionActivity = PendingIntent.getActivity(
             this,
@@ -59,11 +75,23 @@ class PlaybackService : MediaSessionService() {
             IntentFilter(Intent.ACTION_SCREEN_OFF),
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+
+        val preferences = AppPreferences.getInstance(this)
+        applyPreferredAudioDevice(preferences.speakerOutputEnabled)
+        getSharedPreferences(AppPreferences.PREFS_NAME, MODE_PRIVATE)
+            .registerOnSharedPreferenceChangeListener(preferencesListener)
+    }
+
+    private fun applyPreferredAudioDevice(useSpeaker: Boolean) {
+        val speaker = if (useSpeaker) AppPreferences.findBuiltInSpeaker(this) else null
+        player.setPreferredAudioDevice(speaker)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
     override fun onDestroy() {
+        getSharedPreferences(AppPreferences.PREFS_NAME, MODE_PRIVATE)
+            .unregisterOnSharedPreferenceChangeListener(preferencesListener)
         unregisterReceiver(screenOffReceiver)
         mediaSession.run {
             player.release()

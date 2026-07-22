@@ -31,6 +31,7 @@
     <string name="settings_font_color">Schriftfarbe</string>
     <string name="settings_language">Sprache</string>
     <string name="settings_transcode">Transcodierung</string>
+    <string name="settings_speaker_output">Uhr-Lautsprecher</string>
     <string name="settings_logout">Abmelden</string>
 
     <string name="theme_mode_dark">Dunkel</string>
