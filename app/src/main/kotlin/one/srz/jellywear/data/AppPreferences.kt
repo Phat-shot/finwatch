@@ -43,7 +43,11 @@ class AppPreferences private constructor(context: Context) {
     var languageTag by mutableStateOf(prefs.getString(KEY_LANGUAGE_TAG, null))
         private set
 
-    /** Server-side transcode to a watch-appropriate bitrate instead of direct play. */
+    /**
+     * Server-side transcode of video to a watch-appropriate bitrate instead of direct play.
+     * Audio-only items always direct play -- there's no bandwidth reason to transcode them,
+     * so this setting (and its "Transcode (Video)" label) only ever affects video streams.
+     */
     var transcodeEnabled by mutableStateOf(prefs.getBoolean(KEY_TRANSCODE, false))
         private set
 
@@ -139,8 +143,13 @@ class AppPreferences private constructor(context: Context) {
         /** The watch's built-in speaker output device, or null if it doesn't have one. */
         fun findBuiltInSpeaker(context: Context): AudioDeviceInfo? {
             val audioManager = context.getSystemService<AudioManager>() ?: return null
+            // Some devices (Android 11+) report the built-in speaker as the
+            // "safe" media-volume-limited variant instead of the plain type.
             return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                .firstOrNull {
+                    it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER ||
+                        it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE
+                }
         }
 
         fun hasBuiltInSpeaker(context: Context): Boolean = findBuiltInSpeaker(context) != null

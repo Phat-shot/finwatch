@@ -8,12 +8,20 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import androidx.core.content.ContextCompat
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.presentation.MainActivity
+
+// Bounds how many times in a row onPlayerError may auto-recover the same
+// item before giving up -- otherwise a genuinely unplayable stream (e.g. a
+// codec the watch can't decode) would retry forever instead of surfacing as
+// stopped playback.
+private const val MAX_CONSECUTIVE_AUTO_RETRIES = 3
 
 /**
  * Hosts the ExoPlayer instance and its MediaSession so playback keeps
@@ -53,10 +61,32 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    // Recovers from transient playback failures (e.g. a network blip over
+    // Bluetooth tethering) that would otherwise just halt playback until the
+    // user manually hits play again, which read as the video repeatedly
+    // "stopping".
+    private var consecutiveAutoRetries = 0
+    private val playerListener = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+            if (consecutiveAutoRetries >= MAX_CONSECUTIVE_AUTO_RETRIES) return
+            consecutiveAutoRetries++
+            val index = player.currentMediaItemIndex
+            val position = player.currentPosition
+            player.prepare()
+            player.seekTo(index, position)
+            player.play()
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) consecutiveAutoRetries = 0
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
         player = ExoPlayer.Builder(this).build()
+        player.addListener(playerListener)
 
         val sessionActivity = PendingIntent.getActivity(
             this,
