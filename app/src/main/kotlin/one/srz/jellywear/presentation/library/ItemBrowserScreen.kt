@@ -47,14 +47,28 @@ fun ItemBrowserScreen(
     LaunchedEffect(parentId) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            children = api.itemsApi.getItems(
-                GetItemsRequest(
-                    userId = session.userId,
-                    parentId = parentId.toUUIDOrNull(),
-                    recursive = false,
-                    sortBy = listOf(ItemSortBy.SORT_NAME),
-                ),
-            ).content.items
+            // Skip straight through folders that only wrap a single child
+            // folder (e.g. a season that's the only season of a series) --
+            // there's nothing to choose between, so stop and show the first
+            // level that actually has something to pick from.
+            var currentParentId = parentId.toUUIDOrNull()
+            while (true) {
+                val items = api.itemsApi.getItems(
+                    GetItemsRequest(
+                        userId = session.userId,
+                        parentId = currentParentId,
+                        recursive = false,
+                        sortBy = listOf(ItemSortBy.SORT_NAME),
+                    ),
+                ).content.items
+                val onlyChild = items.singleOrNull()
+                if (onlyChild != null && onlyChild.isFolder == true) {
+                    currentParentId = onlyChild.id
+                    continue
+                }
+                children = items
+                break
+            }
         } catch (e: ApiClientException) {
             error = e.message
         }

@@ -1,13 +1,8 @@
 package one.srz.jellywear.playback
 
-import android.app.KeyguardManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.SharedPreferences
-import androidx.core.content.ContextCompat
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -23,6 +18,12 @@ import one.srz.jellywear.presentation.MainActivity
 // stopped playback.
 private const val MAX_CONSECUTIVE_AUTO_RETRIES = 3
 
+// Set on the session's activity PendingIntent so tapping the notification or
+// the Wear OS watch-face playback icon opens straight into the now-playing
+// screen (PLAYER_RESUME_ID) instead of just launching the app to its normal
+// home screen.
+const val EXTRA_OPEN_NOW_PLAYING = "one.srz.jellywear.EXTRA_OPEN_NOW_PLAYING"
+
 /**
  * Hosts the ExoPlayer instance and its MediaSession so playback keeps
  * running (with system media controls) after the app leaves the
@@ -32,23 +33,6 @@ private const val MAX_CONSECUTIVE_AUTO_RETRIES = 3
 class PlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
-
-    // Background playback is the point of this service for normal
-    // listening (screen off/ambient while music keeps going). But if the
-    // device actually locks -- the user has a lock configured and it just
-    // engaged, not just an idle timeout -- assume they're done and stop,
-    // freeing the wake lock/foreground service/decoder instead of
-    // draining the battery unattended.
-    private val screenOffReceiver = object : BroadcastReceiver() {
-        override fun onReceive(receiverContext: Context, intent: Intent) {
-            if (intent.action != Intent.ACTION_SCREEN_OFF) return
-            val keyguardManager = receiverContext.getSystemService(KEYGUARD_SERVICE) as? KeyguardManager
-            if (keyguardManager?.isKeyguardLocked == true) {
-                mediaSession.player.stop()
-                stopSelf()
-            }
-        }
-    }
 
     // Applies the Settings > speaker-output toggle live, including while
     // something is already playing -- this Service can't observe
@@ -91,20 +75,13 @@ class PlaybackService : MediaSessionService() {
         val sessionActivity = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, MainActivity::class.java),
+            Intent(this, MainActivity::class.java).putExtra(EXTRA_OPEN_NOW_PLAYING, true),
             PendingIntent.FLAG_IMMUTABLE,
         )
 
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(sessionActivity)
             .build()
-
-        ContextCompat.registerReceiver(
-            this,
-            screenOffReceiver,
-            IntentFilter(Intent.ACTION_SCREEN_OFF),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
 
         val preferences = AppPreferences.getInstance(this)
         applyPreferredAudioDevice(preferences.speakerOutputEnabled)
@@ -119,10 +96,20 @@ class PlaybackService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
+    // Default MediaSessionService behavior keeps the service (and its
+    // notification) alive across a task removal as long as something is
+    // still playing. The user wants the opposite: swiping the app away is an
+    // explicit "I'm done", so playback and the notification should always go
+    // away with it, audio included -- only backgrounding without closing the
+    // app (handled client-side in PlayerScreen) is allowed to keep audio
+    // going.
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        pauseAllPlayersAndStopSelf()
+    }
+
     override fun onDestroy() {
         getSharedPreferences(AppPreferences.PREFS_NAME, MODE_PRIVATE)
             .unregisterOnSharedPreferenceChangeListener(preferencesListener)
-        unregisterReceiver(screenOffReceiver)
         mediaSession.run {
             player.release()
             release()

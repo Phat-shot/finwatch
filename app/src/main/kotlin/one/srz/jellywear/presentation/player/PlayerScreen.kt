@@ -1,6 +1,7 @@
 package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -24,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +34,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -52,6 +57,8 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import coil.compose.AsyncImage
+import com.google.common.util.concurrent.ListenableFuture
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
@@ -70,6 +77,12 @@ import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.serializer.toUUID
 
 const val PLAYER_QUEUE_ID = "queue"
+
+// Opened from the notification / Wear OS watch-face playback icon: reattach
+// to whatever PlaybackService already has loaded instead of loading a queue,
+// since something must already be playing for that entry point to exist.
+const val PLAYER_RESUME_ID = "resume"
+
 private const val CONTROLS_AUTO_HIDE_MS = 3000L
 private const val AUDIO_AUTO_BACKGROUND_MS = 10_000L
 
@@ -101,32 +114,95 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     var controlsVisible by remember(itemId) { mutableStateOf(true) }
     var interactionTick by remember(itemId) { mutableStateOf(0) }
 
+    val currentItem = queueItems.getOrNull(currentIndex)
+    val isVideo = currentItem?.mediaType == MediaType.VIDEO
+
     // Connects to (and starts, if needed) PlaybackService so playback keeps
-    // running in the background via its MediaSession.
-    DisposableEffect(itemId) {
-        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
-        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        controllerFuture.addListener(
-            { controller = controllerFuture.get() },
-            ContextCompat.getMainExecutor(context),
-        )
+    // running in the background via its MediaSession. Reconnects on every
+    // ON_START (app returning to the foreground), not just once, since video
+    // gets its whole service killed on ON_STOP below and needs a fresh
+    // connection -- audio's service instead just keeps running unattended.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val currentIsVideo = rememberUpdatedState(isVideo)
+    DisposableEffect(itemId, lifecycleOwner) {
+        var controllerFuture: ListenableFuture<MediaController>? = null
+
+        fun connect() {
+            val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+            val future = MediaController.Builder(context, sessionToken).buildAsync()
+            controllerFuture = future
+            future.addListener(
+                {
+                    // Reconnecting on every ON_START (see below) means this
+                    // future gets cancelled by releaseController() far more
+                    // often than the original one-shot connection did -- a
+                    // listener still fires on cancellation, where get() throws.
+                    controller = try {
+                        future.get()
+                    } catch (e: CancellationException) {
+                        null
+                    }
+                },
+                ContextCompat.getMainExecutor(context),
+            )
+        }
+
+        fun releaseController() {
+            controllerFuture?.let { MediaController.releaseFuture(it) }
+            controllerFuture = null
+            controller = null
+        }
+
+        // Video has nothing to show once it isn't the visible screen --
+        // unlike audio (meant to keep going in the background/notification),
+        // kill playback and the whole service outright instead of leaving it
+        // running unseen. hasSetMediaItems resets too, so reconnecting later
+        // (a fresh, empty service) reloads the queue instead of staying blank.
+        fun stopIfVideo() {
+            if (currentIsVideo.value) {
+                controller?.stop()
+                context.stopService(Intent(context, PlaybackService::class.java))
+                hasSetMediaItems = false
+            }
+        }
+
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> connect()
+                Lifecycle.Event.ON_STOP -> {
+                    stopIfVideo()
+                    releaseController()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
-            MediaController.releaseFuture(controllerFuture)
-            controller = null
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            stopIfVideo()
+            releaseController()
         }
     }
 
     LaunchedEffect(itemId) {
-        if (itemId == PLAYER_QUEUE_ID) {
-            queueItems = PlaybackQueue.items
-        } else {
-            val api = session.api ?: return@LaunchedEffect
-            try {
-                val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
-                queueItems = listOf(item)
-            } catch (e: ApiClientException) {
-                error = e.message
+        when (itemId) {
+            PLAYER_QUEUE_ID -> queueItems = PlaybackQueue.items
+            // Just reattaching to what's already loaded in PlaybackService --
+            // it's kept around for display (title, video/audio detection)
+            // but never handed to setMediaItems below.
+            PLAYER_RESUME_ID -> {
+                queueItems = PlaybackQueue.items
+                hasSetMediaItems = true
+            }
+            else -> {
+                val api = session.api ?: return@LaunchedEffect
+                try {
+                    val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
+                    queueItems = listOf(item)
+                } catch (e: ApiClientException) {
+                    error = e.message
+                }
             }
         }
     }
@@ -181,9 +257,6 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             delay(500)
         }
     }
-
-    val currentItem = queueItems.getOrNull(currentIndex)
-    val isVideo = currentItem?.mediaType == MediaType.VIDEO
 
     // Keep the screen on for video (there's nothing to look at otherwise);
     // let the normal timeout apply for audio. Also keep it on while the

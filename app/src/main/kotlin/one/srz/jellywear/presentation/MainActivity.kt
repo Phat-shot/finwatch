@@ -20,8 +20,10 @@ import one.srz.jellywear.presentation.library.ArtistAlbumsScreen
 import one.srz.jellywear.presentation.library.Category
 import one.srz.jellywear.presentation.library.CategoryScreen
 import one.srz.jellywear.presentation.library.ItemBrowserScreen
+import one.srz.jellywear.playback.EXTRA_OPEN_NOW_PLAYING
 import one.srz.jellywear.presentation.login.LoginScreen
 import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
+import one.srz.jellywear.presentation.player.PLAYER_RESUME_ID
 import one.srz.jellywear.presentation.player.PlayerScreen
 import one.srz.jellywear.presentation.settings.AppearanceSettingsScreen
 import one.srz.jellywear.presentation.settings.ColorPickerScreen
@@ -75,19 +77,28 @@ class MainActivity : ComponentActivity() {
 
         val session = JellyfinSession.getInstance(applicationContext)
         val preferences = AppPreferences.getInstance(applicationContext)
+        // Tapping the media notification or the Wear OS watch-face playback
+        // icon launches this activity with this extra set, so it should open
+        // straight into the now-playing screen instead of the usual home screen.
+        val openNowPlaying = intent?.getBooleanExtra(EXTRA_OPEN_NOW_PLAYING, false) == true
         setContent {
-            JellywearApp(session = session, preferences = preferences)
+            JellywearApp(session = session, preferences = preferences, openNowPlaying = openNowPlaying)
         }
     }
 }
 
 @Composable
-fun JellywearApp(session: JellyfinSession, preferences: AppPreferences) {
+fun JellywearApp(session: JellyfinSession, preferences: AppPreferences, openNowPlaying: Boolean = false) {
     JellywearTheme(preferences = preferences) {
         val navController = rememberSwipeDismissableNavController()
+        val startDestination = when {
+            !session.isLoggedIn -> ROUTE_LOGIN
+            openNowPlaying -> "player/$PLAYER_RESUME_ID"
+            else -> ROUTE_HOME
+        }
         SwipeDismissableNavHost(
             navController = navController,
-            startDestination = if (session.isLoggedIn) ROUTE_HOME else ROUTE_LOGIN,
+            startDestination = startDestination,
         ) {
             composable(ROUTE_LOGIN) {
                 LoginScreen(
