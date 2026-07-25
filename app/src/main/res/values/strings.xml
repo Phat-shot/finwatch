@@ -35,6 +35,7 @@
     <string name="settings_accent_color">Accent color</string>
     <string name="settings_font_color">Font color</string>
     <string name="settings_language">Language</string>
+    <string name="settings_jellyfin_theme">Jellyfin theme</string>
     <string name="settings_transcode">Transcode (Video)</string>
     <string name="settings_speaker_output">Watch speaker</string>
     <string name="settings_logout">Log out</string>
@@ -53,6 +54,8 @@
     <string name="color_orange">Orange</string>
     <string name="color_red">Red</string>
     <string name="color_blue">Blue</string>
+    <string name="color_jellyfin_blue">Jellyfin blue</string>
+    <string name="color_jellyfin_purple">Jellyfin purple</string>
     <string name="color_anthracite">Anthracite</string>
     <string name="color_light_gray">Light gray</string>
     <string name="color_white">White</string>

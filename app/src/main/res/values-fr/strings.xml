@@ -33,6 +33,7 @@
     <string name="settings_accent_color">Couleur d\'accent</string>
     <string name="settings_font_color">Couleur du texte</string>
     <string name="settings_language">Langue</string>
+    <string name="settings_jellyfin_theme">Thème Jellyfin</string>
     <string name="settings_transcode">Transcodage (vidéo)</string>
     <string name="settings_speaker_output">Haut-parleur de la montre</string>
     <string name="settings_logout">Déconnexion</string>
@@ -51,6 +52,8 @@
     <string name="color_orange">Orange</string>
     <string name="color_red">Rouge</string>
     <string name="color_blue">Bleu</string>
+    <string name="color_jellyfin_blue">Bleu Jellyfin</string>
+    <string name="color_jellyfin_purple">Violet Jellyfin</string>
     <string name="color_anthracite">Anthracite</string>
     <string name="color_light_gray">Gris clair</string>
     <string name="color_white">Blanc</string>

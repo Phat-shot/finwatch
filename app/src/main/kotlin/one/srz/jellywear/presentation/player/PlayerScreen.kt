@@ -8,12 +8,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -29,7 +26,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -64,6 +60,7 @@ import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.playback.NowPlaying
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
 import org.jellyfin.sdk.api.client.ApiClient
@@ -163,6 +160,10 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 controller?.stop()
                 context.stopService(Intent(context, PlaybackService::class.java))
                 hasSetMediaItems = false
+                // Video has nothing left to show anyone once its service is
+                // gone -- hide the global ring instead of leaving it stuck at
+                // a stale position.
+                NowPlaying.isActive = false
             }
         }
 
@@ -194,6 +195,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             PLAYER_RESUME_ID -> {
                 queueItems = PlaybackQueue.items
                 hasSetMediaItems = true
+                NowPlaying.isActive = true
             }
             else -> {
                 val api = session.api ?: return@LaunchedEffect
@@ -228,6 +230,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             ctrl.prepare()
             ctrl.playWhenReady = true
             hasSetMediaItems = true
+            NowPlaying.isActive = true
         }
     }
 
@@ -239,6 +242,11 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             val listener = object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
+                    NowPlaying.isPlaying = playing
+                }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_IDLE) NowPlaying.isActive = false
                 }
             }
             ctrl.addListener(listener)
@@ -254,6 +262,8 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             currentIndex = ctrl.currentMediaItemIndex
             hasNext = ctrl.hasNextMediaItem()
             hasPrevious = ctrl.hasPreviousMediaItem()
+            NowPlaying.positionMs = positionMs
+            NowPlaying.durationMs = durationMs
             delay(500)
         }
     }
@@ -385,29 +395,15 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                 Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
                             }
                         }
+                        // Progress itself is shown by the global ring around the
+                        // display edge (see JellywearApp/ProgressRing) -- it
+                        // replaces the old inline bar, this just keeps the
+                        // numeric readout.
                         if (durationMs > 0) {
-                            val progress = (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = 8.dp)
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 28.dp)
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(50))
-                                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.25f)),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(progress)
-                                        .clip(RoundedCornerShape(50))
-                                        .background(MaterialTheme.colors.primary),
-                                )
-                            }
                             Text(
                                 text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
                                 style = MaterialTheme.typography.caption2,
-                                modifier = Modifier.padding(top = 4.dp),
+                                modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                     }

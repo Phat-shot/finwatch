@@ -33,6 +33,7 @@
     <string name="settings_accent_color">Color de acento</string>
     <string name="settings_font_color">Color de texto</string>
     <string name="settings_language">Idioma</string>
+    <string name="settings_jellyfin_theme">Tema Jellyfin</string>
     <string name="settings_transcode">Transcodificación (vídeo)</string>
     <string name="settings_speaker_output">Altavoz del reloj</string>
     <string name="settings_logout">Cerrar sesión</string>
@@ -51,6 +52,8 @@
     <string name="color_orange">Naranja</string>
     <string name="color_red">Rojo</string>
     <string name="color_blue">Azul</string>
+    <string name="color_jellyfin_blue">Azul Jellyfin</string>
+    <string name="color_jellyfin_purple">Púrpura Jellyfin</string>
     <string name="color_anthracite">Antracita</string>
     <string name="color_light_gray">Gris claro</string>
     <string name="color_white">Blanco</string>

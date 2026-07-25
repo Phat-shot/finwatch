@@ -49,7 +49,7 @@ fun ArtistAlbumsScreen(
         val api = session.api ?: return@LaunchedEffect
         val id = artistId.toUUIDOrNull() ?: return@LaunchedEffect
         try {
-            albums = api.itemsApi.getItems(
+            val result = api.itemsApi.getItems(
                 GetItemsRequest(
                     userId = session.userId,
                     recursive = true,
@@ -58,6 +58,14 @@ fun ArtistAlbumsScreen(
                     sortBy = listOf(ItemSortBy.SORT_NAME),
                 ),
             ).content.items
+            // An artist with only one album: skip straight into it instead
+            // of showing a pick-list of one, same as CategoryScreen/ItemBrowserScreen.
+            val onlyAlbum = result.singleOrNull()
+            if (onlyAlbum != null) {
+                onOpenAlbum(onlyAlbum.id.toString())
+            } else {
+                albums = result
+            }
         } catch (e: ApiClientException) {
             error = e.message
         }

@@ -33,6 +33,7 @@
     <string name="settings_accent_color">لون التمييز</string>
     <string name="settings_font_color">لون الخط</string>
     <string name="settings_language">اللغة</string>
+    <string name="settings_jellyfin_theme">سمة Jellyfin</string>
     <string name="settings_transcode">إعادة الترميز (الفيديو)</string>
     <string name="settings_speaker_output">مكبر صوت الساعة</string>
     <string name="settings_logout">تسجيل الخروج</string>
@@ -51,6 +52,8 @@
     <string name="color_orange">برتقالي</string>
     <string name="color_red">أحمر</string>
     <string name="color_blue">أزرق</string>
+    <string name="color_jellyfin_blue">أزرق Jellyfin</string>
+    <string name="color_jellyfin_purple">بنفسجي Jellyfin</string>
     <string name="color_anthracite">أنثراسيت</string>
     <string name="color_light_gray">رمادي فاتح</string>
     <string name="color_white">أبيض</string>

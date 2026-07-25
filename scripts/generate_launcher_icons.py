@@ -26,62 +26,109 @@ DENSITIES = {
 # center ~66dp safe zone.
 ADAPTIVE_SIZE = 432
 
-BG_COLOR = (0x1B, 0x1F, 0x3B)  # deep indigo
-JELLY_COLOR = (0x8B, 0x6C, 0xFF)  # jellyfin-esque purple
-JELLY_HILIGHT = (0xB9, 0xA7, 0xFF)
+# Supersampling factor: PIL's ImageDraw has no antialiasing, so everything is
+# rendered at this multiple and downsampled with LANCZOS at the end.
+SUPERSAMPLE = 4
+
+BG_COLOR = (0x00, 0x00, 0x00)  # matches the app's own black background
+
+# Jellyfin's own brand colors (see presentation/theme/Color.kt -- kept in
+# sync with JellyfinBlue/JellyfinPurple there).
+JELLYFIN_BLUE = (0x00, 0xA4, 0xDC)
+JELLYFIN_PURPLE = (0xAA, 0x5C, 0xC3)
 
 
-def draw_jelly(draw: ImageDraw.ImageDraw, cx: float, cy: float, r: float):
-    """A simple jellyfish glyph: a dome + wavy tentacles."""
-    # dome
-    draw.pieslice(
-        [cx - r, cy - r, cx + r, cy + r * 0.4],
-        180,
-        360,
-        fill=JELLY_COLOR,
-    )
-    draw.ellipse(
-        [cx - r * 0.55, cy - r * 0.55, cx - r * 0.1, cy - r * 0.05],
-        fill=JELLY_HILIGHT,
-    )
-    # tentacles
+def lerp_color(a, b, t):
+    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
+
+
+def vertical_gradient(size, top_color, bottom_color):
+    """A size x size RGB image fading top_color -> bottom_color."""
+    column = Image.new("RGB", (1, size))
+    for y in range(size):
+        column.putpixel((0, y), lerp_color(top_color, bottom_color, y / max(1, size - 1)))
+    return column.resize((size, size))
+
+
+def draw_jelly_silhouette(draw: ImageDraw.ImageDraw, cx: float, cy: float, r: float):
+    """A jellyfish glyph (dome + trailing tentacles) in solid white, meant to
+    be used as an alpha mask for a gradient fill -- see render_glyph()."""
+    # Dome: a smooth half-ellipse rather than a flat pieslice, for a softer
+    # silhouette that reads more like Jellyfin's own rounded mark.
+    draw.ellipse([cx - r, cy - r * 0.85, cx + r, cy + r * 0.55], fill=255)
+    draw.rectangle([cx - r, cy - r * 0.15, cx + r, cy + r * 0.55], fill=255)
+
+    # Tentacles: tapered, wavy strokes fading out towards their tips, drawn
+    # as overlapping circles along a sine path so the width can shrink
+    # smoothly (a single draw.line() call can't taper).
     tentacle_count = 5
-    span = r * 1.7
+    span = r * 1.5
     start_x = cx - span / 2
     gap = span / (tentacle_count - 1)
     for i in range(tentacle_count):
         tx = start_x + i * gap
-        points = []
-        length = r * 1.15
-        segments = 10
-        amplitude = r * 0.16 * (1 if i % 2 == 0 else -1)
+        length = r * 1.5
+        amplitude = r * 0.14 * (1 if i % 2 == 0 else -1) * (0.6 + 0.4 * abs(i - 2) / 2)
+        segments = 28
+        base_width = r * 0.16
         for s in range(segments + 1):
             t = s / segments
-            y = cy + t * length
-            x = tx + amplitude * math.sin(t * math.pi * 2.2)
-            points.append((x, y))
-        draw.line(points, fill=JELLY_COLOR, width=max(2, int(r * 0.09)))
+            y = cy + r * 0.35 + t * length
+            x = tx + amplitude * math.sin(t * math.pi * 2.3 + i)
+            width = base_width * (1 - t) ** 1.3
+            if width < 0.6:
+                continue
+            draw.ellipse([x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255)
+
+
+def render_glyph(canvas_size: int, cx: float, cy: float, r: float) -> Image.Image:
+    """Blue-to-purple gradient jellyfish, clipped to the silhouette mask and
+    supersampled for smooth (antialiased) edges."""
+    hi = canvas_size * SUPERSAMPLE
+    mask = Image.new("L", (hi, hi), 0)
+    draw_jelly_silhouette(ImageDraw.Draw(mask), cx * SUPERSAMPLE, cy * SUPERSAMPLE, r * SUPERSAMPLE)
+
+    gradient = vertical_gradient(hi, JELLYFIN_BLUE, JELLYFIN_PURPLE)
+    glyph = Image.new("RGBA", (hi, hi), (0, 0, 0, 0))
+    glyph.paste(gradient, (0, 0), mask)
+
+    # Soft highlight on the dome for a bit of shine/depth.
+    highlight = Image.new("L", (hi, hi), 0)
+    hd = ImageDraw.Draw(highlight)
+    hr = r * SUPERSAMPLE
+    hd.ellipse(
+        [
+            (cx - hr * 0.5) * SUPERSAMPLE,
+            (cy - hr * 0.55) * SUPERSAMPLE,
+            (cx - hr * 0.05) * SUPERSAMPLE,
+            (cy - hr * 0.1) * SUPERSAMPLE,
+        ],
+        fill=90,
+    )
+    white_layer = Image.new("RGBA", (hi, hi), (255, 255, 255, 0))
+    white_layer.putalpha(Image.composite(highlight, Image.new("L", (hi, hi), 0), mask))
+    glyph = Image.alpha_composite(glyph, white_layer)
+
+    return glyph.resize((canvas_size, canvas_size), Image.LANCZOS)
 
 
 def render_icon(size: int, padding_ratio: float) -> Image.Image:
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    pad = size * padding_ratio
     draw.ellipse([0, 0, size, size], fill=BG_COLOR)
-    cx, cy = size / 2, size * 0.42
-    r = (size - 2 * pad) / 2.1
-    draw_jelly(draw, cx, cy, r)
+    pad = size * padding_ratio
+    cx, cy = size / 2, size * 0.46
+    r = (size - 2 * pad) / 2.3
+    glyph = render_glyph(size, cx, cy, r)
+    img = Image.alpha_composite(img, glyph)
     return img
 
 
 def render_foreground(size: int) -> Image.Image:
     """Transparent background, glyph only, sized for the adaptive safe zone."""
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    cx, cy = size / 2, size * 0.46
-    r = size * 0.20
-    draw_jelly(draw, cx, cy, r)
-    return img
+    cx, cy = size / 2, size * 0.48
+    r = size * 0.185
+    return render_glyph(size, cx, cy, r)
 
 
 def main():

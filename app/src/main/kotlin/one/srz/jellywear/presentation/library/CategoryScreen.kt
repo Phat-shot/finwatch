@@ -55,7 +55,7 @@ fun CategoryScreen(
     LaunchedEffect(category) {
         val api = session.api ?: return@LaunchedEffect
         try {
-            elements = when (category) {
+            val result = when (category) {
                 Category.AUDIO -> session.fetchAudiobooks()
                 Category.FAVORITES -> session.fetchFavoriteMusic()
                 else -> api.itemsApi.getItems(
@@ -66,6 +66,20 @@ fun CategoryScreen(
                         sortBy = listOf(ItemSortBy.SORT_NAME),
                     ),
                 ).content.items
+            }
+            // If there's only one thing to pick from, skip straight past this
+            // list instead of making the user tap through a list of one --
+            // same idea as ItemBrowserScreen's folder-drill skip. Music
+            // routes to the artist screen regardless of isFolder (artists
+            // aren't folder items); everything else only skips when the
+            // single result is itself a folder to drill into, so a lone
+            // playable item (e.g. the only movie in the library) still shows
+            // up for an explicit tap instead of surprise-navigating.
+            val onlyResult = result.singleOrNull()
+            when {
+                category == Category.MUSIC && onlyResult != null -> onOpenArtist(onlyResult.id.toString())
+                onlyResult != null && onlyResult.isFolder == true -> onOpenFolder(onlyResult.id.toString())
+                else -> elements = result
             }
         } catch (e: ApiClientException) {
             error = e.message
