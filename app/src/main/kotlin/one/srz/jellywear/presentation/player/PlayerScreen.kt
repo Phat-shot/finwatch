@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,6 +114,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
 
     val currentItem = queueItems.getOrNull(currentIndex)
     val isVideo = currentItem?.mediaType == MediaType.VIDEO
+
+    // The global ring (drawn in JellywearApp) mirrors these so it can fade
+    // in/out together with the video controls instead of always sitting on
+    // top of the video.
+    SideEffect {
+        NowPlaying.isVideo = isVideo
+        NowPlaying.controlsVisible = controlsVisible
+    }
 
     // Connects to (and starts, if needed) PlaybackService so playback keeps
     // running in the background via its MediaSession. Reconnects on every

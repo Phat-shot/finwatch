@@ -17,4 +17,10 @@ object NowPlaying {
     var isPlaying by mutableStateOf(false)
     var positionMs by mutableStateOf(0L)
     var durationMs by mutableStateOf(0L)
+
+    // Kept in sync by PlayerScreen so the ring can fade with the video
+    // controls (see JellywearApp) -- irrelevant for audio, whose controls
+    // never auto-hide.
+    var isVideo by mutableStateOf(false)
+    var controlsVisible by mutableStateOf(true)
 }
