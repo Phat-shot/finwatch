@@ -39,6 +39,10 @@ fun ArtistAlbumsScreen(
     artistId: String,
     onOpenAlbum: (String) -> Unit,
     onShufflePlay: () -> Unit,
+    // Used only by the single-album auto-skip below -- see the matching
+    // parameter on CategoryScreen for why this needs to be distinct from
+    // onOpenAlbum (which is for actual taps).
+    onSkipToAlbum: (String) -> Unit,
 ) {
     var albums by remember(artistId) { mutableStateOf<List<BaseItemDto>?>(null) }
     var error by remember(artistId) { mutableStateOf<String?>(null) }
@@ -62,7 +66,7 @@ fun ArtistAlbumsScreen(
             // of showing a pick-list of one, same as CategoryScreen/ItemBrowserScreen.
             val onlyAlbum = result.singleOrNull()
             if (onlyAlbum != null) {
-                onOpenAlbum(onlyAlbum.id.toString())
+                onSkipToAlbum(onlyAlbum.id.toString())
             } else {
                 albums = result
             }

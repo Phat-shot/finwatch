@@ -3,6 +3,7 @@ package one.srz.jellywear.presentation
 import android.Manifest
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,6 +76,13 @@ class MainActivity : ComponentActivity() {
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
+    // Sees only *later* notification/watch-face taps that arrive while the
+    // app is already running (onNewIntent below, enabled by singleTask
+    // launch mode in the manifest). The very first cold-start tap is handled
+    // by openNowPlaying/startDestination in onCreate instead -- this starts
+    // false so JellywearApp doesn't also double-navigate on top of that.
+    private val openNowPlayingTrigger = mutableStateOf(false)
+
     override fun attachBaseContext(newBase: Context) {
         val languageTag = AppPreferences.getInstance(newBase).languageTag
         val context = if (languageTag != null) {
@@ -101,19 +110,56 @@ class MainActivity : ComponentActivity() {
         // straight into the now-playing screen instead of the usual home screen.
         val openNowPlaying = intent?.getBooleanExtra(EXTRA_OPEN_NOW_PLAYING, false) == true
         setContent {
-            JellywearApp(session = session, preferences = preferences, openNowPlaying = openNowPlaying)
+            JellywearApp(
+                session = session,
+                preferences = preferences,
+                openNowPlaying = openNowPlaying,
+                openNowPlayingTrigger = openNowPlayingTrigger,
+            )
+        }
+    }
+
+    // With singleTask launch mode, reopening the app -- whether via the
+    // launcher icon after audio's idle timeout backgrounds it (moveTaskToBack)
+    // or via the notification/watch-face playback icon -- resumes this same
+    // instance through here instead of stacking a redundant new one on top,
+    // which used to strand the real PlayerScreen one instance back (only
+    // reachable by pressing back).
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_OPEN_NOW_PLAYING, false)) {
+            openNowPlayingTrigger.value = true
         }
     }
 }
 
 @Composable
-fun JellywearApp(session: JellyfinSession, preferences: AppPreferences, openNowPlaying: Boolean = false) {
+fun JellywearApp(
+    session: JellyfinSession,
+    preferences: AppPreferences,
+    openNowPlaying: Boolean = false,
+    openNowPlayingTrigger: MutableState<Boolean> = remember { mutableStateOf(false) },
+) {
     JellywearTheme(preferences = preferences) {
         val navController = rememberSwipeDismissableNavController()
         val startDestination = when {
             !session.isLoggedIn -> ROUTE_LOGIN
             openNowPlaying -> "player/$PLAYER_RESUME_ID"
             else -> ROUTE_HOME
+        }
+
+        // Later notification/watch-face taps while already running (see
+        // MainActivity.onNewIntent) -- the cold-start tap is already covered
+        // by startDestination above, so this only fires for taps *after*
+        // that, each time consuming the trigger so it doesn't refire.
+        LaunchedEffect(openNowPlayingTrigger.value) {
+            if (openNowPlayingTrigger.value) {
+                if (session.isLoggedIn) {
+                    navController.navigate("player/$PLAYER_RESUME_ID")
+                }
+                openNowPlayingTrigger.value = false
+            }
         }
 
         // A single MediaController connection dedicated to the ring overlay
@@ -194,6 +240,16 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences, openNowP
                             onOpenFolder = { id -> navController.navigate("browse/$id") },
                             onPlayItem = { id -> navController.navigate("player/$id") },
                             onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                            onSkipToArtist = { id ->
+                                navController.navigate("artist/$id") {
+                                    popUpTo(ROUTE_CATEGORY) { inclusive = true }
+                                }
+                            },
+                            onSkipToFolder = { id ->
+                                navController.navigate("browse/$id") {
+                                    popUpTo(ROUTE_CATEGORY) { inclusive = true }
+                                }
+                            },
                         )
                     }
                 }
@@ -206,6 +262,11 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences, openNowP
                             artistId = artistId,
                             onOpenAlbum = { id -> navController.navigate("browse/$id") },
                             onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                            onSkipToAlbum = { id ->
+                                navController.navigate("browse/$id") {
+                                    popUpTo(ROUTE_ARTIST) { inclusive = true }
+                                }
+                            },
                         )
                     }
                 }
