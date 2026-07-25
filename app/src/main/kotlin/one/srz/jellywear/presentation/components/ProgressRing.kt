@@ -30,6 +30,14 @@ private val RING_INSET = 3.dp
 // still gets it.
 private val RING_HIT_BAND = 26.dp
 
+// SwipeDismissableNavHost's swipe-to-dismiss (Wear's "back") is also an
+// edge-driven gesture, starting from a strip along the left edge -- without
+// this exclusion the ring (drawn above the nav host) claims that same strip
+// for seeking and back stops working everywhere the ring is visible. Left
+// untouched, so back-swipe always gets first claim there; the rest of the
+// ring (top, right, bottom, most of the left) is still fully seekable.
+private val BACK_GESTURE_ZONE = 24.dp
+
 /**
  * A ring hugging the outer edge of the round display, showing playback
  * progress starting at 12 o'clock and sweeping clockwise. Tapping or
@@ -46,6 +54,7 @@ fun ProgressRing(
     Canvas(
         modifier = modifier.pointerInput(Unit) {
             val hitBandPx = RING_HIT_BAND.toPx()
+            val backGestureZonePx = BACK_GESTURE_ZONE.toPx()
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 val widthPx = size.width.toFloat()
@@ -53,7 +62,9 @@ fun ProgressRing(
                 val center = Offset(widthPx / 2f, heightPx / 2f)
                 val radius = min(widthPx, heightPx) / 2f
                 val distanceFromEdge = radius - distanceBetween(down.position, center)
-                if (distanceFromEdge < 0f || distanceFromEdge > hitBandPx) {
+                val inRingBand = distanceFromEdge in 0f..hitBandPx
+                val inBackGestureZone = down.position.x <= backGestureZonePx
+                if (!inRingBand || inBackGestureZone) {
                     return@awaitEachGesture
                 }
 
