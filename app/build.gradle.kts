@@ -87,6 +87,10 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material:material-icons-extended")
+    // AnimatedVisibility/fadeIn/fadeOut for the progress ring's fade with the
+    // video controls -- pulled in transitively by compose-navigation already,
+    // declared explicitly since that's an implementation detail to rely on.
+    implementation("androidx.compose.animation:animation")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // 1.4.0 for ScalingLazyColumn's built-in rotaryScrollableBehavior (crown scrolling).

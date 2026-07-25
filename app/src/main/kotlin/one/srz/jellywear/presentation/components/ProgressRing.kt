@@ -30,31 +30,31 @@ private val RING_INSET = 3.dp
 // still gets it.
 private val RING_HIT_BAND = 26.dp
 
-// SwipeDismissableNavHost's swipe-to-dismiss (Wear's "back") is also an
-// edge-driven gesture, starting from a strip along the left edge -- without
-// this exclusion the ring (drawn above the nav host) claims that same strip
-// for seeking and back stops working everywhere the ring is visible. Left
-// untouched, so back-swipe always gets first claim there; the rest of the
-// ring (top, right, bottom, most of the left) is still fully seekable.
-private val BACK_GESTURE_ZONE = 24.dp
+// SwipeDismissableNavHost's swipe-to-dismiss (Wear's "back") is a
+// left-edge-driven gesture and, since the ring is drawn above the nav host,
+// competes with it for the same touch region. A thin exclusion strip wasn't
+// enough to reliably stay out of its way, so this excludes the entire left
+// half of the screen from ring interaction instead -- back-swipe always
+// gets it uncontested, and the ring stays fully seekable via its top,
+// right, and bottom.
 
 /**
  * A ring hugging the outer edge of the round display, showing playback
- * progress starting at 12 o'clock and sweeping clockwise. Tapping or
- * dragging within the outer band seeks -- this is meant to be layered above
- * the whole app (see JellywearApp), not just the player screen, so it acts
- * as a global scrub control for whatever's currently playing.
+ * progress starting at 12 o'clock and sweeping clockwise. When [onSeek] is
+ * non-null, tapping or dragging within the outer band (right/top/bottom
+ * only, see above) seeks; pass null to render a purely decorative ring with
+ * no touch handling at all, e.g. on every screen except the player, so it
+ * can never compete with that screen's own gestures (scrolling, back-swipe).
  */
 @Composable
 fun ProgressRing(
     progress: Float,
-    onSeek: (Float) -> Unit,
+    onSeek: ((Float) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(
-        modifier = modifier.pointerInput(Unit) {
+    val seekModifier = if (onSeek != null) {
+        Modifier.pointerInput(onSeek) {
             val hitBandPx = RING_HIT_BAND.toPx()
-            val backGestureZonePx = BACK_GESTURE_ZONE.toPx()
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 val widthPx = size.width.toFloat()
@@ -63,7 +63,7 @@ fun ProgressRing(
                 val radius = min(widthPx, heightPx) / 2f
                 val distanceFromEdge = radius - distanceBetween(down.position, center)
                 val inRingBand = distanceFromEdge in 0f..hitBandPx
-                val inBackGestureZone = down.position.x <= backGestureZonePx
+                val inBackGestureZone = down.position.x <= widthPx / 2f
                 if (!inRingBand || inBackGestureZone) {
                     return@awaitEachGesture
                 }
@@ -78,7 +78,13 @@ fun ProgressRing(
                     onSeek(fractionFor(change.position, center))
                 }
             }
-        },
+        }
+    } else {
+        Modifier
+    }
+
+    Canvas(
+        modifier = modifier.then(seekModifier),
     ) {
         val stroke = RING_STROKE_WIDTH.toPx()
         val inset = RING_INSET.toPx() + stroke / 2f

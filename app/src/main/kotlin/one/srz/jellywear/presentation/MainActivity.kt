@@ -10,6 +10,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -25,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -162,12 +166,20 @@ fun JellywearApp(
             }
         }
 
+        // Only the player screen; the ring is purely decorative everywhere
+        // else so it never competes with that screen's own gestures (list
+        // scrolling, back-swipe -- see ProgressRing's left-half exclusion,
+        // which only matters while this is true anyway).
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        val isOnPlayerScreen = currentRoute == ROUTE_PLAYER
+
         // A single MediaController connection dedicated to the ring overlay
         // below, kept alive app-wide (not just while PlayerScreen is
-        // mounted) so the ring can show progress and seek from any screen.
-        // Gated on NowPlaying.isActive so it only ever binds PlaybackService
-        // once playback has actually started -- otherwise just opening the
-        // app would spin up the service and its notification for nothing.
+        // mounted) so the ring can show progress on any screen (seeking is
+        // still player-only, see isOnPlayerScreen above). Gated on
+        // NowPlaying.isActive so it only ever binds PlaybackService once
+        // playback has actually started -- otherwise just opening the app
+        // would spin up the service and its notification for nothing.
         // PlayerScreen keeps its own separate connection for the delicate
         // video foreground/background lifecycle handling; MediaSession
         // supports multiple simultaneous controllers, so the two don't
@@ -345,7 +357,15 @@ fun JellywearApp(
                 }
             }
 
-            if (NowPlaying.isActive) {
+            // Bound to the video controls' own fade so it disappears/reappears
+            // together with them instead of always sitting on top of the
+            // picture -- irrelevant for audio, whose controls never hide.
+            val ringVisible = NowPlaying.isActive && (!NowPlaying.isVideo || NowPlaying.controlsVisible)
+            AnimatedVisibility(
+                visible = ringVisible,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
                 val duration = NowPlaying.durationMs
                 val progress = if (duration > 0) {
                     (NowPlaying.positionMs.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
@@ -354,14 +374,18 @@ fun JellywearApp(
                 }
                 ProgressRing(
                     progress = progress,
-                    onSeek = { fraction ->
-                        val ctrl = ringController
-                        val seekDuration = ctrl?.duration?.takeIf { it > 0 } ?: duration
-                        if (ctrl != null && seekDuration > 0) {
-                            val target = (fraction * seekDuration).toLong()
-                            ctrl.seekTo(target)
-                            NowPlaying.positionMs = target
+                    onSeek = if (isOnPlayerScreen) {
+                        { fraction ->
+                            val ctrl = ringController
+                            val seekDuration = ctrl?.duration?.takeIf { it > 0 } ?: duration
+                            if (ctrl != null && seekDuration > 0) {
+                                val target = (fraction * seekDuration).toLong()
+                                ctrl.seekTo(target)
+                                NowPlaying.positionMs = target
+                            }
                         }
+                    } else {
+                        null
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
