@@ -1,6 +1,7 @@
 package one.srz.jellywear.presentation
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
@@ -8,19 +9,37 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import java.util.Locale
+import java.util.concurrent.CancellationException
+import kotlinx.coroutines.delay
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.components.ProgressRing
 import one.srz.jellywear.presentation.home.HomeScreen
 import one.srz.jellywear.presentation.library.ArtistAlbumsScreen
 import one.srz.jellywear.presentation.library.Category
 import one.srz.jellywear.presentation.library.CategoryScreen
 import one.srz.jellywear.presentation.library.ItemBrowserScreen
 import one.srz.jellywear.playback.EXTRA_OPEN_NOW_PLAYING
+import one.srz.jellywear.playback.NowPlaying
+import one.srz.jellywear.playback.PlaybackService
 import one.srz.jellywear.presentation.login.LoginScreen
 import one.srz.jellywear.presentation.player.PLAYER_QUEUE_ID
 import one.srz.jellywear.presentation.player.PLAYER_RESUME_ID
@@ -96,127 +115,195 @@ fun JellywearApp(session: JellyfinSession, preferences: AppPreferences, openNowP
             openNowPlaying -> "player/$PLAYER_RESUME_ID"
             else -> ROUTE_HOME
         }
-        SwipeDismissableNavHost(
-            navController = navController,
-            startDestination = startDestination,
-        ) {
-            composable(ROUTE_LOGIN) {
-                LoginScreen(
-                    session = session,
-                    onLoggedIn = {
-                        navController.navigate(ROUTE_HOME) {
-                            popUpTo(ROUTE_LOGIN) { inclusive = true }
-                        }
-                    },
-                )
+
+        // A single MediaController connection dedicated to the ring overlay
+        // below, kept alive app-wide (not just while PlayerScreen is
+        // mounted) so the ring can show progress and seek from any screen.
+        // Gated on NowPlaying.isActive so it only ever binds PlaybackService
+        // once playback has actually started -- otherwise just opening the
+        // app would spin up the service and its notification for nothing.
+        // PlayerScreen keeps its own separate connection for the delicate
+        // video foreground/background lifecycle handling; MediaSession
+        // supports multiple simultaneous controllers, so the two don't
+        // conflict.
+        val context = LocalContext.current
+        var ringController by remember { mutableStateOf<MediaController?>(null) }
+        DisposableEffect(NowPlaying.isActive) {
+            if (!NowPlaying.isActive) {
+                return@DisposableEffect onDispose { }
             }
-            composable(ROUTE_HOME) {
-                HomeScreen(
-                    session = session,
-                    preferences = preferences,
-                    onOpenCategory = { category -> navController.navigate("category/${category.route}") },
-                    onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
-                    onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
-                )
+            val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+            val future = MediaController.Builder(context, sessionToken).buildAsync()
+            future.addListener(
+                {
+                    ringController = try {
+                        future.get()
+                    } catch (e: CancellationException) {
+                        null
+                    }
+                },
+                ContextCompat.getMainExecutor(context),
+            )
+            onDispose {
+                MediaController.releaseFuture(future)
+                ringController = null
             }
-            composable(ROUTE_CATEGORY) { backStackEntry ->
-                val category = backStackEntry.arguments?.getString("type")?.let(Category::fromRoute)
-                if (category != null) {
-                    CategoryScreen(
+        }
+        LaunchedEffect(ringController) {
+            val ctrl = ringController ?: return@LaunchedEffect
+            while (true) {
+                NowPlaying.positionMs = ctrl.currentPosition.coerceAtLeast(0L)
+                NowPlaying.durationMs = ctrl.duration.coerceAtLeast(0L)
+                NowPlaying.isPlaying = ctrl.isPlaying
+                delay(500)
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            SwipeDismissableNavHost(
+                navController = navController,
+                startDestination = startDestination,
+            ) {
+                composable(ROUTE_LOGIN) {
+                    LoginScreen(
                         session = session,
-                        preferences = preferences,
-                        category = category,
-                        onOpenArtist = { id -> navController.navigate("artist/$id") },
-                        onOpenFolder = { id -> navController.navigate("browse/$id") },
-                        onPlayItem = { id -> navController.navigate("player/$id") },
-                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        onLoggedIn = {
+                            navController.navigate(ROUTE_HOME) {
+                                popUpTo(ROUTE_LOGIN) { inclusive = true }
+                            }
+                        },
                     )
                 }
-            }
-            composable(ROUTE_ARTIST) { backStackEntry ->
-                val artistId = backStackEntry.arguments?.getString("artistId")
-                if (artistId != null) {
-                    ArtistAlbumsScreen(
+                composable(ROUTE_HOME) {
+                    HomeScreen(
                         session = session,
                         preferences = preferences,
-                        artistId = artistId,
-                        onOpenAlbum = { id -> navController.navigate("browse/$id") },
+                        onOpenCategory = { category -> navController.navigate("category/${category.route}") },
                         onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
                     )
                 }
-            }
-            composable(ROUTE_BROWSE) { backStackEntry ->
-                val parentId = backStackEntry.arguments?.getString("parentId")
-                if (parentId != null) {
-                    ItemBrowserScreen(
+                composable(ROUTE_CATEGORY) { backStackEntry ->
+                    val category = backStackEntry.arguments?.getString("type")?.let(Category::fromRoute)
+                    if (category != null) {
+                        CategoryScreen(
+                            session = session,
+                            preferences = preferences,
+                            category = category,
+                            onOpenArtist = { id -> navController.navigate("artist/$id") },
+                            onOpenFolder = { id -> navController.navigate("browse/$id") },
+                            onPlayItem = { id -> navController.navigate("player/$id") },
+                            onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        )
+                    }
+                }
+                composable(ROUTE_ARTIST) { backStackEntry ->
+                    val artistId = backStackEntry.arguments?.getString("artistId")
+                    if (artistId != null) {
+                        ArtistAlbumsScreen(
+                            session = session,
+                            preferences = preferences,
+                            artistId = artistId,
+                            onOpenAlbum = { id -> navController.navigate("browse/$id") },
+                            onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        )
+                    }
+                }
+                composable(ROUTE_BROWSE) { backStackEntry ->
+                    val parentId = backStackEntry.arguments?.getString("parentId")
+                    if (parentId != null) {
+                        ItemBrowserScreen(
+                            session = session,
+                            preferences = preferences,
+                            parentId = parentId,
+                            onOpenFolder = { id -> navController.navigate("browse/$id") },
+                            onPlayItem = { id -> navController.navigate("player/$id") },
+                            onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        )
+                    }
+                }
+                composable(ROUTE_PLAYER) { backStackEntry ->
+                    val itemId = backStackEntry.arguments?.getString("itemId")
+                    if (itemId != null) {
+                        PlayerScreen(session = session, preferences = preferences, itemId = itemId)
+                    }
+                }
+                composable(ROUTE_SETTINGS) {
+                    SettingsScreen(
                         session = session,
-                        preferences = preferences,
-                        parentId = parentId,
-                        onOpenFolder = { id -> navController.navigate("browse/$id") },
-                        onPlayItem = { id -> navController.navigate("player/$id") },
-                        onShufflePlay = { navController.navigate("player/$PLAYER_QUEUE_ID") },
+                        onOpenAppearance = { navController.navigate(ROUTE_SETTINGS_APPEARANCE) },
+                        onOpenPlayback = { navController.navigate(ROUTE_SETTINGS_PLAYBACK) },
+                        onOpenLibraries = { navController.navigate(ROUTE_SETTINGS_LIBRARIES) },
+                        onLoggedOut = {
+                            navController.navigate(ROUTE_LOGIN) {
+                                popUpTo(ROUTE_HOME) { inclusive = true }
+                            }
+                        },
                     )
                 }
-            }
-            composable(ROUTE_PLAYER) { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getString("itemId")
-                if (itemId != null) {
-                    PlayerScreen(session = session, preferences = preferences, itemId = itemId)
+                composable(ROUTE_SETTINGS_APPEARANCE) {
+                    AppearanceSettingsScreen(
+                        preferences = preferences,
+                        onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
+                        onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
+                        onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
+                        onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
+                        onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
+                    )
                 }
-            }
-            composable(ROUTE_SETTINGS) {
-                SettingsScreen(
-                    session = session,
-                    onOpenAppearance = { navController.navigate(ROUTE_SETTINGS_APPEARANCE) },
-                    onOpenPlayback = { navController.navigate(ROUTE_SETTINGS_PLAYBACK) },
-                    onOpenLibraries = { navController.navigate(ROUTE_SETTINGS_LIBRARIES) },
-                    onLoggedOut = {
-                        navController.navigate(ROUTE_LOGIN) {
-                            popUpTo(ROUTE_HOME) { inclusive = true }
-                        }
-                    },
-                )
-            }
-            composable(ROUTE_SETTINGS_APPEARANCE) {
-                AppearanceSettingsScreen(
-                    preferences = preferences,
-                    onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
-                    onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
-                    onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
-                    onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
-                    onOpenLanguagePicker = { navController.navigate(ROUTE_LANGUAGE) },
-                )
-            }
-            composable(ROUTE_SETTINGS_PLAYBACK) {
-                PlaybackSettingsScreen(preferences = preferences)
-            }
-            composable(ROUTE_SETTINGS_LIBRARIES) {
-                LibrarySettingsScreen(preferences = preferences)
-            }
-            composable(ROUTE_COLOR_PICKER) { backStackEntry ->
-                val target = backStackEntry.arguments?.getString("target")?.let(ColorPickerTarget::fromRoute)
-                if (target != null) {
-                    ColorPickerScreen(
-                        target = target,
+                composable(ROUTE_SETTINGS_PLAYBACK) {
+                    PlaybackSettingsScreen(preferences = preferences)
+                }
+                composable(ROUTE_SETTINGS_LIBRARIES) {
+                    LibrarySettingsScreen(preferences = preferences)
+                }
+                composable(ROUTE_COLOR_PICKER) { backStackEntry ->
+                    val target = backStackEntry.arguments?.getString("target")?.let(ColorPickerTarget::fromRoute)
+                    if (target != null) {
+                        ColorPickerScreen(
+                            target = target,
+                            preferences = preferences,
+                            onDone = { navController.popBackStack() },
+                        )
+                    }
+                }
+                composable(ROUTE_THEME_MODE) {
+                    ThemeModeScreen(
                         preferences = preferences,
                         onDone = { navController.popBackStack() },
                     )
                 }
+                composable(ROUTE_COVER_ART_MODE) {
+                    CoverArtModeScreen(
+                        preferences = preferences,
+                        onDone = { navController.popBackStack() },
+                    )
+                }
+                composable(ROUTE_LANGUAGE) {
+                    LanguageScreen(preferences = preferences)
+                }
             }
-            composable(ROUTE_THEME_MODE) {
-                ThemeModeScreen(
-                    preferences = preferences,
-                    onDone = { navController.popBackStack() },
+
+            if (NowPlaying.isActive) {
+                val duration = NowPlaying.durationMs
+                val progress = if (duration > 0) {
+                    (NowPlaying.positionMs.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+                ProgressRing(
+                    progress = progress,
+                    onSeek = { fraction ->
+                        val ctrl = ringController
+                        val seekDuration = ctrl?.duration?.takeIf { it > 0 } ?: duration
+                        if (ctrl != null && seekDuration > 0) {
+                            val target = (fraction * seekDuration).toLong()
+                            ctrl.seekTo(target)
+                            NowPlaying.positionMs = target
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
                 )
-            }
-            composable(ROUTE_COVER_ART_MODE) {
-                CoverArtModeScreen(
-                    preferences = preferences,
-                    onDone = { navController.popBackStack() },
-                )
-            }
-            composable(ROUTE_LANGUAGE) {
-                LanguageScreen(preferences = preferences)
             }
         }
     }

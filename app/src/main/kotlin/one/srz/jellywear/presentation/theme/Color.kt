@@ -1,6 +1,7 @@
 package one.srz.jellywear.presentation.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import one.srz.jellywear.R
 
 val Background = Color(0xFF000000)
@@ -13,6 +14,12 @@ val SurfaceLight = Color(0xFFEAEAEA)
 
 val OnAccent = Color(0xFF000000)
 
+// Jellyfin's own brand colors -- used by the opt-in "Jellyfin theme" preset
+// (Settings > Appearance) and the playback progress ring's gradient.
+val JellyfinBlue = Color(0xFF00A4DC)
+val JellyfinPurple = Color(0xFFAA5CC3)
+val LightGray = Color(0xFFB0B0B0)
+
 /** Preset accent colors (icon tint) the user can pick from in Settings. */
 val AccentColorPresets = listOf(
     0xFFCCE600.toInt() to R.string.color_neon_yellow_green,
@@ -21,12 +28,14 @@ val AccentColorPresets = listOf(
     0xFFFF9500.toInt() to R.string.color_orange,
     0xFFFF3B30.toInt() to R.string.color_red,
     0xFF3399FF.toInt() to R.string.color_blue,
+    0xFF00A4DC.toInt() to R.string.color_jellyfin_blue,
+    0xFFAA5CC3.toInt() to R.string.color_jellyfin_purple,
 )
 
 /** Preset text colors the user can pick from in Settings. */
 val FontColorPresets = listOf(
     0xFF6F7578.toInt() to R.string.color_anthracite,
-    0xFFB0B0B0.toInt() to R.string.color_light_gray,
+    LightGray.toArgb() to R.string.color_light_gray,
     0xFFFFFFFF.toInt() to R.string.color_white,
     0xFF3A3A3A.toInt() to R.string.color_dark_gray,
 )

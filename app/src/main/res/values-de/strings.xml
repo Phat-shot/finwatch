@@ -33,6 +33,7 @@
     <string name="settings_accent_color">Akzentfarbe</string>
     <string name="settings_font_color">Schriftfarbe</string>
     <string name="settings_language">Sprache</string>
+    <string name="settings_jellyfin_theme">Jellyfin-Design</string>
     <string name="settings_transcode">Transcodierung (Video)</string>
     <string name="settings_speaker_output">Uhr-Lautsprecher</string>
     <string name="settings_logout">Abmelden</string>
@@ -51,6 +52,8 @@
     <string name="color_orange">Orange</string>
     <string name="color_red">Rot</string>
     <string name="color_blue">Blau</string>
+    <string name="color_jellyfin_blue">Jellyfin-Blau</string>
+    <string name="color_jellyfin_purple">Jellyfin-Lila</string>
     <string name="color_anthracite">Anthrazit</string>
     <string name="color_light_gray">Hellgrau</string>
     <string name="color_white">Weiß</string>

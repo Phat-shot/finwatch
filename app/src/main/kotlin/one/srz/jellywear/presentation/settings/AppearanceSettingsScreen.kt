@@ -3,6 +3,7 @@ package one.srz.jellywear.presentation.settings
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
@@ -13,6 +14,8 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.presentation.theme.JellyfinBlue
+import one.srz.jellywear.presentation.theme.LightGray
 
 @Composable
 fun AppearanceSettingsScreen(
@@ -74,6 +77,22 @@ fun AppearanceSettingsScreen(
                 onClick = onOpenLanguagePicker,
                 label = { Text(text = stringResource(R.string.settings_language)) },
                 secondaryLabel = { Text(text = languageDisplayName(preferences.languageTag)) },
+                colors = ChipDefaults.primaryChipColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            // One-tap preset, not a persisted toggle: applies Jellyfin's own
+            // blue accent + light-gray text on top of the already-black
+            // background, then leaves the two pickers above free to fine-tune
+            // further. Opt-in on purpose -- nothing about a fresh install
+            // (beta or prod) switches to this look on its own.
+            Chip(
+                onClick = {
+                    preferences.setAccentColor(JellyfinBlue.toArgb())
+                    preferences.setFontColor(LightGray.toArgb())
+                },
+                label = { Text(text = stringResource(R.string.settings_jellyfin_theme)) },
                 colors = ChipDefaults.primaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )

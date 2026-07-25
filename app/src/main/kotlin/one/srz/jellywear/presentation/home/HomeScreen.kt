@@ -1,12 +1,15 @@
 package one.srz.jellywear.presentation.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,10 +43,12 @@ import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.presentation.library.Category
+import one.srz.jellywear.presentation.theme.JellyfinBlue
+import one.srz.jellywear.presentation.theme.JellyfinPurple
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 
-private const val ICON_TILE_SIZE_DP = 52
+private const val ICON_TILE_SIZE_DP = 54
 private const val ICON_SIZE_DP = 26
 
 private fun Category.icon(): ImageVector = when (this) {
@@ -147,6 +153,11 @@ fun HomeScreen(
     }
 }
 
+// A thin Jellyfin blue-to-purple gradient ring around every tile -- independent
+// of the user's chosen accent color, so the launcher keeps a consistent
+// brand identity even when the accent is customized elsewhere.
+private val TileBorderBrush = Brush.linearGradient(listOf(JellyfinBlue, JellyfinPurple))
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CompactIconTile(
@@ -160,7 +171,9 @@ private fun CompactIconTile(
             .size(ICON_TILE_SIZE_DP.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colors.surface)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .border(BorderStroke(1.5.dp, TileBorderBrush), CircleShape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(1.5.dp),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
