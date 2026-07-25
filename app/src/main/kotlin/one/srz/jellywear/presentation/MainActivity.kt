@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.navigation.NavController
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -166,35 +165,17 @@ fun JellywearApp(
             }
         }
 
-        // Only the player screen; the ring is purely decorative everywhere
-        // else so it never competes with that screen's own gestures (list
-        // scrolling, back-swipe -- see ProgressRing's left-half exclusion,
-        // which only matters while this is true anyway). Tracked via a plain
-        // NavController listener rather than currentBackStackEntryAsState()
-        // (androidx.navigation.compose), since that extension's artifact
-        // isn't on the classpath here -- only the base navigation-runtime
-        // Wear's compose-navigation itself depends on.
-        var currentRoute by remember { mutableStateOf(navController.currentDestination?.route) }
-        DisposableEffect(navController) {
-            val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-                currentRoute = destination.route
-            }
-            navController.addOnDestinationChangedListener(listener)
-            onDispose { navController.removeOnDestinationChangedListener(listener) }
-        }
-        val isOnPlayerScreen = currentRoute == ROUTE_PLAYER
-
         // A single MediaController connection dedicated to the ring overlay
         // below, kept alive app-wide (not just while PlayerScreen is
-        // mounted) so the ring can show progress on any screen (seeking is
-        // still player-only, see isOnPlayerScreen above). Gated on
-        // NowPlaying.isActive so it only ever binds PlaybackService once
-        // playback has actually started -- otherwise just opening the app
-        // would spin up the service and its notification for nothing.
-        // PlayerScreen keeps its own separate connection for the delicate
-        // video foreground/background lifecycle handling; MediaSession
-        // supports multiple simultaneous controllers, so the two don't
-        // conflict.
+        // mounted) so the ring's progress display stays live on any screen,
+        // not just the player -- it's read-only (see ProgressRing), never
+        // used to seek. Gated on NowPlaying.isActive so it only ever binds
+        // PlaybackService once playback has actually started -- otherwise
+        // just opening the app would spin up the service and its
+        // notification for nothing. PlayerScreen keeps its own separate
+        // connection for the delicate video foreground/background lifecycle
+        // handling; MediaSession supports multiple simultaneous
+        // controllers, so the two don't conflict.
         val context = LocalContext.current
         var ringController by remember { mutableStateOf<MediaController?>(null) }
         DisposableEffect(NowPlaying.isActive) {
@@ -385,19 +366,6 @@ fun JellywearApp(
                 }
                 ProgressRing(
                     progress = progress,
-                    onSeek = if (isOnPlayerScreen) {
-                        { fraction ->
-                            val ctrl = ringController
-                            val seekDuration = ctrl?.duration?.takeIf { it > 0 } ?: duration
-                            if (ctrl != null && seekDuration > 0) {
-                                val target = (fraction * seekDuration).toLong()
-                                ctrl.seekTo(target)
-                                NowPlaying.positionMs = target
-                            }
-                        }
-                    } else {
-                        null
-                    },
                     modifier = Modifier.fillMaxSize(),
                 )
             }

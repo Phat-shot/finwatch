@@ -211,6 +211,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 try {
                     val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
                     queueItems = listOf(item)
+                    // PLAYER_RESUME_ID (notification/watch-face tap, or
+                    // reopening the app while this is playing) reattaches by
+                    // reading PlaybackQueue.items -- without this, only the
+                    // shuffle-play paths that already write to it would ever
+                    // have anything to resume into, leaving a plain single-item
+                    // play (by far the common case) stuck on the loading spinner
+                    // forever once backgrounded and reopened.
+                    PlaybackQueue.items = listOf(item)
                 } catch (e: ApiClientException) {
                     error = e.message
                 }
