@@ -46,6 +46,14 @@ fun CategoryScreen(
     onOpenFolder: (String) -> Unit,
     onPlayItem: (String) -> Unit,
     onShufflePlay: () -> Unit,
+    // Used only by the single-result auto-skip below, distinct from
+    // onOpenArtist/onOpenFolder above (which are for actual taps) -- the
+    // caller wires these to replace this screen in the back stack instead of
+    // pushing on top of it, so navigating back from the destination goes to
+    // whatever's above this category instead of bouncing straight back into
+    // it (which would just re-run this same skip and jump forward again).
+    onSkipToArtist: (String) -> Unit,
+    onSkipToFolder: (String) -> Unit,
 ) {
     var elements by remember(category) { mutableStateOf<List<BaseItemDto>?>(null) }
     var error by remember(category) { mutableStateOf<String?>(null) }
@@ -77,8 +85,8 @@ fun CategoryScreen(
             // up for an explicit tap instead of surprise-navigating.
             val onlyResult = result.singleOrNull()
             when {
-                category == Category.MUSIC && onlyResult != null -> onOpenArtist(onlyResult.id.toString())
-                onlyResult != null && onlyResult.isFolder == true -> onOpenFolder(onlyResult.id.toString())
+                category == Category.MUSIC && onlyResult != null -> onSkipToArtist(onlyResult.id.toString())
+                onlyResult != null && onlyResult.isFolder == true -> onSkipToFolder(onlyResult.id.toString())
                 else -> elements = result
             }
         } catch (e: ApiClientException) {

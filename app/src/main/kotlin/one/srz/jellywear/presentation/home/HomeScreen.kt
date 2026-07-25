@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,9 +35,7 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
@@ -112,25 +111,33 @@ fun HomeScreen(
         }
     }
 
+    // Gap between tiles, used both between columns (within a row) and
+    // between rows, so the ring-to-ring spacing reads as even in both
+    // directions instead of the horizontal gap (Arrangement.SpaceEvenly)
+    // and vertical gap (ScalingLazyColumn's own default item spacing)
+    // happening to differ.
+    val tileGap = 8.dp
+    // The brand gradient ring is part of the opt-in "Jellyfin theme" look
+    // (Settings > Appearance), not the default/legacy one -- only draw it
+    // once that preset is actually in effect (accent == Jellyfin blue).
+    val showBrandRing = preferences.accentColorArgb == JellyfinBlue.toArgb()
+
     ScalingLazyColumn(
         modifier = Modifier.fillMaxWidth(),
         state = listState,
+        verticalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterVertically),
         rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
     ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.app_name))
-            }
-        }
         items(visibleCategories.chunked(2)) { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterHorizontally),
             ) {
                 row.forEach { category ->
                     CompactIconTile(
                         icon = category.icon(),
                         contentDescription = stringResource(category.titleRes),
+                        showBrandRing = showBrandRing,
                         onClick = { onOpenCategory(category) },
                         onLongClick = { shufflePlay(category) },
                     )
@@ -145,6 +152,7 @@ fun HomeScreen(
                 CompactIconTile(
                     icon = Icons.Filled.Settings,
                     contentDescription = stringResource(R.string.settings_tile),
+                    showBrandRing = showBrandRing,
                     onClick = onOpenSettings,
                     onLongClick = { },
                 )
@@ -153,9 +161,8 @@ fun HomeScreen(
     }
 }
 
-// A thin Jellyfin blue-to-purple gradient ring around every tile -- independent
-// of the user's chosen accent color, so the launcher keeps a consistent
-// brand identity even when the accent is customized elsewhere.
+// A thin Jellyfin blue-to-purple gradient ring around every tile -- only
+// shown for the opt-in "Jellyfin theme" preset, see showBrandRing above.
 private val TileBorderBrush = Brush.linearGradient(listOf(JellyfinBlue, JellyfinPurple))
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -163,6 +170,7 @@ private val TileBorderBrush = Brush.linearGradient(listOf(JellyfinBlue, Jellyfin
 private fun CompactIconTile(
     icon: ImageVector,
     contentDescription: String,
+    showBrandRing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -171,7 +179,13 @@ private fun CompactIconTile(
             .size(ICON_TILE_SIZE_DP.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colors.surface)
-            .border(BorderStroke(1.5.dp, TileBorderBrush), CircleShape)
+            .then(
+                if (showBrandRing) {
+                    Modifier.border(BorderStroke(1.5.dp, TileBorderBrush), CircleShape)
+                } else {
+                    Modifier
+                },
+            )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(1.5.dp),
         contentAlignment = Alignment.Center,
