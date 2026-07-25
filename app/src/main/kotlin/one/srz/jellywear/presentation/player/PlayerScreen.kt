@@ -8,9 +8,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -27,6 +30,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -211,6 +215,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 try {
                     val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
                     queueItems = listOf(item)
+                    // PLAYER_RESUME_ID (notification/watch-face tap, or
+                    // reopening the app while this is playing) reattaches by
+                    // reading PlaybackQueue.items -- without this, only the
+                    // shuffle-play paths that already write to it would ever
+                    // have anything to resume into, leaving a plain single-item
+                    // play (by far the common case) stuck on the loading spinner
+                    // forever once backgrounded and reopened.
+                    PlaybackQueue.items = listOf(item)
                 } catch (e: ApiClientException) {
                     error = e.message
                 }
@@ -404,11 +416,32 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                 Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
                             }
                         }
-                        // Progress itself is shown by the global ring around the
-                        // display edge (see JellywearApp/ProgressRing) -- it
-                        // replaces the old inline bar, this just keeps the
-                        // numeric readout.
                         if (durationMs > 0) {
+                            // The global ring (JellywearApp/ProgressRing) is
+                            // purely decorative now and easy to miss over a
+                            // busy video frame, so video gets its own bar
+                            // back here -- audio keeps just the time readout,
+                            // its ring is normally the only thing on screen.
+                            if (isVideo) {
+                                val progress = (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                                Box(
+                                    modifier = Modifier
+                                        .padding(top = 8.dp)
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 28.dp)
+                                        .height(4.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(MaterialTheme.colors.onSurface.copy(alpha = 0.25f)),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(progress)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(MaterialTheme.colors.primary),
+                                    )
+                                }
+                            }
                             Text(
                                 text = "${formatMillis(positionMs)} / ${formatMillis(durationMs)}",
                                 style = MaterialTheme.typography.caption2,
