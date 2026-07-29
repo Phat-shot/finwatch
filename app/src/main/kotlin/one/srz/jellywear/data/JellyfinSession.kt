@@ -96,23 +96,21 @@ class JellyfinSession private constructor(context: Context) {
     }
 
     /**
-     * Rebuilds a client against the opposite http/https scheme of [baseUrl],
-     * or null if [baseUrl] has neither prefix.
+     * Rebuilds a client against https:// for an http:// [baseUrl], or null
+     * if [baseUrl] is already https (or has no recognizable scheme).
      *
      * Used as a second-chance retry around the actual sign-in call: the
-     * http(s) connectivity check in [buildVerifiedClient] is a GET, which
-     * some reverse proxies transparently redirect from http to https --
+     * connectivity check in [buildVerifiedClient] is a GET, which some
+     * reverse proxies transparently redirect from http to https --
      * making the check pass even though a POST (the real login call) hits
      * the same redirect and has its body dropped per HTTP redirect
-     * semantics, failing where the GET didn't.
+     * semantics, failing where the GET didn't. Only the http -> https
+     * direction is offered: retrying the other way around would silently
+     * resend the user's password over a cleartext connection.
      */
-    fun buildClientWithFlippedScheme(baseUrl: String): ApiClient? {
-        val flipped = when {
-            baseUrl.startsWith("http://") -> "https://${baseUrl.removePrefix("http://")}"
-            baseUrl.startsWith("https://") -> "http://${baseUrl.removePrefix("https://")}"
-            else -> return null
-        }
-        return jellyfin.createApi(baseUrl = flipped)
+    fun buildClientWithUpgradedScheme(baseUrl: String): ApiClient? {
+        if (!baseUrl.startsWith("http://")) return null
+        return jellyfin.createApi(baseUrl = "https://${baseUrl.removePrefix("http://")}")
     }
 
     /** Null on success, the failure otherwise. */

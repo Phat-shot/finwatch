@@ -123,16 +123,18 @@ fun LoginScreen(
                         // redirect http -> https -- letting the check pass
                         // even though this login POST hits the same
                         // redirect and loses its body, failing where the
-                        // GET didn't. One more try on the other scheme
-                        // before giving up, but only if the user didn't
+                        // GET didn't. One more try, upgraded to https,
+                        // before giving up -- but only if the user didn't
                         // type a scheme explicitly (respect their choice).
+                        // Never the reverse: a https -> http retry would
+                        // resend the password in cleartext.
                         if (result.isFailure && !serverUrlHadExplicitScheme) {
-                            val flippedClient = currentClient.baseUrl
-                                ?.let { session.buildClientWithFlippedScheme(it) }
-                            if (flippedClient != null) {
-                                val retryResult = session.login(flippedClient, username, text)
+                            val upgradedClient = currentClient.baseUrl
+                                ?.let { session.buildClientWithUpgradedScheme(it) }
+                            if (upgradedClient != null) {
+                                val retryResult = session.login(upgradedClient, username, text)
                                 if (retryResult.isSuccess) {
-                                    client = flippedClient
+                                    client = upgradedClient
                                     result = retryResult
                                 }
                             }
