@@ -70,8 +70,10 @@ class JellyfinSession private constructor(context: Context) {
     /**
      * Builds an unauthenticated client bound to [serverUrl] and verifies it
      * can actually reach a Jellyfin server. If the user didn't type a
-     * scheme, tries http:// first and falls back to https:// (many
-     * reverse-proxied Jellyfin servers are https-only) before giving up.
+     * scheme, tries https:// first (credentials and the access token should
+     * never travel in cleartext when the server supports TLS) and only
+     * falls back to http:// (e.g. a LAN-local server without certificates)
+     * before giving up.
      */
     suspend fun buildVerifiedClient(serverUrl: String): Result<ApiClient> {
         // Hostnames are case-insensitive; normalizing avoids e.g. Settings
@@ -80,12 +82,12 @@ class JellyfinSession private constructor(context: Context) {
         val trimmed = serverUrl.trim().trimEnd('/').lowercase()
         val hasExplicitScheme = trimmed.contains("://")
 
-        val primaryClient = jellyfin.createApi(baseUrl = if (hasExplicitScheme) trimmed else "http://$trimmed")
+        val primaryClient = jellyfin.createApi(baseUrl = if (hasExplicitScheme) trimmed else "https://$trimmed")
         val primaryError = pingServer(primaryClient)
         if (primaryError == null) return Result.success(primaryClient)
 
         if (!hasExplicitScheme) {
-            val fallbackClient = jellyfin.createApi(baseUrl = "https://$trimmed")
+            val fallbackClient = jellyfin.createApi(baseUrl = "http://$trimmed")
             val fallbackError = pingServer(fallbackClient)
             if (fallbackError == null) return Result.success(fallbackClient)
         }
