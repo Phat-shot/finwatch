@@ -64,14 +64,24 @@ fun LoginScreen(
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
-        val text = result.data
+        val rawText = result.data
             ?.let { RemoteInput.getResultsFromIntent(it) }
             ?.getCharSequence(REMOTE_INPUT_KEY)
             ?.toString()
-            ?.trim()
-            .orEmpty()
 
-        if (text.isEmpty()) {
+        // No payload at all means the user backed out of the input UI.
+        if (rawText == null) {
+            errorMessage = genericError
+            step = LoginStep.ERROR
+            return@rememberLauncherForActivityResult
+        }
+
+        // Server URL and username can safely be trimmed, but a password must
+        // be passed through untouched -- leading/trailing whitespace can be
+        // part of a valid password. An empty password is legitimate too:
+        // Jellyfin allows passwordless accounts.
+        val text = if (step == LoginStep.PASSWORD) rawText else rawText.trim()
+        if (text.isEmpty() && step != LoginStep.PASSWORD) {
             errorMessage = genericError
             step = LoginStep.ERROR
             return@rememberLauncherForActivityResult
