@@ -5,8 +5,11 @@ video, built with Kotlin + Jetpack Compose for Wear OS + Media3.
 
 ## Features
 
-- **Sign in** to a Jellyfin server (server URL / username / password,
-  entered via Wear OS's `RemoteInput` text entry — `presentation/login`).
+- **Sign in** to a Jellyfin server (`presentation/login`): if the server
+  has Quick Connect enabled, the watch shows a short code to confirm from
+  another device — no password typing on the watch. Otherwise server URL /
+  username / password are entered via Wear OS's `RemoteInput` text entry.
+  Schemeless server URLs are probed https-first with an http fallback.
   The access token is encrypted at rest with an Android Keystore-backed
   AES key (`data/SecureTokenStore.kt`), not stored in plaintext.
 - **Compact launcher** (`presentation/home/HomeScreen.kt`): a two-per-row
@@ -66,17 +69,47 @@ icon-related is committed to the repo.
 
 ## CI
 
-`.github/workflows/build.yml` builds the matching flavor's release APK on
-every push to `main` or `test`, uploads it as a workflow artifact, and
-publishes it as a GitHub Release (`main` → normal release, `test` →
-pre-release). Releases built from `main` are additionally mirrored to the
-public `jellywear-release` repo, so anyone can grab the latest APK
-without access to this private repo.
+`.github/workflows/build.yml` runs in two stages:
 
-Both variants are currently signed with the Gradle debug signing config so
-CI can produce an installable APK without any secrets set up yet. Swap in
-a real keystore (via repo secrets) in `app/build.gradle.kts` before
-shipping a public release.
+1. **validate** — Android Lint + unit tests, on every push to `main`/`test`
+   *and* on pull requests targeting them.
+2. **build** (pushes only) — builds the matching flavor's release APK,
+   uploads it as a workflow artifact, and publishes it as a GitHub Release
+   (`main` → normal release, `test` → pre-release). `main` builds
+   additionally produce the App Bundle (`bundleProdRelease`) that Google
+   Play requires, attached to the release and uploaded as the `prod-aab`
+   artifact. Releases built from `main` are also mirrored to the public
+   `jellywear-release` repo (needs the `RELEASE_REPO_TOKEN` secret, a
+   fine-grained PAT for that repo).
+
+### Release signing
+
+Signing is driven by repo secrets, with a debug fallback so forks and
+secretless runs keep producing installable builds:
+
+| Secret | Content |
+|---|---|
+| `RELEASE_KEYSTORE_BASE64` | base64 of the release keystore file (`base64 -w0 release.jks`) |
+| `RELEASE_KEYSTORE_PASSWORD` | keystore password |
+| `RELEASE_KEY_ALIAS` | key alias |
+| `RELEASE_KEY_PASSWORD` | key password |
+
+When the secrets are absent, release builds are signed with the committed
+debug keystore (`keystore/debug.keystore`) — fine for sideloading and the
+beta channel, **not** accepted by Google Play. Locally the same values can
+be supplied as Gradle properties (`releaseKeystoreFile`,
+`releaseKeystorePassword`, `releaseKeyAlias`, `releaseKeyPassword`) in
+`~/.gradle/gradle.properties`.
+
+### Play Store upload
+
+`.github/workflows/play-publish.yml` is a manually triggered workflow
+(`workflow_dispatch`) that builds a prod AAB with an explicitly chosen
+`versionCode` and uploads it to a selectable Play track via
+`r0adkll/upload-google-play`. It additionally needs the
+`PLAY_SERVICE_ACCOUNT_JSON` secret (JSON key of a service account linked
+in Play Console → Setup → API access). Without the secrets the workflow
+skips cleanly instead of failing.
 
 ## Local build
 
@@ -97,6 +130,14 @@ python3 scripts/generate_launcher_icons.py
 
 - No seek control — playback shows a position/duration progress bar but
   it isn't scrubbable yet.
-- Release signing still uses the Gradle debug signing config (see
-  "CI" above) — swap in a real keystore via repo secrets before a public
-  release.
+- No real release keystore yet — the signing *mechanics* (secrets +
+  debug fallback, see "Release signing" above) are in place, but the
+  keystore itself still has to be generated and its secrets configured
+  before a store release.
+- `compileSdk`/`targetSdk` are 34. Google Play requires **targetSdk 35**
+  for new Wear OS apps (existing ones by 2026-08-31), so an AGP +
+  compileSdk upgrade is needed before a Play submission. Media3 is pinned
+  to 1.4.1 for the same reason (1.5+ needs compileSdk 35).
+- No CHANGELOG or CONTRIBUTING yet; release notes only exist as GitHub
+  Release entries.
+- No privacy policy URL yet — Google Play requires one for every app.
