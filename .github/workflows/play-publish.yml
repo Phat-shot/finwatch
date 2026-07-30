@@ -1,0 +1,102 @@
+# Manually triggered Play Store upload. Safe to run without secrets: if the
+# required secrets aren't configured, the workflow prints a notice and
+# finishes successfully without uploading anything.
+#
+# Required secrets:
+#   PLAY_SERVICE_ACCOUNT_JSON -- full JSON key of a Google Cloud service
+#                                account that is linked to the Play Console
+#                                (Setup > API access) with release permission
+#   RELEASE_KEYSTORE_BASE64   -- base64 of the release keystore (upload key)
+#   RELEASE_KEYSTORE_PASSWORD -- keystore password
+#   RELEASE_KEY_ALIAS         -- key alias inside the keystore
+#   RELEASE_KEY_PASSWORD      -- key password
+#
+# Note on versionCode: Play requires a strictly increasing versionCode per
+# artifact. The push-triggered build workflow uses github.run_number, which
+# this manually triggered workflow does NOT share -- so the versionCode for
+# a Play upload is an explicit input here. Pick a value higher than anything
+# previously uploaded to Play (and higher than the current build workflow
+# run number if you want GitHub releases and Play releases to stay in sync).
+name: Play Store upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionCode:
+        description: "versionCode for this upload (must exceed the last one on Play)"
+        required: true
+        type: string
+      track:
+        description: "Play release track"
+        required: true
+        default: internal
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets
+        id: check
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$PLAY_JSON" ] || [ -z "$KEYSTORE_BASE64" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PLAY_SERVICE_ACCOUNT_JSON and/or RELEASE_KEYSTORE_BASE64 are not configured -- skipping the Play upload. See the comment at the top of play-publish.yml for the required secrets."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        if: steps.check.outputs.configured == 'true'
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare release keystore from secrets
+        if: steps.check.outputs.configured == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Build Prod release AAB
+        if: steps.check.outputs.configured == 'true'
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleProdRelease -PappVersionCode=${{ inputs.versionCode }} --no-daemon
+
+      - name: Upload to Google Play
+        if: steps.check.outputs.configured == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: one.srz.finwatch
+          releaseFiles: app/build/outputs/bundle/prodRelease/*.aab
+          track: ${{ inputs.track }}
+          status: completed

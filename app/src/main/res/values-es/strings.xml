@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="login_title">Iniciar sesión en jellywear</string>
+    <string name="login_title">Iniciar sesión en Finwatch</string>
     <string name="login_prompt_server">URL del servidor</string>
     <string name="login_prompt_username">Usuario</string>
     <string name="login_prompt_password">Contraseña</string>

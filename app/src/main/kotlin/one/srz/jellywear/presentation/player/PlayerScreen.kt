@@ -2,7 +2,7 @@ package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
 import android.content.Intent
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -47,6 +47,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -94,6 +95,9 @@ private const val AUDIO_AUTO_BACKGROUND_MS = 10_000L
 // approximate it here from the item's own stream info instead.
 private val COMPATIBLE_AUDIO_CODECS = setOf("aac", "mp3", "flac", "opus", "vorbis")
 
+// PlayerView and AspectRatioFrameLayout (media3-ui) are @UnstableApi; the
+// opt-in stays function-local instead of propagating to callers.
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
@@ -315,7 +319,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // apps can't force the display off directly, but backgrounding the
     // activity lets the system's own idle/ambient timeout take over while
     // playback keeps going through the MediaSession. Any tap resets it.
-    val activity = context as? ComponentActivity
+    val activity = LocalActivity.current
     LaunchedEffect(isVideo, interactionTick) {
         if (!isVideo) {
             delay(AUDIO_AUTO_BACKGROUND_MS)
@@ -497,6 +501,9 @@ private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean
         // Transcoding only ever applies to video -- audio-only items always direct play.
         api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
     }
-    val separator = if (base.contains("?")) "&" else "?"
-    return "$base$separator${ApiClient.QUERY_ACCESS_TOKEN}=${api.accessToken}"
+    // Deliberately no access token in the URL: PlaybackService authenticates
+    // its HTTP requests with the Authorization header instead (see its
+    // ExoPlayer data-source factory), keeping the token out of error logs
+    // and anything else that captures URLs.
+    return base
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="login_title">تسجيل الدخول إلى jellywear</string>
+    <string name="login_title">تسجيل الدخول إلى Finwatch</string>
     <string name="login_prompt_server">رابط الخادم</string>
     <string name="login_prompt_username">اسم المستخدم</string>
     <string name="login_prompt_password">كلمة المرور</string>

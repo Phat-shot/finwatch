@@ -64,14 +64,24 @@ fun LoginScreen(
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
-        val text = result.data
+        val rawText = result.data
             ?.let { RemoteInput.getResultsFromIntent(it) }
             ?.getCharSequence(REMOTE_INPUT_KEY)
             ?.toString()
-            ?.trim()
-            .orEmpty()
 
-        if (text.isEmpty()) {
+        // No payload at all means the user backed out of the input UI.
+        if (rawText == null) {
+            errorMessage = genericError
+            step = LoginStep.ERROR
+            return@rememberLauncherForActivityResult
+        }
+
+        // Server URL and username can safely be trimmed, but a password must
+        // be passed through untouched -- leading/trailing whitespace can be
+        // part of a valid password. An empty password is legitimate too:
+        // Jellyfin allows passwordless accounts.
+        val text = if (step == LoginStep.PASSWORD) rawText else rawText.trim()
+        if (text.isEmpty() && step != LoginStep.PASSWORD) {
             errorMessage = genericError
             step = LoginStep.ERROR
             return@rememberLauncherForActivityResult
@@ -113,16 +123,18 @@ fun LoginScreen(
                         // redirect http -> https -- letting the check pass
                         // even though this login POST hits the same
                         // redirect and loses its body, failing where the
-                        // GET didn't. One more try on the other scheme
-                        // before giving up, but only if the user didn't
+                        // GET didn't. One more try, upgraded to https,
+                        // before giving up -- but only if the user didn't
                         // type a scheme explicitly (respect their choice).
+                        // Never the reverse: a https -> http retry would
+                        // resend the password in cleartext.
                         if (result.isFailure && !serverUrlHadExplicitScheme) {
-                            val flippedClient = currentClient.baseUrl
-                                ?.let { session.buildClientWithFlippedScheme(it) }
-                            if (flippedClient != null) {
-                                val retryResult = session.login(flippedClient, username, text)
+                            val upgradedClient = currentClient.baseUrl
+                                ?.let { session.buildClientWithUpgradedScheme(it) }
+                            if (upgradedClient != null) {
+                                val retryResult = session.login(upgradedClient, username, text)
                                 if (retryResult.isSuccess) {
-                                    client = flippedClient
+                                    client = upgradedClient
                                     result = retryResult
                                 }
                             }
