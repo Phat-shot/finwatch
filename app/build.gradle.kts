@@ -6,12 +6,21 @@ plugins {
 
 android {
     namespace = "one.srz.jellywear"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "one.srz.jellywear"
         minSdk = 28
-        targetSdk = 34
+        // 36 (not just Play's current minimum of 35): from 2026-08-31 Play
+        // requires targetSdk 36 for new apps and updates anyway, and none of
+        // the Android 15/16 behavior changes bite this app -- no
+        // onBackPressed/KEYCODE_BACK handling (predictive back is a no-op
+        // with swipe-dismiss Compose navigation), no BODY_SENSORS, and
+        // edge-to-edge enforcement targets phones/tablets, not the always
+        // fullscreen Wear surface. The mediaPlayback foreground service
+        // type + FOREGROUND_SERVICE_MEDIA_PLAYBACK permission required
+        // since targetSdk 34 are already declared in the manifest.
+        targetSdk = 36
 
         val ciVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
         versionCode = ciVersionCode ?: 1
@@ -85,10 +94,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -101,45 +106,59 @@ android {
     }
 }
 
-dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+// Replaces the deprecated android.kotlinOptions DSL (slated for removal in
+// newer Kotlin Gradle plugin versions).
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
 
-    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+dependencies {
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
+
+    val composeBom = platform("androidx.compose:compose-bom:2026.06.01")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material:material-icons-extended")
+    // Pinned explicitly: the icon artifacts stopped at 1.7.8 (Compose 1.8
+    // dropped them) and are no longer managed by newer Compose BOMs. 1.7.8
+    // stays binary-compatible with current Compose runtimes.
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     // AnimatedVisibility/fadeIn/fadeOut for the progress ring's fade with the
     // video controls -- pulled in transitively by compose-navigation already,
     // declared explicitly since that's an implementation detail to rely on.
     implementation("androidx.compose.animation:animation")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // 1.4.0 for ScalingLazyColumn's built-in rotaryScrollableBehavior (crown scrolling).
-    implementation("androidx.wear.compose:compose-material:1.4.0")
-    implementation("androidx.wear.compose:compose-foundation:1.4.0")
-    implementation("androidx.wear.compose:compose-navigation:1.4.0")
+    implementation("androidx.wear.compose:compose-material:1.6.2")
+    implementation("androidx.wear.compose:compose-foundation:1.6.2")
+    implementation("androidx.wear.compose:compose-navigation:1.6.2")
     implementation("androidx.wear:wear-input:1.2.0")
 
-    // Cover/album art thumbnails.
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    // Cover/album art thumbnails. 2.7.0 is the last Coil 2 release; Coil 3
+    // is a separate migration (new io.coil-kt.coil3 coordinates + package
+    // names, ImageLoaderFactory replaced by SingletonImageLoader.Factory,
+    // OkHttp moved behind coil-network-okhttp) -- deliberately not done
+    // here, see https://coil-kt.github.io/coil/upgrading_to_coil3/.
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // Jellyfin server API client.
-    implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
+    // Jellyfin server API client. 1.8.12 is the latest stable; 1.9.x is
+    // still in beta and raises the minimum supported server to Jellyfin 12,
+    // which would cut off users on older servers.
+    implementation("org.jellyfin.sdk:jellyfin-core:1.8.12")
     // jellyfin-core's HTTP client logs via kotlin-logging's SLF4J backend,
     // which needs a binding on the classpath or it crashes with
     // NoClassDefFoundError on Android (no SLF4J implementation by default).
     // slf4j-simple writes to stdout/stderr, which logcat captures.
-    implementation("org.slf4j:slf4j-simple:2.0.17")
+    implementation("org.slf4j:slf4j-simple:2.0.18")
 
     // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
-    // Pinned below 1.5.0: from there on media3 requires compileSdk 35+/36+,
-    // ahead of what AGP 8.5.2 (max recommended compileSdk 34) supports here.
-    implementation("androidx.media3:media3-exoplayer:1.4.1")
-    implementation("androidx.media3:media3-session:1.4.1")
-    implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-session:1.10.1")
+    implementation("androidx.media3:media3-ui:1.10.1")
 
     testImplementation("junit:junit:4.13.2")
 }

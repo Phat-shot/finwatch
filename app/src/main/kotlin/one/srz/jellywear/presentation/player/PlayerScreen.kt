@@ -47,6 +47,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -94,6 +95,9 @@ private const val AUDIO_AUTO_BACKGROUND_MS = 10_000L
 // approximate it here from the item's own stream info instead.
 private val COMPATIBLE_AUDIO_CODECS = setOf("aac", "mp3", "flac", "opus", "vorbis")
 
+// PlayerView and AspectRatioFrameLayout (media3-ui) are @UnstableApi; the
+// opt-in stays function-local instead of propagating to callers.
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
