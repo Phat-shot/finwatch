@@ -1,4 +1,4 @@
-# jellywear
+# Finwatch
 
 An **unofficial** Jellyfin client for Wear OS — browse your libraries and
 play audio or video, built with Kotlin + Jetpack Compose for Wear OS +
@@ -6,7 +6,7 @@ Media3. Not affiliated with or endorsed by the Jellyfin project.
 
 ## License
 
-jellywear is free software, licensed under the
+Finwatch is free software, licensed under the
 [Mozilla Public License 2.0](LICENSE). Licenses of bundled third-party
 components (including the LGPL-3.0-licensed
 [jellyfin-sdk-kotlin](https://github.com/jellyfin/jellyfin-sdk-kotlin))
@@ -65,8 +65,8 @@ CI:
 
 | Branch | Flavor | App label      | Application ID          | Release asset            |
 |--------|--------|----------------|--------------------------|---------------------------|
-| `main` | `prod` | jellywear      | `one.srz.jellywear`      | `jellywear-v#.apk`        |
-| `test` | `beta` | jellywear beta | `one.srz.jellywear.beta` | `jellywear-v#-test.apk`   |
+| `main` | `prod` | Finwatch       | `one.srz.finwatch`       | `finwatch-v#.apk`        |
+| `test` | `beta` | Finwatch beta  | `one.srz.finwatch.beta`  | `finwatch-v#-test.apk`   |
 
 `#` is the GitHub Actions run number, passed to Gradle as `-PappVersionCode`.
 
@@ -123,8 +123,8 @@ skips cleanly instead of failing.
 ## Local build
 
 ```bash
-./gradlew assembleProdRelease   # jellywear
-./gradlew assembleBetaRelease   # jellywear beta (run scripts/badge_launcher_icon.py first for the badged icon)
+./gradlew assembleProdRelease   # Finwatch
+./gradlew assembleBetaRelease   # Finwatch beta (run scripts/badge_launcher_icon.py first for the badged icon)
 ```
 
 Requires JDK 17 and the Android SDK (compileSdk 36). The build uses

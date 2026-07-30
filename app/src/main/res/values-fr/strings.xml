@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="login_title">Connexion à jellywear</string>
+    <string name="login_title">Connexion à Finwatch</string>
     <string name="login_prompt_server">URL du serveur</string>
     <string name="login_prompt_username">Nom d\'utilisateur</string>
     <string name="login_prompt_password">Mot de passe</string>

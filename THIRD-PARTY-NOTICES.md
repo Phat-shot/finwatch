@@ -1,12 +1,12 @@
 # Third-Party Notices
 
-jellywear is licensed under the [Mozilla Public License 2.0](LICENSE).
+Finwatch is licensed under the [Mozilla Public License 2.0](LICENSE).
 
-"Jellyfin" is a trademark of the Jellyfin project. jellywear is an
+"Jellyfin" is a trademark of the Jellyfin project. Finwatch is an
 **unofficial** third-party client and is not affiliated with or endorsed
 by the Jellyfin project.
 
-jellywear bundles or links against the following third-party components:
+Finwatch bundles or links against the following third-party components:
 
 | Component | License |
 |---|---|
@@ -23,7 +23,7 @@ jellywear bundles or links against the following third-party components:
 jellyfin-sdk-kotlin is licensed under the GNU Lesser General Public
 License v3.0. Its source code is available at
 <https://github.com/jellyfin/jellyfin-sdk-kotlin>. The complete
-corresponding source code of jellywear — including the build scripts
+corresponding source code of Finwatch — including the build scripts
 needed to rebuild the app with a modified version of the library — is
 published in this repository, which satisfies the LGPL's requirement
 that users be able to relink the application against a modified version

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the jellywear launcher icon (legacy + adaptive) into app/src/main/res.
+"""Generate the Finwatch launcher icon (legacy + adaptive) into app/src/main/res.
 
 Run once locally when the icon design changes:
     python3 scripts/generate_launcher_icons.py
