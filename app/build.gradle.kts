@@ -6,12 +6,21 @@ plugins {
 
 android {
     namespace = "one.srz.jellywear"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "one.srz.jellywear"
         minSdk = 28
-        targetSdk = 34
+        // 36 (not just Play's current minimum of 35): from 2026-08-31 Play
+        // requires targetSdk 36 for new apps and updates anyway, and none of
+        // the Android 15/16 behavior changes bite this app -- no
+        // onBackPressed/KEYCODE_BACK handling (predictive back is a no-op
+        // with swipe-dismiss Compose navigation), no BODY_SENSORS, and
+        // edge-to-edge enforcement targets phones/tablets, not the always
+        // fullscreen Wear surface. The mediaPlayback foreground service
+        // type + FOREGROUND_SERVICE_MEDIA_PLAYBACK permission required
+        // since targetSdk 34 are already declared in the manifest.
+        targetSdk = 36
 
         val ciVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
         versionCode = ciVersionCode ?: 1
