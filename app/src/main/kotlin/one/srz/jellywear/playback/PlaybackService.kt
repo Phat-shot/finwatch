@@ -173,6 +173,11 @@ class PlaybackService : MediaSessionService() {
         override fun handleCustomCommand(session: MediaSession, action: String, extras: Bundle): Boolean =
             delegate.handleCustomCommand(session, action, extras)
 
+        // Required by media3 1.10's Provider interface (didn't exist in 1.4);
+        // the delegate owns channel creation, so just pass its answer through.
+        override fun getNotificationChannelInfo(): MediaNotification.Provider.NotificationChannelInfo =
+            delegate.getNotificationChannelInfo()
+
         private fun withOngoingActivity(
             mediaSession: MediaSession,
             mediaNotification: MediaNotification,
