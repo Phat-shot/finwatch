@@ -138,16 +138,22 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.6.2")
     implementation("androidx.wear:wear-input:1.2.0")
 
-    // Cover/album art thumbnails.
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    // Cover/album art thumbnails. 2.7.0 is the last Coil 2 release; Coil 3
+    // is a separate migration (new io.coil-kt.coil3 coordinates + package
+    // names, ImageLoaderFactory replaced by SingletonImageLoader.Factory,
+    // OkHttp moved behind coil-network-okhttp) -- deliberately not done
+    // here, see https://coil-kt.github.io/coil/upgrading_to_coil3/.
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // Jellyfin server API client.
-    implementation("org.jellyfin.sdk:jellyfin-core:1.8.6")
+    // Jellyfin server API client. 1.8.12 is the latest stable; 1.9.x is
+    // still in beta and raises the minimum supported server to Jellyfin 12,
+    // which would cut off users on older servers.
+    implementation("org.jellyfin.sdk:jellyfin-core:1.8.12")
     // jellyfin-core's HTTP client logs via kotlin-logging's SLF4J backend,
     // which needs a binding on the classpath or it crashes with
     // NoClassDefFoundError on Android (no SLF4J implementation by default).
     // slf4j-simple writes to stdout/stderr, which logcat captures.
-    implementation("org.slf4j:slf4j-simple:2.0.17")
+    implementation("org.slf4j:slf4j-simple:2.0.18")
 
     // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
     implementation("androidx.media3:media3-exoplayer:1.10.1")
