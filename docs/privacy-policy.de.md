@@ -1,6 +1,6 @@
 <!--
   VORLAGE / ORIENTIERUNG — keine Rechtsberatung.
-  Vor Veröffentlichung: Platzhalter [NAME/ADRESSE …] und philipp@srz.one ausfüllen
+  Angaben zum Verantwortlichen sind eingetragen; aktuell halten.
   und den Text einmal selbst (ggf. fachkundig) prüfen.
   Vorgesehener Hosting-Ort: https://srz.one/finwatch/privacy
 -->

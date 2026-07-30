@@ -1,6 +1,6 @@
 <!--
   TEMPLATE / FOR ORIENTATION — not legal advice.
-  Before publishing: fill in the [NAME/ADDRESS …] and philipp@srz.one placeholders
+  Controller details are filled in; keep them current.
   and review the text yourself (or have it reviewed).
   Intended hosting location: https://srz.one/finwatch/privacy
 -->
