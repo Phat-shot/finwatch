@@ -1,7 +1,16 @@
 # jellywear
 
-A Jellyfin client for Wear OS — browse your libraries and play audio or
-video, built with Kotlin + Jetpack Compose for Wear OS + Media3.
+An **unofficial** Jellyfin client for Wear OS — browse your libraries and
+play audio or video, built with Kotlin + Jetpack Compose for Wear OS +
+Media3. Not affiliated with or endorsed by the Jellyfin project.
+
+## License
+
+jellywear is free software, licensed under the
+[Mozilla Public License 2.0](LICENSE). Licenses of bundled third-party
+components (including the LGPL-3.0-licensed
+[jellyfin-sdk-kotlin](https://github.com/jellyfin/jellyfin-sdk-kotlin))
+are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Features
 
