@@ -115,25 +115,27 @@ kotlin {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 
-    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.06.01")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material:material-icons-extended")
+    // Pinned explicitly: the icon artifacts stopped at 1.7.8 (Compose 1.8
+    // dropped them) and are no longer managed by newer Compose BOMs. 1.7.8
+    // stays binary-compatible with current Compose runtimes.
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     // AnimatedVisibility/fadeIn/fadeOut for the progress ring's fade with the
     // video controls -- pulled in transitively by compose-navigation already,
     // declared explicitly since that's an implementation detail to rely on.
     implementation("androidx.compose.animation:animation")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // 1.4.0 for ScalingLazyColumn's built-in rotaryScrollableBehavior (crown scrolling).
-    implementation("androidx.wear.compose:compose-material:1.4.0")
-    implementation("androidx.wear.compose:compose-foundation:1.4.0")
-    implementation("androidx.wear.compose:compose-navigation:1.4.0")
+    implementation("androidx.wear.compose:compose-material:1.6.2")
+    implementation("androidx.wear.compose:compose-foundation:1.6.2")
+    implementation("androidx.wear.compose:compose-navigation:1.6.2")
     implementation("androidx.wear:wear-input:1.2.0")
 
     // Cover/album art thumbnails.
