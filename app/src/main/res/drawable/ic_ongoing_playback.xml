@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static icon for the playback Ongoing Activity: shown on the watch face
+     while audio keeps playing in the background. Per the OngoingActivity
+     guidelines this must be a simple monochrome (white) vector on a
+     transparent background; the system tints it to match the watch face. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,5v14l11,-7z" />
+</vector>

@@ -98,6 +98,9 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.4.0")
     implementation("androidx.wear.compose:compose-navigation:1.4.0")
     implementation("androidx.wear:wear-input:1.2.0")
+    // Ongoing Activity (watch-face chip while playback runs) -- a Wear OS
+    // app-quality requirement for background media playback.
+    implementation("androidx.wear:wear-ongoing:1.1.0")
 
     // Cover/album art thumbnails.
     implementation("io.coil-kt:coil-compose:2.6.0")
