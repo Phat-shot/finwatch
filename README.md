@@ -127,7 +127,8 @@ skips cleanly instead of failing.
 ./gradlew assembleBetaRelease   # jellywear beta (run scripts/badge_launcher_icon.py first for the badged icon)
 ```
 
-Requires JDK 17 and the Android SDK (compileSdk 34).
+Requires JDK 17 and the Android SDK (compileSdk 36). The build uses
+Gradle 8.14 (wrapper) with AGP 8.13 and Kotlin 2.3.
 
 ## Regenerating the base launcher icon
 
@@ -143,10 +144,11 @@ python3 scripts/generate_launcher_icons.py
   debug fallback, see "Release signing" above) are in place, but the
   keystore itself still has to be generated and its secrets configured
   before a store release.
-- `compileSdk`/`targetSdk` are 34. Google Play requires **targetSdk 35**
-  for new Wear OS apps (existing ones by 2026-08-31), so an AGP +
-  compileSdk upgrade is needed before a Play submission. Media3 is pinned
-  to 1.4.1 for the same reason (1.5+ needs compileSdk 35).
+- The toolchain is on the last AGP 8.x/Gradle 8.x line by design; the
+  AGP 9 + Gradle 9 + Kotlin 2.4 (and possibly Coil 3) migration is a
+  separate follow-up (see issue #21). Playback lifecycle around
+  pause/task-removal should be re-tested on a watch after the Media3
+  1.4 -> 1.10 jump.
 - No CHANGELOG or CONTRIBUTING yet; release notes only exist as GitHub
   Release entries.
 - No privacy policy URL yet — Google Play requires one for every app.
