@@ -2,7 +2,7 @@ package one.srz.jellywear.presentation.player
 
 import android.content.ComponentName
 import android.content.Intent
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -319,7 +319,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // apps can't force the display off directly, but backgrounding the
     // activity lets the system's own idle/ambient timeout take over while
     // playback keeps going through the MediaSession. Any tap resets it.
-    val activity = context as? ComponentActivity
+    val activity = LocalActivity.current
     LaunchedEffect(isVideo, interactionTick) {
         if (!isVideo) {
             delay(AUDIO_AUTO_BACKGROUND_MS)
