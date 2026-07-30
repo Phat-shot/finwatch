@@ -95,7 +95,7 @@ fun ColorPickerScreen(
                 Text(text = stringResource(nameRes))
                 if (selected) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(imageVector = Icons.Filled.Check, contentDescription = null)
+                    Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected))
                 }
             }
         }

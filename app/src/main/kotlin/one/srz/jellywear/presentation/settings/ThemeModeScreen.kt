@@ -48,7 +48,10 @@ fun ThemeModeScreen(preferences: AppPreferences, onDone: () -> Unit) {
                 },
                 label = { Text(text = stringResource(mode.labelRes())) },
                 icon = if (selected) {
-                    { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+                    // The check mark is the only thing distinguishing the
+                    // active choice, so it needs a label for TalkBack (read
+                    // merged with the chip's text as "Selected, <option>").
+                    { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
                 } else {
                     null
                 },

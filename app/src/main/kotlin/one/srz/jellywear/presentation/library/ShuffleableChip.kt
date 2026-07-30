@@ -49,6 +49,9 @@ fun ShuffleableChip(
         if (imageUrl != null) {
             AsyncImage(
                 model = imageUrl,
+                // Purely decorative: the chip's own text right next to it
+                // already names the item, so a description here would just
+                // make TalkBack read the same title twice.
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

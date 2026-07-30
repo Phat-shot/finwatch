@@ -20,6 +20,13 @@
     <string name="category_favorites">المفضلة</string>
     <string name="category_playlists">قوائم التشغيل</string>
 
+    <string name="player_previous">المقطع السابق</string>
+    <string name="player_play">تشغيل</string>
+    <string name="player_pause">إيقاف مؤقت</string>
+    <string name="player_next">المقطع التالي</string>
+
+    <string name="selected">محدد</string>
+
     <string name="settings_title">الإعدادات</string>
     <string name="settings_tile">الإعدادات</string>
     <string name="settings_version">الإصدار %1$s</string>
