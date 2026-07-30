@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stamp a "BETA" ribbon onto the jellywear launcher icon for the test build.
+"""Stamp a "BETA" ribbon onto the Finwatch launcher icon for the test build.
 
 Runs as a CI step (only for the `beta` flavor / `test` branch) *before*
 `./gradlew assembleBetaRelease`. It copies the prod launcher icons from

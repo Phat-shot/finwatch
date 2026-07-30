@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "jellywear"
+rootProject.name = "finwatch"
 include(":app")

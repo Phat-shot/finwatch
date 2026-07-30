@@ -9,7 +9,12 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "one.srz.jellywear"
+        // App is branded "Finwatch"; the namespace / Kotlin packages keep the
+        // historical one.srz.jellywear -- invisible to users and Play, and a
+        // package-wide rename buys nothing but churn. The applicationId is
+        // what Play and devices identify the app by, and it is forever once
+        // the first release ships, so it carries the real name.
+        applicationId = "one.srz.finwatch"
         minSdk = 28
         // 36 (not just Play's current minimum of 35): from 2026-08-31 Play
         // requires targetSdk 36 for new apps and updates anyway, and none of
@@ -63,13 +68,13 @@ android {
     productFlavors {
         create("prod") {
             dimension = "channel"
-            // applicationId / app_name come from the main source set (jellywear).
+            // applicationId / app_name come from the main source set (Finwatch).
         }
         create("beta") {
             dimension = "channel"
             applicationIdSuffix = ".beta"
             versionNameSuffix = "-beta"
-            // app_name ("jellywear beta") and badged launcher icons live in
+            // app_name ("Finwatch beta") and badged launcher icons live in
             // src/beta/res, see scripts/badge_launcher_icon.py.
         }
     }
@@ -115,9 +120,12 @@ kotlin {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.19.0")
+    // core 1.18+/lifecycle 2.10+ require AGP 9.1 / compileSdk 37 -- these are
+    // the newest versions the current AGP 8.13 / compileSdk 36 toolchain
+    // accepts (checkAarMetadata fails the build otherwise).
+    implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
 
     val composeBom = platform("androidx.compose:compose-bom:2026.06.01")
     implementation(composeBom)

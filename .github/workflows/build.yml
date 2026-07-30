@@ -81,13 +81,13 @@ jobs:
             echo "flavor=Prod" >> "$GITHUB_OUTPUT"
             echo "flavor_lower=prod" >> "$GITHUB_OUTPUT"
             echo "tag=v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-            echo "release_name=jellywear v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Finwatch v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
             echo "flavor=Beta" >> "$GITHUB_OUTPUT"
             echo "flavor_lower=beta" >> "$GITHUB_OUTPUT"
             echo "tag=v${{ github.run_number }}-test" >> "$GITHUB_OUTPUT"
-            echo "release_name=jellywear beta v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Finwatch beta v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "Unsupported branch: ${{ github.ref }}" >&2
@@ -151,9 +151,9 @@ jobs:
             exit 1
           fi
           if [ "${{ steps.variant.outputs.flavor_lower }}" = "beta" ]; then
-            final_name="jellywear-v${{ github.run_number }}-test.apk"
+            final_name="finwatch-v${{ github.run_number }}-test.apk"
           else
-            final_name="jellywear-v${{ github.run_number }}.apk"
+            final_name="finwatch-v${{ github.run_number }}.apk"
           fi
           final_path="$(dirname "$built_apk")/$final_name"
           mv "$built_apk" "$final_path"
@@ -168,7 +168,7 @@ jobs:
             echo "No AAB produced" >&2
             exit 1
           fi
-          final_path="$(dirname "$built_aab")/jellywear-v${{ github.run_number }}.aab"
+          final_path="$(dirname "$built_aab")/finwatch-v${{ github.run_number }}.aab"
           mv "$built_aab" "$final_path"
           echo "path=$final_path" >> "$GITHUB_OUTPUT"
 
