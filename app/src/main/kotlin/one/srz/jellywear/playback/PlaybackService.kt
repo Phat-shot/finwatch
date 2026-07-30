@@ -33,7 +33,12 @@ const val EXTRA_OPEN_NOW_PLAYING = "one.srz.jellywear.EXTRA_OPEN_NOW_PLAYING"
  * running (with system media controls) after the app leaves the
  * foreground -- e.g. the watch screen turns off while listening.
  */
-@UnstableApi
+// @OptIn instead of @UnstableApi: the unstable surface (DefaultDataSource,
+// DefaultHttpDataSource, DefaultMediaSourceFactory) is an implementation
+// detail of this class. @UnstableApi would propagate to every reference to
+// PlaybackService (MainActivity, PlayerScreen), each then failing lint's
+// UnsafeOptInUsageError; @OptIn accepts the risk here without spreading it.
+@androidx.annotation.OptIn(UnstableApi::class)
 class PlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
