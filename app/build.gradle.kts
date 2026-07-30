@@ -81,7 +81,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 code shrinking + resource shrinking: smaller APK/AAB and
+            // less bytecode surface. Keep rules for the libraries that need
+            // them (jellyfin-sdk/kotlinx.serialization, slf4j) live in
+            // proguard-rules.pro; most other dependencies ship their own
+            // consumer rules inside their artifacts (see comments there).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             // Real keystore when the RELEASE_* environment/properties are
             // configured (CI secrets), debug signing otherwise so every
             // checkout still builds an installable APK without any setup.
