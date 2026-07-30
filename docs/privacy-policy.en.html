@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finwatch — Privacy Policy / Datenschutzerklärung</title>
+<!--
+  TEMPLATE / FOR ORIENTATION — not legal advice. / VORLAGE — keine Rechtsberatung.
+  Before publishing, fill in the [NAME/ADDRESS] and [CONTACT EMAIL] placeholders.
+  Intended hosting location: https://srz.one/finwatch/privacy
+-->
+<style>
+  body { margin: 0 auto; max-width: 44rem; padding: 1.5rem 1rem 4rem;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         line-height: 1.6; color: #1c1c1e; background: #ffffff; }
+  h1 { font-size: 1.6rem; line-height: 1.3; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; }
+  a { color: #0a58ca; }
+  nav.lang { position: sticky; top: 0; background: #ffffff; padding: .5rem 0;
+             border-bottom: 1px solid #ddd; margin-bottom: 1.5rem; }
+  nav.lang a { margin-right: 1rem; font-weight: 600; text-decoration: none; }
+  section:target { scroll-margin-top: 3rem; }
+  section + section { border-top: 2px solid #ddd; margin-top: 3rem; padding-top: 1rem; }
+  .meta { color: #555; font-size: .9rem; }
+  footer { margin-top: 3rem; font-size: .85rem; color: #555;
+           border-top: 1px solid #ddd; padding-top: 1rem; }
+  @media (prefers-color-scheme: dark) {
+    body, nav.lang { background: #111; color: #e6e6e6; }
+    a { color: #7db3ff; }
+    .meta, footer { color: #aaa; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="lang" aria-label="Language">
+  <a href="#en">English</a>
+  <a href="#de">Deutsch</a>
+</nav>
+
+<section id="en" lang="en">
+<h1>Privacy Policy — Finwatch</h1>
+<p class="meta">Last updated: 30 July 2026</p>
+
+<p>Finwatch is an unofficial open-source client for Jellyfin media servers on
+Wear OS smartwatches. This policy describes what data the app processes — and,
+above all, what it does not.</p>
+
+<h2>Summary</h2>
+<ul>
+  <li>The developer operates <strong>no servers of their own</strong> and
+      <strong>receives no data whatsoever</strong> from the app.</li>
+  <li>The app connects exclusively to the <strong>Jellyfin server that you
+      configure yourself</strong>. What that server stores is determined by its
+      operator (usually you).</li>
+  <li><strong>No tracking, no analytics, no advertising, no third-party
+      SDKs</strong> that collect data.</li>
+</ul>
+
+<h2>Controller</h2>
+<p>[NAME/ADDRESS — to be inserted by the operator]<br>
+Contact: [CONTACT EMAIL]</p>
+<p>Because the app transmits no personal data to the developer, in normal
+operation no processing of personal data within the meaning of the GDPR takes
+place on the developer's side. This policy documents exactly that and explains
+the processing that happens locally on your watch and towards your own
+server.</p>
+
+<h2>What data the app processes</h2>
+<p><strong>Sign-in data (server URL, username, password).</strong>
+When you sign in, your username and password are transmitted once, directly to
+the Jellyfin server you entered — and to no one else. Your password is not
+stored. The server issues an access token; this token is stored locally on the
+watch, encrypted with a key held in the Android Keystore (never in
+plaintext).</p>
+<p><strong>Using the app (browsing, playback).</strong>
+While browsing and playing, the app sends the requests required for those
+features (library queries, streaming requests, playback progress) to your
+Jellyfin server. This data is exchanged solely between your watch and your
+server. Whatever the server logs or stores (e.g. play history) is the
+responsibility of the server operator.</p>
+<p><strong>Settings.</strong> Your app settings (appearance, playback, visible
+libraries, language) are stored locally on the watch only.</p>
+<p><strong>Legal basis</strong> (to the extent the GDPR applies to this local
+processing at all): the processing is necessary to provide the features you use
+(Art. 6(1)(b) GDPR).</p>
+
+<h2>What the app does NOT do</h2>
+<ul>
+  <li>no collection or transmission of data to the developer or third parties,</li>
+  <li>no tracking, no analytics, no crash reports sent to the developer,</li>
+  <li>no advertising, no advertising IDs,</li>
+  <li>no location data, no contacts, no sensor data,</li>
+  <li>no account creation — the app only signs in to an existing account on
+      your own Jellyfin server.</li>
+</ul>
+
+<h2>Transport encryption (HTTPS)</h2>
+<p>Whether the connection to your Jellyfin server is encrypted depends on the
+server URL you enter. <strong>We strongly recommend an
+<code>https://</code> address.</strong> For compatibility (e.g. servers on a
+home network), the app also allows unencrypted <code>http://</code>
+connections; in that case, credentials and media are transmitted unencrypted.
+Securing the server is the server operator's responsibility.</p>
+
+<h2>Android Auto Backup</h2>
+<p>The app participates in Android's Auto Backup. As a result, the server URL,
+username, and app settings may be included in your device's Google account
+backup (Google Drive); that backup is encrypted by Google. The access token is
+encrypted with a <strong>device-bound</strong> Keystore key and is therefore
+unusable on any other device. You can disable backup in your device's
+Android/Google settings.</p>
+
+<h2>App permissions</h2>
+<ul>
+  <li><strong>Internet</strong> — to connect to your Jellyfin server.</li>
+  <li><strong>Notifications / foreground service (media playback)</strong> —
+      so playback keeps running with system media controls when the screen
+      turns off.</li>
+  <li><strong>Wake lock</strong> — prevents playback from being cut off by
+      power saving.</li>
+</ul>
+
+<h2>Your rights</h2>
+<p>Under the GDPR you have, vis-à-vis a controller, in particular the rights of
+access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction
+(Art. 18), data portability (Art. 20) and objection (Art. 21), as well as the
+right to lodge a complaint with a supervisory authority (Art. 77).</p>
+<p>Since the developer stores no personal data about you, there is normally
+nothing to disclose or erase on the developer's side. In practice:</p>
+<ul>
+  <li><strong>Delete local data:</strong> clear the app's data in the watch
+      settings, or uninstall the app.</li>
+  <li><strong>Data on the server:</strong> contact the operator of your
+      Jellyfin server (usually yourself).</li>
+</ul>
+<p>For any questions, contact [CONTACT EMAIL].</p>
+
+<h2>Changes</h2>
+<p>This policy will be updated as needed (e.g. for new features). The current
+version is always available at this address; the date of the last change is
+shown at the top.</p>
+</section>
+
+<section id="de" lang="de">
+<h1>Datenschutzerklärung — Finwatch</h1>
+<p class="meta">Stand: 30. Juli 2026</p>
+
+<p>Finwatch ist ein inoffizieller Open-Source-Client für Jellyfin-Medienserver
+auf Wear-OS-Smartwatches. Diese Erklärung beschreibt, welche Daten die App
+verarbeitet — und vor allem, welche nicht.</p>
+
+<h2>Das Wichtigste in Kürze</h2>
+<ul>
+  <li>Der Entwickler betreibt <strong>keine eigenen Server</strong> und
+      <strong>erhält keinerlei Daten</strong> aus der App.</li>
+  <li>Die App verbindet sich ausschließlich mit dem <strong>Jellyfin-Server,
+      den Sie selbst eintragen</strong>. Was dieser Server speichert, bestimmt
+      dessen Betreiber (in der Regel Sie selbst).</li>
+  <li><strong>Kein Tracking, keine Analyse-Dienste, keine Werbung, keine
+      Drittanbieter-SDKs</strong>, die Daten sammeln.</li>
+</ul>
+
+<h2>Verantwortlicher</h2>
+<p>[NAME/ADRESSE — vom Betreiber einzusetzen]<br>
+Kontakt: [KONTAKT-E-MAIL]</p>
+<p>Da die App keine personenbezogenen Daten an den Entwickler übermittelt,
+findet beim Entwickler im Regelbetrieb keine Verarbeitung personenbezogener
+Daten im Sinne der DSGVO statt. Diese Erklärung dokumentiert genau das und
+erläutert die Verarbeitung, die lokal auf Ihrer Uhr bzw. gegenüber Ihrem
+eigenen Server stattfindet.</p>
+
+<h2>Welche Daten die App verarbeitet</h2>
+<p><strong>Anmeldedaten (Server-URL, Benutzername, Passwort).</strong>
+Bei der Anmeldung werden Benutzername und Passwort einmalig direkt an den von
+Ihnen eingetragenen Jellyfin-Server übermittelt — an niemanden sonst. Ihr
+Passwort wird nicht gespeichert. Der Server stellt ein Zugriffstoken aus;
+dieses wird lokal auf der Uhr gespeichert und dabei mit einem Schlüssel aus dem
+Android-Keystore verschlüsselt (nicht im Klartext).</p>
+<p><strong>Nutzung der App (Bibliothek, Wiedergabe).</strong>
+Beim Stöbern und Abspielen sendet die App die dafür nötigen Anfragen
+(Bibliotheksabfragen, Streaming-Anfragen, Wiedergabestatus) an Ihren
+Jellyfin-Server. Diese Daten werden nur zwischen Ihrer Uhr und Ihrem Server
+ausgetauscht. Was der Server protokolliert oder speichert (z.&nbsp;B.
+Abspielverlauf), liegt in der Verantwortung des Serverbetreibers.</p>
+<p><strong>Einstellungen.</strong> Ihre App-Einstellungen (Darstellung,
+Wiedergabe, angezeigte Bibliotheken, Sprache) werden nur lokal auf der Uhr
+gespeichert.</p>
+<p><strong>Rechtsgrundlage</strong> (soweit die DSGVO auf die lokale
+Verarbeitung überhaupt anwendbar ist): Die Verarbeitung ist zur Bereitstellung
+der von Ihnen genutzten Funktionen erforderlich (Art. 6 Abs. 1 lit. b
+DSGVO).</p>
+
+<h2>Was die App NICHT tut</h2>
+<ul>
+  <li>keine Erhebung oder Übermittlung von Daten an den Entwickler oder
+      Dritte,</li>
+  <li>kein Tracking, keine Analytics, keine Absturzberichte an den
+      Entwickler,</li>
+  <li>keine Werbung, keine Werbe-IDs,</li>
+  <li>keine Standortdaten, keine Kontakte, keine Sensordaten,</li>
+  <li>keine Kontoerstellung — die App meldet sich nur an einem bestehenden
+      Konto Ihres eigenen Jellyfin-Servers an.</li>
+</ul>
+
+<h2>Transportverschlüsselung (HTTPS)</h2>
+<p>Ob die Verbindung zu Ihrem Jellyfin-Server verschlüsselt ist, hängt von der
+Server-URL ab, die Sie eintragen. <strong>Wir empfehlen dringend eine
+<code>https://</code>-Adresse.</strong> Aus Kompatibilitätsgründen
+(z.&nbsp;B. Server im Heimnetz) lässt die App auch unverschlüsselte
+<code>http://</code>-Verbindungen zu; in diesem Fall werden Anmeldedaten und
+Medien unverschlüsselt übertragen. Die Absicherung des Servers liegt beim
+Serverbetreiber.</p>
+
+<h2>Android Auto-Backup</h2>
+<p>Die App nimmt am Auto-Backup von Android teil. Dabei können Server-URL,
+Benutzername und App-Einstellungen in das Google-Konto-Backup Ihres Geräts
+(Google Drive) aufgenommen werden; dieses Backup ist von Google verschlüsselt.
+Das Zugriffstoken ist mit einem <strong>gerätegebundenen</strong>
+Keystore-Schlüssel verschlüsselt und daher auf einem anderen Gerät nicht
+verwendbar. Das Backup können Sie in den Android-/Google-Einstellungen Ihres
+Geräts deaktivieren.</p>
+
+<h2>Berechtigungen der App</h2>
+<ul>
+  <li><strong>Internet</strong> — Verbindung zu Ihrem Jellyfin-Server.</li>
+  <li><strong>Benachrichtigungen / Vordergrunddienst (Medienwiedergabe)</strong>
+      — damit die Wiedergabe mit Systemsteuerung weiterläuft, wenn das Display
+      ausgeht.</li>
+  <li><strong>Wake Lock</strong> — verhindert, dass die Wiedergabe durch den
+      Energiesparmodus abbricht.</li>
+</ul>
+
+<h2>Ihre Rechte</h2>
+<p>Nach der DSGVO haben Sie gegenüber einem Verantwortlichen insbesondere das
+Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17),
+Einschränkung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch
+(Art. 21) sowie das Recht auf Beschwerde bei einer Aufsichtsbehörde
+(Art. 77).</p>
+<p>Da der Entwickler keine personenbezogenen Daten von Ihnen speichert, gibt es
+beim Entwickler in der Regel nichts zu beauskunften oder zu löschen. Praktisch
+gilt:</p>
+<ul>
+  <li><strong>Lokale Daten löschen:</strong> App-Daten in den Einstellungen der
+      Uhr löschen oder die App deinstallieren.</li>
+  <li><strong>Daten auf dem Server:</strong> wenden Sie sich an den Betreiber
+      Ihres Jellyfin-Servers (meist Sie selbst).</li>
+</ul>
+<p>Bei Fragen erreichen Sie uns unter [KONTAKT-E-MAIL].</p>
+
+<h2>Änderungen</h2>
+<p>Diese Erklärung wird bei Bedarf angepasst (z.&nbsp;B. bei neuen Funktionen).
+Die jeweils aktuelle Fassung finden Sie unter dieser Adresse; das
+Änderungsdatum steht oben.</p>
+</section>
+
+<footer>
+  Finwatch is an independent open-source project (MPL-2.0,
+  <a href="https://github.com/Phat-shot/finwatch">github.com/Phat-shot/finwatch</a>)
+  and is not affiliated with the Jellyfin project. Jellyfin is a trademark of
+  the Jellyfin project. /
+  Finwatch ist ein unabhängiges Open-Source-Projekt und steht in keiner
+  Verbindung zum Jellyfin-Projekt. Jellyfin ist eine Marke des
+  Jellyfin-Projekts.
+</footer>
+
+</body>
+</html>

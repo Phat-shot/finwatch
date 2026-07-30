@@ -87,9 +87,7 @@ icon-related is committed to the repo.
    (`main` → normal release, `test` → pre-release). `main` builds
    additionally produce the App Bundle (`bundleProdRelease`) that Google
    Play requires, attached to the release and uploaded as the `prod-aab`
-   artifact. Releases built from `main` are also mirrored to the public
-   `jellywear-release` repo (needs the `RELEASE_REPO_TOKEN` secret, a
-   fine-grained PAT for that repo).
+   artifact.
 
 ### Release signing
 
