@@ -29,6 +29,25 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // Real release signing, fed entirely from the environment (CI
+        // secrets, see .github/workflows/build.yml) or Gradle properties
+        // (e.g. ~/.gradle/gradle.properties locally) -- no key material in
+        // the repo. If RELEASE_KEYSTORE_FILE isn't set, the release build
+        // type below falls back to the debug key so forks and secretless CI
+        // runs still produce an installable artifact.
+        create("release") {
+            val keystorePath = System.getenv("RELEASE_KEYSTORE_FILE")
+                ?: project.findProperty("releaseKeystoreFile") as String?
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                    ?: project.findProperty("releaseKeystorePassword") as String?
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                    ?: project.findProperty("releaseKeyAlias") as String?
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+                    ?: project.findProperty("releaseKeyPassword") as String?
+            }
+        }
     }
 
     flavorDimensions += "channel"
@@ -49,10 +68,15 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            // TODO: replace with a real release keystore (via GitHub Secrets)
-            // once we're ready to ship signed builds. Debug signing keeps
-            // both branches producing an installable APK in the meantime.
-            signingConfig = signingConfigs.getByName("debug")
+            // Real keystore when the RELEASE_* environment/properties are
+            // configured (CI secrets), debug signing otherwise so every
+            // checkout still builds an installable APK without any setup.
+            val releaseSigning = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning.storeFile != null) {
+                releaseSigning
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

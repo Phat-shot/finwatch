@@ -30,6 +30,11 @@ import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
+// Upper bound for the single-child folder skip below -- a pathological or
+// self-referencing folder structure must not turn into an unbounded loop of
+// network calls.
+private const val MAX_SINGLE_FOLDER_SKIPS = 15
+
 @Composable
 fun ItemBrowserScreen(
     session: JellyfinSession,
@@ -52,6 +57,7 @@ fun ItemBrowserScreen(
             // there's nothing to choose between, so stop and show the first
             // level that actually has something to pick from.
             var currentParentId = parentId.toUUIDOrNull()
+            var skips = 0
             while (true) {
                 val items = api.itemsApi.getItems(
                     GetItemsRequest(
@@ -62,8 +68,9 @@ fun ItemBrowserScreen(
                     ),
                 ).content.items
                 val onlyChild = items.singleOrNull()
-                if (onlyChild != null && onlyChild.isFolder == true) {
+                if (onlyChild != null && onlyChild.isFolder == true && skips < MAX_SINGLE_FOLDER_SKIPS) {
                     currentParentId = onlyChild.id
+                    skips++
                     continue
                 }
                 children = items

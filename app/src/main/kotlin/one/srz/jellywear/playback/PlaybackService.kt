@@ -6,10 +6,14 @@ import android.content.SharedPreferences
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.presentation.MainActivity
 
 // Bounds how many times in a row onPlayerError may auto-recover the same
@@ -69,7 +73,19 @@ class PlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
-        player = ExoPlayer.Builder(this).build()
+        // Stream URLs are token-free (see PlayerScreen.buildStreamUrl) --
+        // authenticate every HTTP request via the Authorization header
+        // instead, so the token never shows up in URLs that ExoPlayer might
+        // log (e.g. inside a PlaybackException on a network error).
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        JellyfinSession.getInstance(this).authorizationHeader()?.let { header ->
+            httpDataSourceFactory.setDefaultRequestProperties(mapOf("Authorization" to header))
+        }
+        player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(DefaultDataSource.Factory(this, httpDataSourceFactory)),
+            )
+            .build()
         player.addListener(playerListener)
 
         val sessionActivity = PendingIntent.getActivity(
