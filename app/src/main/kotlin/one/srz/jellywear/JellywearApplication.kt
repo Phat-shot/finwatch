@@ -15,6 +15,19 @@ import one.srz.jellywear.data.JellyfinSession
  * in smoothly instead of causing a layout jump.
  */
 class JellywearApplication : Application(), ImageLoaderFactory {
+    override fun onCreate() {
+        // slf4j-simple (the logging binding for the Jellyfin SDK's HTTP
+        // client) defaults to INFO, at which the SDK logs every API request
+        // URL -- useful while debugging, but a release build shouldn't write
+        // the user's server address and library browsing activity to logcat.
+        // Must be set before the first logger is created, hence here, before
+        // anything touches the SDK.
+        if (!BuildConfig.DEBUG) {
+            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn")
+        }
+        super.onCreate()
+    }
+
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
         .crossfade(true)
         .memoryCache {
