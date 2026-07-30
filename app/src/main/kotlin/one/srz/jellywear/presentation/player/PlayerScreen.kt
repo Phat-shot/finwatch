@@ -459,13 +459,6 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     }
 }
 
-private fun formatMillis(millis: Long): String {
-    val totalSeconds = millis / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%d:%02d".format(minutes, seconds)
-}
-
 private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean): String {
     val deviceId = api.deviceInfo.id
     val base = if (item.mediaType == MediaType.VIDEO) {

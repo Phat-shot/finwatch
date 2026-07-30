@@ -70,30 +70,19 @@ class JellyfinSession private constructor(context: Context) {
 
     /**
      * Builds an unauthenticated client bound to [serverUrl] and verifies it
-     * can actually reach a Jellyfin server. If the user didn't type a
-     * scheme, tries https:// first (credentials and the access token should
-     * never travel in cleartext when the server supports TLS) and only
-     * falls back to http:// (e.g. a LAN-local server without certificates)
-     * before giving up.
+     * can actually reach a Jellyfin server. The candidate URLs -- and the
+     * https-first probing order for schemeless input -- come from
+     * [ServerUrl.candidates]; on total failure the *first* candidate's
+     * error (i.e. the https one) is reported.
      */
     suspend fun buildVerifiedClient(serverUrl: String): Result<ApiClient> {
-        // Hostnames are case-insensitive; normalizing avoids e.g. Settings
-        // showing "MyServer.Local" vs "myserver.local" depending on how the
-        // user happened to type it.
-        val trimmed = serverUrl.trim().trimEnd('/').lowercase()
-        val hasExplicitScheme = trimmed.contains("://")
-
-        val primaryClient = jellyfin.createApi(baseUrl = if (hasExplicitScheme) trimmed else "https://$trimmed")
-        val primaryError = pingServer(primaryClient)
-        if (primaryError == null) return Result.success(primaryClient)
-
-        if (!hasExplicitScheme) {
-            val fallbackClient = jellyfin.createApi(baseUrl = "http://$trimmed")
-            val fallbackError = pingServer(fallbackClient)
-            if (fallbackError == null) return Result.success(fallbackClient)
+        var firstError: Throwable? = null
+        for (candidate in ServerUrl.candidates(serverUrl)) {
+            val client = jellyfin.createApi(baseUrl = candidate)
+            val error = pingServer(client) ?: return Result.success(client)
+            if (firstError == null) firstError = error
         }
-
-        return Result.failure(primaryError)
+        return Result.failure(checkNotNull(firstError))
     }
 
     /**
@@ -106,13 +95,12 @@ class JellyfinSession private constructor(context: Context) {
      * making the check pass even though a POST (the real login call) hits
      * the same redirect and has its body dropped per HTTP redirect
      * semantics, failing where the GET didn't. Only the http -> https
-     * direction is offered: retrying the other way around would silently
-     * resend the user's password over a cleartext connection.
+     * direction is offered (see [ServerUrl.upgradeToHttps]): retrying the
+     * other way around would silently resend the user's password over a
+     * cleartext connection.
      */
-    fun buildClientWithUpgradedScheme(baseUrl: String): ApiClient? {
-        if (!baseUrl.startsWith("http://")) return null
-        return jellyfin.createApi(baseUrl = "https://${baseUrl.removePrefix("http://")}")
-    }
+    fun buildClientWithUpgradedScheme(baseUrl: String): ApiClient? =
+        ServerUrl.upgradeToHttps(baseUrl)?.let { jellyfin.createApi(baseUrl = it) }
 
     /** Null on success, the failure otherwise. */
     private suspend fun pingServer(client: ApiClient): Throwable? = try {
