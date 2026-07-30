@@ -14,16 +14,25 @@
 # Note on versionCode: Play requires a strictly increasing versionCode per
 # artifact. The push-triggered build workflow uses github.run_number, which
 # this manually triggered workflow does NOT share -- so the versionCode for
-# a Play upload is an explicit input here. Pick a value higher than anything
-# previously uploaded to Play (and higher than the current build workflow
-# run number if you want GitHub releases and Play releases to stay in sync).
+# a Play upload is an explicit input here. The rule (see README
+# "Versioning"): ALWAYS pass the run number of the main build you are
+# publishing -- it's the "v1.N" GitHub release's build number, shown in
+# that build workflow run's URL/logs. That keeps the Play artifact
+# byte-identical in version to the GitHub release and keeps both counters
+# strictly increasing and in sync.
 name: Play Store upload
+
+env:
+  # Copy of the constant in build.yml -- MUST be kept in sync, so the AAB
+  # built here carries the same "1.N" versionName as the corresponding
+  # GitHub release. See README "Versioning".
+  VERSION_NAME_OFFSET: 64
 
 on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: "versionCode for this upload (must exceed the last one on Play)"
+        description: "versionCode for this upload: the run number of the main build being published (must exceed the last versionCode on Play)"
         required: true
         type: string
       track:
@@ -89,7 +98,7 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew bundleProdRelease -PappVersionCode=${{ inputs.versionCode }} --no-daemon
+          ./gradlew bundleProdRelease -PappVersionCode=${{ inputs.versionCode }} -PversionNameOffset=$VERSION_NAME_OFFSET --no-daemon
 
       - name: Upload to Google Play
         if: steps.check.outputs.configured == 'true'

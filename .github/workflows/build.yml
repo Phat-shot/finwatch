@@ -10,6 +10,15 @@ on:
 permissions:
   contents: write
 
+env:
+  # Single source of truth for the user-facing "1.N" version:
+  # N = github.run_number - VERSION_NAME_OFFSET (clamped at 0). Adjust this
+  # once, right before cutting the first main release, so that release
+  # comes out as v1.0 -- afterwards leave it alone forever (N must keep
+  # increasing). play-publish.yml carries a copy that must be kept in sync.
+  # See README "Versioning".
+  VERSION_NAME_OFFSET: 64
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
@@ -77,17 +86,23 @@ jobs:
       - name: Resolve build variant for this branch
         id: variant
         run: |
+          # User-facing version "1.N" (see the VERSION_NAME_OFFSET comment
+          # at the top of this file). versionCode stays the raw run_number.
+          minor=$(( ${{ github.run_number }} - VERSION_NAME_OFFSET ))
+          if [ "$minor" -lt 0 ]; then minor=0; fi
+          version_name="1.$minor"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "flavor=Prod" >> "$GITHUB_OUTPUT"
             echo "flavor_lower=prod" >> "$GITHUB_OUTPUT"
-            echo "tag=v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-            echo "release_name=Finwatch v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "tag=v$version_name" >> "$GITHUB_OUTPUT"
+            echo "release_name=Finwatch v$version_name" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
             echo "flavor=Beta" >> "$GITHUB_OUTPUT"
             echo "flavor_lower=beta" >> "$GITHUB_OUTPUT"
-            echo "tag=v${{ github.run_number }}-test" >> "$GITHUB_OUTPUT"
-            echo "release_name=Finwatch beta v${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "tag=v$version_name-test" >> "$GITHUB_OUTPUT"
+            echo "release_name=Finwatch beta v$version_name" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "Unsupported branch: ${{ github.ref }}" >&2
@@ -128,7 +143,7 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assemble${{ steps.variant.outputs.flavor }}Release -PappVersionCode=${{ github.run_number }} --no-daemon
+        run: ./gradlew assemble${{ steps.variant.outputs.flavor }}Release -PappVersionCode=${{ github.run_number }} -PversionNameOffset=$VERSION_NAME_OFFSET --no-daemon
 
       # Google Play only accepts App Bundles -- built alongside the APK
       # (prod only) so every main build has a Play-uploadable artifact.
@@ -140,7 +155,7 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew bundleProdRelease -PappVersionCode=${{ github.run_number }} --no-daemon
+        run: ./gradlew bundleProdRelease -PappVersionCode=${{ github.run_number }} -PversionNameOffset=$VERSION_NAME_OFFSET --no-daemon
 
       - name: Locate and rename APK
         id: apk
@@ -151,9 +166,9 @@ jobs:
             exit 1
           fi
           if [ "${{ steps.variant.outputs.flavor_lower }}" = "beta" ]; then
-            final_name="finwatch-v${{ github.run_number }}-test.apk"
+            final_name="finwatch-v${{ steps.variant.outputs.version_name }}-test.apk"
           else
-            final_name="finwatch-v${{ github.run_number }}.apk"
+            final_name="finwatch-v${{ steps.variant.outputs.version_name }}.apk"
           fi
           final_path="$(dirname "$built_apk")/$final_name"
           mv "$built_apk" "$final_path"
@@ -168,7 +183,7 @@ jobs:
             echo "No AAB produced" >&2
             exit 1
           fi
-          final_path="$(dirname "$built_aab")/finwatch-v${{ github.run_number }}.aab"
+          final_path="$(dirname "$built_aab")/finwatch-v${{ steps.variant.outputs.version_name }}.aab"
           mv "$built_aab" "$final_path"
           echo "path=$final_path" >> "$GITHUB_OUTPUT"
 

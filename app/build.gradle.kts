@@ -27,9 +27,19 @@ android {
         // since targetSdk 34 are already declared in the manifest.
         targetSdk = 36
 
+        // versionCode: the technical, strictly increasing counter Play and
+        // devices compare -- CI passes github.run_number as -PappVersionCode,
+        // local builds fall back to 1. See README "Versioning".
         val ciVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
         versionCode = ciVersionCode ?: 1
-        versionName = "1.${versionCode}"
+        // versionName: user-facing "1.N" where N = versionCode minus a fixed
+        // offset, so the visible counter starts near 1.0 instead of leaking
+        // historical CI run numbers. Plain counter, not semver: 1.9 -> 1.10.
+        // The offset constant lives in .github/workflows/build.yml
+        // (VERSION_NAME_OFFSET, passed as -PversionNameOffset); without it
+        // (local builds) the offset is 0 and the name is "1.<versionCode>".
+        val versionNameOffset = (project.findProperty("versionNameOffset") as String?)?.toIntOrNull() ?: 0
+        versionName = "1.${maxOf(0, (ciVersionCode ?: 1) - versionNameOffset)}"
     }
 
     signingConfigs {
@@ -81,7 +91,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 code shrinking + resource shrinking: smaller APK/AAB and
+            // less bytecode surface. Keep rules for the libraries that need
+            // them (jellyfin-sdk/kotlinx.serialization, slf4j) live in
+            // proguard-rules.pro; most other dependencies ship their own
+            // consumer rules inside their artifacts (see comments there).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             // Real keystore when the RELEASE_* environment/properties are
             // configured (CI secrets), debug signing otherwise so every
             // checkout still builds an installable APK without any setup.
