@@ -55,7 +55,10 @@ class AppPreferences private constructor(context: Context) {
     var speakerOutputEnabled by mutableStateOf(prefs.getBoolean(KEY_SPEAKER_OUTPUT, false))
         private set
 
-    /** Which category tiles show up on the compact launcher (Settings > Libraries). All shown by default. */
+    /**
+     * Which category tiles show up on the compact launcher (Settings > Libraries).
+     * Defaults to everything except audiobooks and playlists, see DEFAULT_HIDDEN_CATEGORIES.
+     */
     var visibleCategories by mutableStateOf(loadVisibleCategories(prefs))
         private set
 
@@ -128,8 +131,11 @@ class AppPreferences private constructor(context: Context) {
         const val TRANSCODE_VIDEO_BITRATE = 1_500_000
         const val TRANSCODE_AUDIO_BITRATE = 128_000
 
-        // 10% less green than the original #CCFF00.
-        const val DEFAULT_ACCENT = 0xFFCCE600.toInt()
+        // Jellyfin blue -- same value as JellyfinBlue in
+        // presentation/theme/Color.kt and one of the AccentColorPresets, so
+        // the out-of-the-box look matches the Jellyfin brand. Only applies
+        // when no accent has ever been saved; stored picks win.
+        const val DEFAULT_ACCENT = 0xFF00A4DC.toInt()
         const val DEFAULT_FONT_COLOR = 0xFF6F7578.toInt()
 
         @Volatile
@@ -154,13 +160,19 @@ class AppPreferences private constructor(context: Context) {
 
         fun hasBuiltInSpeaker(context: Context): Boolean = findBuiltInSpeaker(context) != null
 
+        // Audiobooks and playlists are the least-used tiles, so they start
+        // hidden to keep the launcher compact -- users can re-enable them in
+        // Settings > Libraries. Only affects fresh installs (no stored set);
+        // an existing saved selection is left exactly as the user made it.
+        private val DEFAULT_HIDDEN_CATEGORIES = setOf(Category.AUDIO, Category.PLAYLISTS)
+
         // SharedPreferences.getStringSet's returned set must not be held onto/mutated
         // directly (the framework may reuse or mutate it internally) -- mapping it into
         // a fresh Set<Category> up front avoids that aliasing bug and drops any
         // now-unknown routes.
         private fun loadVisibleCategories(prefs: SharedPreferences): Set<Category> {
             val storedRoutes = prefs.getStringSet(KEY_VISIBLE_CATEGORIES, null)
-                ?: return Category.entries.toSet()
+                ?: return Category.entries.toSet() - DEFAULT_HIDDEN_CATEGORIES
             return storedRoutes.mapNotNull(Category::fromRoute).toSet()
         }
     }
