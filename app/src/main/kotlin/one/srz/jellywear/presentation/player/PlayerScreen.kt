@@ -348,7 +348,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 ) {
                     AsyncImage(
                         model = session.imageUrl(currentItem.id),
-                        contentDescription = null,
+                        contentDescription = currentItem.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -396,7 +396,10 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                 enabled = hasPrevious,
                                 colors = ButtonDefaults.iconButtonColors(),
                             ) {
-                                Icon(imageVector = Icons.Filled.SkipPrevious, contentDescription = null)
+                                Icon(
+                                    imageVector = Icons.Filled.SkipPrevious,
+                                    contentDescription = stringResource(R.string.player_previous),
+                                )
                             }
                             Button(
                                 onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
@@ -405,7 +408,9 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                             ) {
                                 Icon(
                                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(
+                                        if (isPlaying) R.string.player_pause else R.string.player_play,
+                                    ),
                                 )
                             }
                             Button(
@@ -413,7 +418,10 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                 enabled = hasNext,
                                 colors = ButtonDefaults.iconButtonColors(),
                             ) {
-                                Icon(imageVector = Icons.Filled.SkipNext, contentDescription = null)
+                                Icon(
+                                    imageVector = Icons.Filled.SkipNext,
+                                    contentDescription = stringResource(R.string.player_next),
+                                )
                             }
                         }
                         if (durationMs > 0) {

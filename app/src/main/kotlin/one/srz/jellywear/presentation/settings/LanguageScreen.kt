@@ -66,7 +66,7 @@ fun LanguageScreen(preferences: AppPreferences) {
                 },
                 label = { Text(text = languageDisplayName(option.tag)) },
                 icon = if (selected) {
-                    { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+                    { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
                 } else {
                     null
                 },

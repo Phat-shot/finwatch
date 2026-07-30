@@ -20,6 +20,13 @@
     <string name="category_favorites">Favoris</string>
     <string name="category_playlists">Playlists</string>
 
+    <string name="player_previous">Titre précédent</string>
+    <string name="player_play">Lecture</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_next">Titre suivant</string>
+
+    <string name="selected">Sélectionné</string>
+
     <string name="settings_title">Paramètres</string>
     <string name="settings_tile">Paramètres</string>
     <string name="settings_version">Version %1$s</string>
