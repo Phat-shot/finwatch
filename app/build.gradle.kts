@@ -150,11 +150,9 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.17")
 
     // Media3 for Jellyfin audio/video playback (ExoPlayer + MediaSession + video surface).
-    // Pinned below 1.5.0: from there on media3 requires compileSdk 35+/36+,
-    // ahead of what AGP 8.5.2 (max recommended compileSdk 34) supports here.
-    implementation("androidx.media3:media3-exoplayer:1.4.1")
-    implementation("androidx.media3:media3-session:1.4.1")
-    implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-session:1.10.1")
+    implementation("androidx.media3:media3-ui:1.10.1")
 
     testImplementation("junit:junit:4.13.2")
 }
