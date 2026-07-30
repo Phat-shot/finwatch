@@ -14,6 +14,7 @@ import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.systemApi
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.api.client.extensions.userViewsApi
+import org.jellyfin.sdk.api.client.util.AuthorizationHeaderBuilder
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.UUID
@@ -262,12 +263,34 @@ class JellyfinSession private constructor(context: Context) {
         }
     }
 
-    /** Primary-image URL for [itemId], sized for a small chip thumbnail, or null if not logged in. */
+    /**
+     * Primary-image URL for [itemId], sized for a small chip thumbnail, or
+     * null if not logged in. Deliberately token-free: the access token
+     * travels in the Authorization header (see [authorizationHeader] and the
+     * Coil interceptor in JellywearApplication) instead of the URL, keeping
+     * it out of logcat and Coil's disk cache keys.
+     */
     fun imageUrl(itemId: UUID): String? {
         val currentApi = api ?: return null
-        val url = currentApi.imageApi.getItemImageUrl(itemId = itemId, imageType = ImageType.PRIMARY, maxWidth = 120)
-        val separator = if (url.contains("?")) "&" else "?"
-        return "$url$separator${ApiClient.QUERY_ACCESS_TOKEN}=${currentApi.accessToken}"
+        return currentApi.imageApi.getItemImageUrl(itemId = itemId, imageType = ImageType.PRIMARY, maxWidth = 120)
+    }
+
+    /**
+     * Value for an HTTP Authorization header authenticating requests with
+     * the current session's token (the same header the SDK itself sends),
+     * or null when logged out. Used by the media player and the image
+     * loader, whose requests don't go through the SDK.
+     */
+    fun authorizationHeader(): String? {
+        val currentApi = api ?: return null
+        val token = currentApi.accessToken ?: return null
+        return AuthorizationHeaderBuilder.buildHeader(
+            clientName = currentApi.clientInfo.name,
+            clientVersion = currentApi.clientInfo.version,
+            deviceId = currentApi.deviceInfo.id,
+            deviceName = currentApi.deviceInfo.name,
+            accessToken = token,
+        )
     }
 
     fun logout() {

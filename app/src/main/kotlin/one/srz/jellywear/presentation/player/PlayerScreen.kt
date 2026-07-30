@@ -497,6 +497,9 @@ private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean
         // Transcoding only ever applies to video -- audio-only items always direct play.
         api.audioApi.getAudioStreamUrl(itemId = item.id, static = true, deviceId = deviceId)
     }
-    val separator = if (base.contains("?")) "&" else "?"
-    return "$base$separator${ApiClient.QUERY_ACCESS_TOKEN}=${api.accessToken}"
+    // Deliberately no access token in the URL: PlaybackService authenticates
+    // its HTTP requests with the Authorization header instead (see its
+    // ExoPlayer data-source factory), keeping the token out of error logs
+    // and anything else that captures URLs.
+    return base
 }
