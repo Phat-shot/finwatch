@@ -65,10 +65,40 @@ CI:
 
 | Branch | Flavor | App label      | Application ID          | Release asset            |
 |--------|--------|----------------|--------------------------|---------------------------|
-| `main` | `prod` | Finwatch       | `one.srz.finwatch`       | `finwatch-v#.apk`        |
-| `test` | `beta` | Finwatch beta  | `one.srz.finwatch.beta`  | `finwatch-v#-test.apk`   |
+| `main` | `prod` | Finwatch       | `one.srz.finwatch`       | `finwatch-v1.N.apk`      |
+| `test` | `beta` | Finwatch beta  | `one.srz.finwatch.beta`  | `finwatch-v1.N-test.apk` |
 
-`#` is the GitHub Actions run number, passed to Gradle as `-PappVersionCode`.
+`1.N` is the user-facing version — see "Versioning" below.
+
+## Versioning
+
+Two counters, one source:
+
+- **`versionCode`** (what Play and devices compare) is the GitHub Actions
+  run number of the shared `build.yml` workflow, passed to Gradle as
+  `-PappVersionCode`. Pushes to `test` and `main` draw from the *same*
+  counter, so every CI build — beta or prod — gets a strictly increasing
+  code. Local builds fall back to `versionCode 1`.
+- **`versionName`** (what users see) is `1.N` with
+  `N = run_number − VERSION_NAME_OFFSET`, clamped at 0. It is a plain
+  release counter, not semver: `1.9 → 1.10 → 1.11`. Git tags and release
+  names follow it (`v1.N`, `v1.N-test`, "Finwatch v1.N").
+
+`VERSION_NAME_OFFSET` is a single constant defined at the top of
+`.github/workflows/build.yml` (with a copy in `play-publish.yml` that must
+be kept in sync) and passed to Gradle as `-PversionNameOffset`. Adjust it
+**once**, right before cutting the first `main` release, so that release
+comes out as `v1.0` (offset = that run's number); after that it must never
+change, or `N` would jump or regress. Builds without the property (local)
+show `1.<versionCode>`.
+
+**Play uploads:** `play-publish.yml` asks for an explicit `versionCode`.
+Always enter the run number of the `main` build being published (visible
+in that run's logs and equal to its GitHub release's build). That way the
+Play artifact is version-identical to the GitHub release, and both Play
+and GitHub versions stay synchronized and strictly increasing. Re-runs of
+a workflow keep their original run number — never re-upload a re-run to
+Play; push a new commit instead.
 
 The beta variant additionally gets a "BETA" ribbon stamped onto the
 launcher icon at CI time (`scripts/badge_launcher_icon.py`), so it's
