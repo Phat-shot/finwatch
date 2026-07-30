@@ -1,12 +1,11 @@
 package one.srz.jellywear.presentation.settings
 
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
@@ -43,7 +42,7 @@ fun languageDisplayName(tag: String?): String {
 @Composable
 fun LanguageScreen(preferences: AppPreferences) {
     val listState = rememberScalingLazyListState()
-    val activity = LocalContext.current as? ComponentActivity
+    val activity = LocalActivity.current
 
     ScalingLazyColumn(
         modifier = Modifier.fillMaxWidth(),
