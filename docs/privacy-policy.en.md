@@ -1,6 +1,6 @@
 <!--
   TEMPLATE / FOR ORIENTATION — not legal advice.
-  Before publishing: fill in the [NAME/ADDRESS …] and [CONTACT EMAIL] placeholders
+  Controller details are filled in; keep them current.
   and review the text yourself (or have it reviewed).
   Intended hosting location: https://srz.one/finwatch/privacy
 -->
@@ -25,9 +25,9 @@ above all, what it does not.
 
 ## Controller
 
-[NAME/ADDRESS — to be inserted by the operator]
+Philipp Schwarz, Zur Sperrmauer 20, 34549 Edertal, Germany
 
-Contact: [CONTACT EMAIL]
+Contact: philipp@srz.one
 
 Because the app transmits no personal data to the developer, in normal operation
 no processing of personal data within the meaning of the GDPR takes place on the
@@ -107,7 +107,7 @@ nothing to disclose or erase on the developer's side. In practice:
 - **Data on the server:** contact the operator of your Jellyfin server
   (usually yourself).
 
-For any questions, contact [CONTACT EMAIL].
+For any questions, contact philipp@srz.one.
 
 ## Changes
 

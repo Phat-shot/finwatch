@@ -1,6 +1,6 @@
 <!--
   VORLAGE / ORIENTIERUNG — keine Rechtsberatung.
-  Vor Veröffentlichung: Platzhalter [NAME/ADRESSE …] und [KONTAKT-E-MAIL] ausfüllen
+  Angaben zum Verantwortlichen sind eingetragen; aktuell halten.
   und den Text einmal selbst (ggf. fachkundig) prüfen.
   Vorgesehener Hosting-Ort: https://srz.one/finwatch/privacy
 -->
@@ -25,9 +25,9 @@ verarbeitet — und vor allem, welche nicht.
 
 ## Verantwortlicher
 
-[NAME/ADRESSE — vom Betreiber einzusetzen]
+Philipp Schwarz, Zur Sperrmauer 20, 34549 Edertal
 
-Kontakt: [KONTAKT-E-MAIL]
+Kontakt: philipp@srz.one
 
 Da die App keine personenbezogenen Daten an den Entwickler übermittelt, findet
 beim Entwickler im Regelbetrieb keine Verarbeitung personenbezogener Daten im
@@ -113,7 +113,7 @@ gilt:
 - **Daten auf dem Server:** wenden Sie sich an den Betreiber Ihres
   Jellyfin-Servers (meist Sie selbst).
 
-Bei Fragen erreichen Sie uns unter [KONTAKT-E-MAIL].
+Bei Fragen erreichen Sie uns unter philipp@srz.one.
 
 ## Änderungen
 
