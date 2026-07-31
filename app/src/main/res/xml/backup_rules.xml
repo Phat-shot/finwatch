@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto Backup rules for devices running API 30 and lower
+    (android:fullBackupContent). API 31+ devices use
+    data_extraction_rules.xml instead; keep the two files in sync.
+
+    jellyfin_session.xml (JellyfinSession.PREFS_NAME) is excluded as a
+    whole file: it contains the access token, encrypted with an Android
+    Keystore-backed AES key that never leaves the device. A restored
+    ciphertext can therefore never be decrypted on the target device -
+    backing it up only produces dead ballast and a confusingly
+    half-restored session. Server URL and username live in the same
+    prefs file, so they are excluded along with the token; the restore
+    UX is a clean re-login instead of a session that looks signed-in
+    but isn't.
+
+    Everything else - notably app_preferences.xml (theme, colors,
+    playback and library settings) - intentionally stays in the backup.
+-->
+<full-backup-content>
+    <exclude
+        domain="sharedpref"
+        path="jellyfin_session.xml" />
+</full-backup-content>
