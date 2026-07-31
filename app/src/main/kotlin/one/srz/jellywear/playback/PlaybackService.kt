@@ -188,8 +188,20 @@ class PlaybackService : MediaSessionService() {
             // icons, extras). The one thing recovery can't restore is Media3's
             // MediaStyle (a compat style androidx.core doesn't know), so re-apply
             // that explicitly to keep the media look and session link intact.
+            // Wear's SysUI only surfaces an Ongoing Activity when the carrying
+            // notification is an *ongoing* one (FLAG_ONGOING_EVENT) -- neither
+            // media3's provider nor the foreground-service flag sets that, which
+            // left the watch-face chip missing (dumpsys: numOngoing=0 despite
+            // the OA extras being present). Ongoing only while actually playing,
+            // so the chip disappears and the notification becomes dismissible on
+            // pause/stop, as the Wear guideline expects.
+            val player = mediaSession.player
+            val isActivelyPlaying = player.playWhenReady &&
+                player.playbackState != Player.STATE_IDLE &&
+                player.playbackState != Player.STATE_ENDED
             val builder = NotificationCompat.Builder(this@PlaybackService, mediaNotification.notification)
                 .setStyle(MediaStyleNotificationHelper.MediaStyle(mediaSession))
+                .setOngoing(isActivelyPlaying)
             val title = mediaSession.player.mediaMetadata.title?.toString()
                 ?.takeIf { it.isNotBlank() }
                 ?: getString(R.string.app_name)
