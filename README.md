@@ -12,6 +12,14 @@ components (including the LGPL-3.0-licensed
 [jellyfin-sdk-kotlin](https://github.com/jellyfin/jellyfin-sdk-kotlin))
 are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
+## Contributing & changelog
+
+Pull requests go against the `test` branch — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for the branch model, build
+prerequisites, and PR expectations. Notable changes are tracked in
+[CHANGELOG.md](CHANGELOG.md); every user-visible PR adds an entry to its
+`[Unreleased]` section.
+
 ## Features
 
 - **Sign in** to a Jellyfin server (`presentation/login`): if the server
