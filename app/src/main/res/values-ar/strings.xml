@@ -9,6 +9,16 @@
     <string name="login_quick_connect_hint">أدخل هذا الرمز على هاتفك أو حاسوبك، في Jellyfin ← Quick Connect</string>
     <string name="login_quick_connect_timeout">انتهت مهلة Quick Connect</string>
 
+    <string name="http_warning_title">اتصال غير مشفّر</string>
+    <string name="http_warning_text">يستخدم هذا الخادم ‪http://‬ — سيتم إرسال كلمة المرور والوسائط دون تشفير.</string>
+    <string name="http_warning_continue">الاتصال على أي حال</string>
+    <string name="http_warning_cancel">إلغاء</string>
+
+    <string name="error_network">خطأ في الشبكة. تحقق من اتصالك.</string>
+    <string name="error_auth">تم رفض الوصول. تحقق من بيانات تسجيل الدخول.</string>
+    <string name="error_server">خطأ في الخادم. حاول مرة أخرى لاحقًا.</string>
+    <string name="error_generic">حدث خطأ ما</string>
+
     <string name="library_title">المكتبة</string>
     <string name="library_loading">جارٍ التحميل…</string>
     <string name="library_empty">لم يتم العثور على مكتبات</string>

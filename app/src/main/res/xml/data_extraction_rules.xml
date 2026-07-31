@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup/transfer rules for devices running API 31+
+    (android:dataExtractionRules). API 30 and lower devices use
+    backup_rules.xml instead; keep the two files in sync.
+
+    jellyfin_session.xml (JellyfinSession.PREFS_NAME) is excluded from
+    both cloud backup and device-to-device transfer: it contains the
+    access token, encrypted with an Android Keystore-backed AES key
+    that never leaves the device, so a restored/transferred ciphertext
+    can never be decrypted on the target device. Server URL and
+    username live in the same prefs file and are excluded along with
+    the token - the restore UX is a clean re-login instead of a
+    session that looks signed-in but isn't.
+
+    Everything else - notably app_preferences.xml (theme, colors,
+    playback and library settings) - intentionally stays included.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="sharedpref"
+            path="jellyfin_session.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="sharedpref"
+            path="jellyfin_session.xml" />
+    </device-transfer>
+</data-extraction-rules>
