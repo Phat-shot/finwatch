@@ -271,7 +271,13 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_IDLE) NowPlaying.isActive = false
+                    // STATE_ENDED too: when the queue simply finishes, the
+                    // global ring would otherwise sit at 100% over every
+                    // screen (and keep JellywearApp's ring controller bound
+                    // and polling) until the process dies.
+                    if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
+                        NowPlaying.isActive = false
+                    }
                 }
             }
             ctrl.addListener(listener)
