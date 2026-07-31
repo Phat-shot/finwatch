@@ -61,15 +61,15 @@ fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var quickConnectCode by remember { mutableStateOf<String?>(null) }
     var quickConnectSecret by remember { mutableStateOf<String?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // String resource id, resolved via stringResource at the display site
+    // so language switches recompose it (lint: LocalContextGetResourceValueCall).
+    var errorRes by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val serverLabel = stringResource(R.string.login_prompt_server)
     val usernameLabel = stringResource(R.string.login_prompt_username)
     val passwordLabel = stringResource(R.string.login_prompt_password)
-    val genericError = stringResource(R.string.login_error_generic)
-    val quickConnectTimeoutError = stringResource(R.string.login_quick_connect_timeout)
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
@@ -81,7 +81,7 @@ fun LoginScreen(
 
         // No payload at all means the user backed out of the input UI.
         if (rawText == null) {
-            errorMessage = genericError
+            errorRes = R.string.login_error_generic
             step = LoginStep.ERROR
             return@rememberLauncherForActivityResult
         }
@@ -92,7 +92,7 @@ fun LoginScreen(
         // Jellyfin allows passwordless accounts.
         val text = if (step == LoginStep.PASSWORD) rawText else rawText.trim()
         if (text.isEmpty() && step != LoginStep.PASSWORD) {
-            errorMessage = genericError
+            errorRes = R.string.login_error_generic
             step = LoginStep.ERROR
             return@rememberLauncherForActivityResult
         }
@@ -119,7 +119,7 @@ fun LoginScreen(
                             }
                         },
                         onFailure = { error ->
-                            errorMessage = context.getString(errorMessageRes(error))
+                            errorRes = errorMessageRes(error)
                             step = LoginStep.ERROR
                         },
                     )
@@ -132,7 +132,7 @@ fun LoginScreen(
             LoginStep.PASSWORD -> {
                 val currentClient = client
                 if (currentClient == null) {
-                    errorMessage = genericError
+                    errorRes = R.string.login_error_generic
                     step = LoginStep.ERROR
                 } else {
                     step = LoginStep.SIGNING_IN
@@ -164,7 +164,7 @@ fun LoginScreen(
                         result.fold(
                             onSuccess = { onLoggedIn() },
                             onFailure = { error ->
-                                errorMessage = context.getString(errorMessageRes(error))
+                                errorRes = errorMessageRes(error)
                                 step = LoginStep.ERROR
                             },
                         )
@@ -187,7 +187,7 @@ fun LoginScreen(
             LoginStep.CHECKING -> {
                 val currentClient = client
                 if (currentClient == null) {
-                    errorMessage = genericError
+                    errorRes = R.string.login_error_generic
                     step = LoginStep.ERROR
                 } else if (session.isQuickConnectEnabled(currentClient)) {
                     session.initiateQuickConnect(currentClient).fold(
@@ -206,7 +206,7 @@ fun LoginScreen(
                 val currentClient = client
                 val secret = quickConnectSecret
                 if (currentClient == null || secret == null) {
-                    errorMessage = genericError
+                    errorRes = R.string.login_error_generic
                     step = LoginStep.ERROR
                 } else {
                     var attempts = 0
@@ -215,7 +215,7 @@ fun LoginScreen(
                         delay(QUICK_CONNECT_POLL_INTERVAL_MS)
                         val result = session.pollQuickConnect(currentClient, secret)
                         result.onFailure { error ->
-                            errorMessage = context.getString(errorMessageRes(error))
+                            errorRes = errorMessageRes(error)
                             step = LoginStep.ERROR
                         }
                         if (result.isFailure) return@LaunchedEffect
@@ -225,7 +225,7 @@ fun LoginScreen(
                     if (loggedIn) {
                         onLoggedIn()
                     } else if (step == LoginStep.QUICK_CONNECT) {
-                        errorMessage = quickConnectTimeoutError
+                        errorRes = R.string.login_quick_connect_timeout
                         step = LoginStep.ERROR
                     }
                 }
@@ -273,7 +273,7 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = errorMessage ?: genericError,
+                        text = stringResource(errorRes ?: R.string.login_error_generic),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.body2,
                     )
