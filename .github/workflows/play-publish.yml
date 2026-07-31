@@ -26,7 +26,7 @@ env:
   # Copy of the constant in build.yml -- MUST be kept in sync, so the AAB
   # built here carries the same "1.N" versionName as the corresponding
   # GitHub release. See README "Versioning".
-  VERSION_NAME_OFFSET: 64
+  VERSION_NAME_OFFSET: 70
 
 on:
   workflow_dispatch:
