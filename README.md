@@ -4,6 +4,35 @@ An **unofficial** Jellyfin client for Wear OS — browse your libraries and
 play audio or video, built with Kotlin + Jetpack Compose for Wear OS +
 Media3. Not affiliated with or endorsed by the Jellyfin project.
 
+## Install
+
+Finwatch requires a Wear OS watch and your own, reachable
+[Jellyfin](https://jellyfin.org) server — the app is only a client.
+
+- **GitHub Releases** —
+  [github.com/Phat-shot/finwatch/releases](https://github.com/Phat-shot/finwatch/releases):
+  stable releases are tagged `v1.N` with the APK attached as
+  `finwatch-v1.N.apk`; beta builds from the `test` branch are
+  pre-releases tagged `v1.N-test` (`finwatch-v1.N-test.apk`, separate
+  app id `one.srz.finwatch.beta`). Sideload onto the watch via ADB
+  (enable developer options + wireless debugging on the watch, then
+  `adb install finwatch-v1.N.apk`).
+- **[Obtainium](https://github.com/ImranR98/Obtainium)** — to get
+  update notifications for sideloaded installs, add the app in
+  Obtainium with the repo URL `https://github.com/Phat-shot/finwatch`.
+  Obtainium then tracks new GitHub releases automatically (enable
+  "Include prereleases" only if you want the beta channel).
+- **Coming soon** — Google Play (closed beta first, testers welcome —
+  see the issue tracker) and, once accepted, the
+  [IzzyOnDroid](https://apt.izzysoft.de/fdroid/) F-Droid repo.
+
+**Signing note:** APKs from GitHub Releases (and later IzzyOnDroid) are
+signed with the developer's release key (certificate SHA-256 starting
+`99:4D:DA:1D`). The future Google Play version will be re-signed by Play
+App Signing and therefore carries a *different* signature — Android will
+refuse to update one over the other. Pick one install source per watch;
+switching later means uninstall + reinstall.
+
 ## License
 
 Finwatch is free software, licensed under the
