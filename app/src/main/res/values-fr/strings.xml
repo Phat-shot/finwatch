@@ -9,6 +9,11 @@
     <string name="login_quick_connect_hint">Entrez ce code sur votre téléphone ou ordinateur, dans Jellyfin → Quick Connect</string>
     <string name="login_quick_connect_timeout">Délai Quick Connect dépassé</string>
 
+    <string name="http_warning_title">Connexion non chiffrée</string>
+    <string name="http_warning_text">Ce serveur utilise http:// — le mot de passe et les médias sont transmis en clair.</string>
+    <string name="http_warning_continue">Se connecter quand même</string>
+    <string name="http_warning_cancel">Annuler</string>
+
     <string name="library_title">Bibliothèque</string>
     <string name="library_loading">Chargement…</string>
     <string name="library_empty">Aucune bibliothèque trouvée</string>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
+import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.input.RemoteInputIntentHelper
@@ -38,7 +45,7 @@ private const val QUICK_CONNECT_POLL_INTERVAL_MS = 3000L
 private const val QUICK_CONNECT_MAX_ATTEMPTS = 60 // ~3 minutes
 
 private enum class LoginStep {
-    SERVER, CONNECTING, CHECKING, QUICK_CONNECT, USERNAME, PASSWORD, SIGNING_IN, ERROR
+    SERVER, CONNECTING, HTTP_WARNING, CHECKING, QUICK_CONNECT, USERNAME, PASSWORD, SIGNING_IN, ERROR
 }
 
 @Composable
@@ -95,7 +102,18 @@ fun LoginScreen(
                     session.buildVerifiedClient(text).fold(
                         onSuccess = { verifiedClient ->
                             client = verifiedClient
-                            step = LoginStep.CHECKING
+                            // Whenever the verified connection ended up on
+                            // cleartext http -- the https-first probe fell
+                            // back, or the user typed http:// explicitly --
+                            // interpose an explicit consent step before any
+                            // credentials are asked for, let alone sent
+                            // (see #23: usesCleartextTraffic stays enabled
+                            // for LAN servers, so this opt-in is the guard).
+                            step = if (verifiedClient.baseUrl?.startsWith("http://") == true) {
+                                LoginStep.HTTP_WARNING
+                            } else {
+                                LoginStep.CHECKING
+                            }
                         },
                         onFailure = { error ->
                             errorMessage = error.message ?: genericError
@@ -150,8 +168,8 @@ fun LoginScreen(
                     }
                 }
             }
-            LoginStep.CONNECTING, LoginStep.CHECKING, LoginStep.QUICK_CONNECT,
-            LoginStep.SIGNING_IN, LoginStep.ERROR,
+            LoginStep.CONNECTING, LoginStep.HTTP_WARNING, LoginStep.CHECKING,
+            LoginStep.QUICK_CONNECT, LoginStep.SIGNING_IN, LoginStep.ERROR,
             -> Unit
         }
     }
@@ -209,8 +227,19 @@ fun LoginScreen(
                     }
                 }
             }
-            LoginStep.CONNECTING, LoginStep.SIGNING_IN, LoginStep.ERROR -> Unit
+            LoginStep.CONNECTING, LoginStep.HTTP_WARNING, LoginStep.SIGNING_IN, LoginStep.ERROR -> Unit
         }
+    }
+
+    if (step == LoginStep.HTTP_WARNING) {
+        HttpWarning(
+            onContinue = { step = LoginStep.CHECKING },
+            onCancel = {
+                client = null
+                step = LoginStep.SERVER
+            },
+        )
+        return
     }
 
     Column(
@@ -259,6 +288,64 @@ fun LoginScreen(
                     style = MaterialTheme.typography.title3,
                 )
             }
+            // Rendered by the early return above, never reaches this Column.
+            LoginStep.HTTP_WARNING -> Unit
+        }
+    }
+}
+
+/**
+ * Explicit consent step shown when the server connection ended up on
+ * cleartext http (https-first probing fell back, or the user typed an
+ * http:// URL). Canceling is the visually primary action; continuing is
+ * the deliberate opt-in.
+ */
+@Composable
+private fun HttpWarning(
+    onContinue: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val listState = rememberScalingLazyListState()
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+    ) {
+        item {
+            ListHeader {
+                Text(
+                    text = stringResource(R.string.http_warning_title),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        item {
+            Text(
+                text = stringResource(R.string.http_warning_text),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.body2,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+        }
+        item {
+            Chip(
+                label = { Text(text = stringResource(R.string.http_warning_cancel)) },
+                onClick = onCancel,
+                colors = ChipDefaults.primaryChipColors(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            )
+        }
+        item {
+            Chip(
+                label = { Text(text = stringResource(R.string.http_warning_continue)) },
+                onClick = onContinue,
+                colors = ChipDefaults.secondaryChipColors(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+            )
         }
     }
 }

@@ -9,6 +9,11 @@
     <string name="login_quick_connect_hint">Introduce este código en tu teléfono u ordenador, en Jellyfin → Quick Connect</string>
     <string name="login_quick_connect_timeout">Quick Connect ha expirado</string>
 
+    <string name="http_warning_title">Conexión sin cifrar</string>
+    <string name="http_warning_text">Este servidor usa http:// — la contraseña y los medios se transmiten sin cifrar.</string>
+    <string name="http_warning_continue">Conectar de todos modos</string>
+    <string name="http_warning_cancel">Cancelar</string>
+
     <string name="library_title">Biblioteca</string>
     <string name="library_loading">Cargando…</string>
     <string name="library_empty">No se encontraron bibliotecas</string>
