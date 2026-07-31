@@ -14,6 +14,11 @@
     <string name="http_warning_continue">Trotzdem verbinden</string>
     <string name="http_warning_cancel">Abbrechen</string>
 
+    <string name="error_network">Netzwerkfehler. Prüfe deine Verbindung.</string>
+    <string name="error_auth">Zugriff verweigert. Prüfe deine Anmeldedaten.</string>
+    <string name="error_server">Serverfehler. Versuche es später erneut.</string>
+    <string name="error_generic">Etwas ist schiefgelaufen</string>
+
     <string name="library_title">Bibliothek</string>
     <string name="library_loading">Wird geladen…</string>
     <string name="library_empty">Keine Bibliotheken gefunden</string>

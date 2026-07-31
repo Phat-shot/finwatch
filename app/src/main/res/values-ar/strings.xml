@@ -14,6 +14,11 @@
     <string name="http_warning_continue">الاتصال على أي حال</string>
     <string name="http_warning_cancel">إلغاء</string>
 
+    <string name="error_network">خطأ في الشبكة. تحقق من اتصالك.</string>
+    <string name="error_auth">تم رفض الوصول. تحقق من بيانات تسجيل الدخول.</string>
+    <string name="error_server">خطأ في الخادم. حاول مرة أخرى لاحقًا.</string>
+    <string name="error_generic">حدث خطأ ما</string>
+
     <string name="library_title">المكتبة</string>
     <string name="library_loading">جارٍ التحميل…</string>
     <string name="library_empty">لم يتم العثور على مكتبات</string>

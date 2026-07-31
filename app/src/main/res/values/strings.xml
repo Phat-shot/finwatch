@@ -16,6 +16,11 @@
     <string name="http_warning_continue">Connect anyway</string>
     <string name="http_warning_cancel">Cancel</string>
 
+    <string name="error_network">Network error. Check your connection.</string>
+    <string name="error_auth">Access denied. Check your credentials.</string>
+    <string name="error_server">Server error. Try again later.</string>
+    <string name="error_generic">Something went wrong</string>
+
     <string name="library_title">Library</string>
     <string name="library_loading">Loading…</string>
     <string name="library_empty">No libraries found</string>

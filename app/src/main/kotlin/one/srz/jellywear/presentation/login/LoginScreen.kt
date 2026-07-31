@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.library.errorMessageRes
 import org.jellyfin.sdk.api.client.ApiClient
 
 private const val REMOTE_INPUT_KEY = "text"
@@ -61,6 +63,7 @@ fun LoginScreen(
     var quickConnectSecret by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val serverLabel = stringResource(R.string.login_prompt_server)
     val usernameLabel = stringResource(R.string.login_prompt_username)
@@ -116,7 +119,7 @@ fun LoginScreen(
                             }
                         },
                         onFailure = { error ->
-                            errorMessage = error.message ?: genericError
+                            errorMessage = context.getString(errorMessageRes(error))
                             step = LoginStep.ERROR
                         },
                     )
@@ -161,7 +164,7 @@ fun LoginScreen(
                         result.fold(
                             onSuccess = { onLoggedIn() },
                             onFailure = { error ->
-                                errorMessage = error.message ?: genericError
+                                errorMessage = context.getString(errorMessageRes(error))
                                 step = LoginStep.ERROR
                             },
                         )
@@ -212,7 +215,7 @@ fun LoginScreen(
                         delay(QUICK_CONNECT_POLL_INTERVAL_MS)
                         val result = session.pollQuickConnect(currentClient, secret)
                         result.onFailure { error ->
-                            errorMessage = error.message ?: genericError
+                            errorMessage = context.getString(errorMessageRes(error))
                             step = LoginStep.ERROR
                         }
                         if (result.isFailure) return@LaunchedEffect
