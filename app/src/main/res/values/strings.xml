@@ -11,6 +11,16 @@
     <string name="login_quick_connect_hint">Enter this code on your phone or computer, in Jellyfin → Quick Connect</string>
     <string name="login_quick_connect_timeout">Quick Connect timed out</string>
 
+    <string name="http_warning_title">Unencrypted connection</string>
+    <string name="http_warning_text">This server uses http:// — your password and media are transferred in plain text.</string>
+    <string name="http_warning_continue">Connect anyway</string>
+    <string name="http_warning_cancel">Cancel</string>
+
+    <string name="error_network">Network error. Check your connection.</string>
+    <string name="error_auth">Access denied. Check your credentials.</string>
+    <string name="error_server">Server error. Try again later.</string>
+    <string name="error_generic">Something went wrong</string>
+
     <string name="library_title">Library</string>
     <string name="library_loading">Loading…</string>
     <string name="library_empty">No libraries found</string>

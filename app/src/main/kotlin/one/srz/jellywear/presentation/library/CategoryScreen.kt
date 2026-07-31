@@ -56,7 +56,7 @@ fun CategoryScreen(
     onSkipToFolder: (String) -> Unit,
 ) {
     var elements by remember(category) { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember(category) { mutableStateOf<String?>(null) }
+    var errorRes by remember(category) { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 
@@ -90,7 +90,7 @@ fun CategoryScreen(
                 else -> elements = result
             }
         } catch (e: ApiClientException) {
-            error = e.message
+            errorRes = errorMessageRes(e)
         }
     }
 
@@ -105,8 +105,8 @@ fun CategoryScreen(
             }
         }
         when {
-            error != null -> item {
-                Text(text = error ?: stringResource(R.string.login_error_generic))
+            errorRes != null -> item {
+                Text(text = stringResource(errorRes ?: R.string.error_generic))
             }
             elements == null -> item {
                 Text(text = stringResource(R.string.library_loading))

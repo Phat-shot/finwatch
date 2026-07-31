@@ -45,7 +45,7 @@ fun ArtistAlbumsScreen(
     onSkipToAlbum: (String) -> Unit,
 ) {
     var albums by remember(artistId) { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember(artistId) { mutableStateOf<String?>(null) }
+    var errorRes by remember(artistId) { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 
@@ -71,7 +71,7 @@ fun ArtistAlbumsScreen(
                 albums = result
             }
         } catch (e: ApiClientException) {
-            error = e.message
+            errorRes = errorMessageRes(e)
         }
     }
 
@@ -86,8 +86,8 @@ fun ArtistAlbumsScreen(
             }
         }
         when {
-            error != null -> item {
-                Text(text = error ?: stringResource(R.string.login_error_generic))
+            errorRes != null -> item {
+                Text(text = stringResource(errorRes ?: R.string.error_generic))
             }
             albums == null -> item {
                 Text(text = stringResource(R.string.library_loading))

@@ -45,7 +45,7 @@ fun ItemBrowserScreen(
     onShufflePlay: () -> Unit,
 ) {
     var children by remember(parentId) { mutableStateOf<List<BaseItemDto>?>(null) }
-    var error by remember(parentId) { mutableStateOf<String?>(null) }
+    var errorRes by remember(parentId) { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 
@@ -77,7 +77,7 @@ fun ItemBrowserScreen(
                 break
             }
         } catch (e: ApiClientException) {
-            error = e.message
+            errorRes = errorMessageRes(e)
         }
     }
 
@@ -92,8 +92,8 @@ fun ItemBrowserScreen(
             }
         }
         when {
-            error != null -> item {
-                Text(text = error ?: stringResource(R.string.login_error_generic))
+            errorRes != null -> item {
+                Text(text = stringResource(errorRes ?: R.string.error_generic))
             }
             children == null -> item {
                 Text(text = stringResource(R.string.library_loading))
