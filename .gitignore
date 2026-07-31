@@ -17,3 +17,4 @@ app/src/beta/res/mipmap-*/
 *.aab
 *.ap_
 *.dex
+__pycache__/
