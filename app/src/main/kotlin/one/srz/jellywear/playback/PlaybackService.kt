@@ -4,7 +4,10 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -31,6 +34,12 @@ import one.srz.jellywear.presentation.MainActivity
 // codec the watch can't decode) would retry forever instead of surfacing as
 // stopped playback.
 private const val MAX_CONSECUTIVE_AUTO_RETRIES = 3
+
+// First retry waits this long; each further retry doubles it (1 s, 2 s, 4 s).
+// Firing the retries back-to-back would burn all attempts within the same
+// network blip they are meant to ride out (e.g. Bluetooth tethering dropping
+// for a couple of seconds).
+private const val AUTO_RETRY_BASE_DELAY_MS = 1_000L
 
 // Set on the session's activity PendingIntent so tapping the notification or
 // the Wear OS watch-face playback icon opens straight into the now-playing
@@ -68,21 +77,51 @@ class PlaybackService : MediaSessionService() {
     // Recovers from transient playback failures (e.g. a network blip over
     // Bluetooth tethering) that would otherwise just halt playback until the
     // user manually hits play again, which read as the video repeatedly
-    // "stopping".
+    // "stopping". Retries are scheduled with exponential backoff on the main
+    // thread (the player's application thread) instead of firing immediately,
+    // so a 2-3 s outage doesn't exhaust every attempt before the network is
+    // back.
     private var consecutiveAutoRetries = 0
+    private val retryHandler = Handler(Looper.getMainLooper())
+    private var pendingRetry: Runnable? = null
+
+    private fun cancelPendingRetry() {
+        pendingRetry?.let(retryHandler::removeCallbacks)
+        pendingRetry = null
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlayerError(error: PlaybackException) {
             if (consecutiveAutoRetries >= MAX_CONSECUTIVE_AUTO_RETRIES) return
+            val delayMs = AUTO_RETRY_BASE_DELAY_MS shl consecutiveAutoRetries
             consecutiveAutoRetries++
+            // Capture where playback broke *now*; by the time the retry runs
+            // the player may have reset its state.
             val index = player.currentMediaItemIndex
             val position = player.currentPosition
-            player.prepare()
-            player.seekTo(index, position)
-            player.play()
+            cancelPendingRetry()
+            val retry = Runnable {
+                pendingRetry = null
+                player.prepare()
+                player.seekTo(index, position)
+                player.play()
+            }
+            pendingRetry = retry
+            retryHandler.postDelayed(retry, delayMs)
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             if (isPlaying) consecutiveAutoRetries = 0
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            // A newly set queue (PlayerScreen starting something else) makes
+            // any scheduled retry meaningless -- it would seek the new item to
+            // the old item's position. Drop it and start counting fresh.
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+                cancelPendingRetry()
+                consecutiveAutoRetries = 0
+            }
         }
     }
 
@@ -229,10 +268,12 @@ class PlaybackService : MediaSessionService() {
     override fun onDestroy() {
         getSharedPreferences(AppPreferences.PREFS_NAME, MODE_PRIVATE)
             .unregisterOnSharedPreferenceChangeListener(preferencesListener)
-        mediaSession.run {
-            player.release()
-            release()
-        }
+        cancelPendingRetry()
+        // Guarded because lateinit fields stay uninitialized if onCreate ever
+        // throws partway through -- an unguarded access here would then bury
+        // the original failure under an UninitializedPropertyAccessException.
+        if (::mediaSession.isInitialized) mediaSession.release()
+        if (::player.isInitialized) player.release()
         super.onDestroy()
     }
 }
