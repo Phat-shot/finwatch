@@ -62,6 +62,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import coil.compose.AsyncImage
 import com.google.common.util.concurrent.ListenableFuture
+import java.io.IOException
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
@@ -74,6 +75,9 @@ import one.srz.jellywear.playback.PlaybackService
 import one.srz.jellywear.presentation.MainActivity
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
+import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.api.client.exception.SecureConnectionException
+import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.jellyfin.sdk.api.client.extensions.audioApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.api.client.extensions.videosApi
@@ -105,7 +109,9 @@ private val COMPATIBLE_AUDIO_CODECS = setOf("aac", "mp3", "flac", "opus", "vorbi
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
     var queueItems by remember(itemId) { mutableStateOf<List<BaseItemDto>>(emptyList()) }
-    var error by remember(itemId) { mutableStateOf<String?>(null) }
+    // String resource id, not a raw exception message -- the watch shows a
+    // short translated line, never technical text (see errorStringRes).
+    var errorRes by remember(itemId) { mutableStateOf<Int?>(null) }
     var isPlaying by remember(itemId) { mutableStateOf(true) }
     var controller by remember(itemId) { mutableStateOf<MediaController?>(null) }
     var positionMs by remember(itemId) { mutableStateOf(0L) }
@@ -248,8 +254,18 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             }
             else -> {
                 val api = session.api ?: return@LaunchedEffect
+                // Today itemId is always an internally produced UUID, but a
+                // malformed one (e.g. a future deeplink) used to crash with
+                // an uncaught IllegalArgumentException -- degrade to the
+                // generic error state instead.
+                val itemUuid = try {
+                    itemId.toUUID()
+                } catch (e: IllegalArgumentException) {
+                    errorRes = R.string.error_generic
+                    return@LaunchedEffect
+                }
                 try {
-                    val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
+                    val item = api.userLibraryApi.getItem(itemId = itemUuid, userId = session.userId).content
                     queueItems = listOf(item)
                     // PLAYER_RESUME_ID (notification/watch-face tap, or
                     // reopening the app while this is playing) reattaches by
@@ -260,7 +276,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     // forever once backgrounded and reopened.
                     PlaybackQueue.items = listOf(item)
                 } catch (e: ApiClientException) {
-                    error = e.message
+                    errorRes = errorStringRes(e)
                 }
             }
         }
@@ -429,8 +445,8 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         contentAlignment = Alignment.Center,
     ) {
         when {
-            error != null -> Text(
-                text = error ?: stringResource(R.string.login_error_generic),
+            errorRes != null -> Text(
+                text = stringResource(errorRes ?: R.string.error_generic),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp),
             )
@@ -557,6 +573,20 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             }
         }
     }
+}
+
+// Maps SDK failures onto the shared error strings so the watch shows a short
+// translated line instead of a raw (technical, English-only) exception
+// message.
+private fun errorStringRes(e: ApiClientException): Int = when (e) {
+    // Host unreachable / network offline; TLS failures grouped in here too,
+    // as on the watch they almost always mean the connection path is broken.
+    is TimeoutException, is SecureConnectionException -> R.string.error_network
+    is InvalidStatusException -> when (e.status) {
+        401, 403 -> R.string.error_auth
+        else -> R.string.error_server
+    }
+    else -> if (e.cause is IOException) R.string.error_network else R.string.error_generic
 }
 
 private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean): String {
