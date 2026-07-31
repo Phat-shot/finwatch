@@ -1,0 +1,1 @@
+Inoffizieller Jellyfin-Client für Wear OS. Eigener Jellyfin-Server nötig.

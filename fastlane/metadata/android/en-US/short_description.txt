@@ -1,0 +1,1 @@
+Unofficial Jellyfin client for Wear OS. Requires your own Jellyfin server.
