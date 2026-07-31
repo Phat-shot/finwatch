@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -117,6 +119,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // played, silently preventing every later item (audio or video) from
     // starting.
     var hasSetMediaItems by remember(itemId) { mutableStateOf(false) }
+    // Where to restart playback when the queue is handed to the controller
+    // again. stopIfVideo() (ON_STOP) tears the whole service down, so without
+    // this a backgrounded video always restarted at 0:00 on return.
+    // rememberSaveable so the position even survives the activity being
+    // recreated (or the process dying) while backgrounded. C.TIME_UNSET means
+    // "default position", i.e. an untouched fresh start.
+    var startMediaItemIndex by rememberSaveable(itemId) { mutableStateOf(0) }
+    var startPositionMs by rememberSaveable(itemId) { mutableStateOf(C.TIME_UNSET) }
     var controlsVisible by remember(itemId) { mutableStateOf(true) }
     var interactionTick by remember(itemId) { mutableStateOf(0) }
 
@@ -174,6 +184,12 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         // (a fresh, empty service) reloads the queue instead of staying blank.
         fun stopIfVideo() {
             if (currentIsVideo.value) {
+                // Remember where the video was interrupted so the reload on
+                // the next ON_START resumes there instead of at 0:00.
+                controller?.let { ctrl ->
+                    startMediaItemIndex = ctrl.currentMediaItemIndex
+                    startPositionMs = ctrl.currentPosition
+                }
                 controller?.stop()
                 context.stopService(Intent(context, PlaybackService::class.java))
                 hasSetMediaItems = false
@@ -251,7 +267,13 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     )
                     .build()
             }
-            ctrl.setMediaItems(mediaItems)
+            // coerceIn guards against a stale saved index (e.g. the queue
+            // shrank to a single refetched item after process death).
+            ctrl.setMediaItems(
+                mediaItems,
+                startMediaItemIndex.coerceIn(0, mediaItems.lastIndex),
+                startPositionMs,
+            )
             ctrl.prepare()
             ctrl.playWhenReady = true
             hasSetMediaItems = true
