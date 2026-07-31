@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Generate the Finwatch launcher icon (legacy + adaptive) into app/src/main/res.
 
+The glyph is the Finwatch mascot: a shark fin wearing a round smartwatch
+as a pirate eye patch, the watch screen showing a comic eye. Drawn in
+Jellyfin's brand gradient colors (explicitly permitted by their branding
+policy; the mark itself is our own design).
+
 Run once locally when the icon design changes:
     python3 scripts/generate_launcher_icons.py
 """
@@ -37,9 +42,51 @@ BG_COLOR = (0x00, 0x00, 0x00)  # matches the app's own black background
 JELLYFIN_BLUE = (0x00, 0xA4, 0xDC)
 JELLYFIN_PURPLE = (0xAA, 0x5C, 0xC3)
 
+STRAP_COLOR = (24, 24, 30)
+CASE_COLOR = (225, 225, 232)
+SCREEN_COLOR = (10, 10, 14)
+SCLERA_COLOR = (245, 245, 248)
+PUPIL_COLOR = (8, 8, 10)
+
+# Strap endpoints and the watch's position along it, in the mascot's unit
+# square. The watch center sits exactly on the strap line.
+STRAP_P1 = (0.02, 0.58)
+STRAP_P2 = (0.90, 0.16)
+WATCH_T = 0.48
+WATCH_RADIUS = 0.135  # of unit width
+PUPIL_DIR = (-0.35, -0.25)  # comic eye glancing up-left
+
 
 def lerp_color(a, b, t):
     return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
+
+
+def bezier(p0, p1, p2, p3, steps=60):
+    pts = []
+    for s in range(steps + 1):
+        t = s / steps
+        mt = 1 - t
+        pts.append((
+            mt**3 * p0[0] + 3 * mt**2 * t * p1[0] + 3 * mt * t**2 * p2[0] + t**3 * p3[0],
+            mt**3 * p0[1] + 3 * mt**2 * t * p1[1] + 3 * mt * t**2 * p2[1] + t**3 * p3[1],
+        ))
+    return pts
+
+
+def fin_outline(scale_x, scale_y):
+    """Shark-fin silhouette, unit coords scaled by the given factors."""
+    def P(x, y):
+        return (x * scale_x, y * scale_y)
+    pts = []
+    # leading (left) edge: bottom-left up to the tip, bulging left
+    pts += bezier(P(0.20, 0.93), P(0.10, 0.62), P(0.24, 0.28), P(0.58, 0.10))
+    # tip roundover
+    pts += bezier(P(0.58, 0.10), P(0.66, 0.06), P(0.70, 0.10), P(0.70, 0.16))
+    # trailing (right) edge: concave down to bottom-right
+    pts += bezier(P(0.70, 0.16), P(0.62, 0.42), P(0.68, 0.68), P(0.86, 0.93))
+    # bottom: gentle curve back to start
+    pts += bezier(P(0.86, 0.93), P(0.64, 0.99), P(0.42, 0.99), P(0.20, 0.93))
+    return pts
 
 
 def vertical_gradient(size, top_color, bottom_color):
@@ -50,64 +97,82 @@ def vertical_gradient(size, top_color, bottom_color):
     return column.resize((size, size))
 
 
-def draw_jelly_silhouette(draw: ImageDraw.ImageDraw, cx: float, cy: float, r: float):
-    """A jellyfish glyph (dome + trailing tentacles) in solid white, meant to
-    be used as an alpha mask for a gradient fill -- see render_glyph()."""
-    # Dome: a smooth half-ellipse rather than a flat pieslice, for a softer
-    # silhouette that reads more like Jellyfin's own rounded mark.
-    draw.ellipse([cx - r, cy - r * 0.85, cx + r, cy + r * 0.55], fill=255)
-    draw.rectangle([cx - r, cy - r * 0.15, cx + r, cy + r * 0.55], fill=255)
-
-    # Tentacles: tapered, wavy strokes fading out towards their tips, drawn
-    # as overlapping circles along a sine path so the width can shrink
-    # smoothly (a single draw.line() call can't taper).
-    tentacle_count = 5
-    span = r * 1.5
-    start_x = cx - span / 2
-    gap = span / (tentacle_count - 1)
-    for i in range(tentacle_count):
-        tx = start_x + i * gap
-        length = r * 1.5
-        amplitude = r * 0.14 * (1 if i % 2 == 0 else -1) * (0.6 + 0.4 * abs(i - 2) / 2)
-        segments = 28
-        base_width = r * 0.16
-        for s in range(segments + 1):
-            t = s / segments
-            y = cy + r * 0.35 + t * length
-            x = tx + amplitude * math.sin(t * math.pi * 2.3 + i)
-            width = base_width * (1 - t) ** 1.3
-            if width < 0.6:
-                continue
-            draw.ellipse([x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255)
-
-
 def render_glyph(canvas_size: int, cx: float, cy: float, r: float) -> Image.Image:
-    """Blue-to-purple gradient jellyfish, clipped to the silhouette mask and
-    supersampled for smooth (antialiased) edges."""
+    """The fin-with-watch mascot on a transparent canvas_size square,
+    scaled so the whole mark fits a circle of radius ~1.15*r around
+    (cx, cy) -- same contract the old jellyfish glyph had."""
     hi = canvas_size * SUPERSAMPLE
-    mask = Image.new("L", (hi, hi), 0)
-    draw_jelly_silhouette(ImageDraw.Draw(mask), cx * SUPERSAMPLE, cy * SUPERSAMPLE, r * SUPERSAMPLE)
+    # The mascot's unit square maps to a box of side S centered on the
+    # fin's visual center (0.5, 0.525).
+    S = 1.95 * r * SUPERSAMPLE
+    ox = cx * SUPERSAMPLE - 0.5 * S
+    oy = cy * SUPERSAMPLE - 0.525 * S
 
-    gradient = vertical_gradient(hi, JELLYFIN_BLUE, JELLYFIN_PURPLE)
+    def U(x, y):
+        return (ox + x * S, oy + y * S)
+
     glyph = Image.new("RGBA", (hi, hi), (0, 0, 0, 0))
+
+    # fin: gradient clipped to silhouette
+    mask = Image.new("L", (hi, hi), 0)
+    ImageDraw.Draw(mask).polygon(
+        [(ox + px * S, oy + py * S) for (px, py) in fin_outline(1, 1)], fill=255)
+    gradient = Image.new("RGBA", (hi, hi), (0, 0, 0, 0))
+    grad_sq = vertical_gradient(int(S) or 1, JELLYFIN_BLUE, JELLYFIN_PURPLE)
+    gradient.paste(grad_sq, (int(ox), int(oy)))
     glyph.paste(gradient, (0, 0), mask)
 
-    # Soft highlight on the dome for a bit of shine/depth.
-    highlight = Image.new("L", (hi, hi), 0)
-    hd = ImageDraw.Draw(highlight)
-    hr = r * SUPERSAMPLE
-    hd.ellipse(
-        [
-            (cx - hr * 0.5) * SUPERSAMPLE,
-            (cy - hr * 0.55) * SUPERSAMPLE,
-            (cx - hr * 0.05) * SUPERSAMPLE,
-            (cy - hr * 0.1) * SUPERSAMPLE,
-        ],
-        fill=90,
+    d = ImageDraw.Draw(glyph)
+
+    # strap, clipped to the fin
+    strap = Image.new("L", (hi, hi), 0)
+    ImageDraw.Draw(strap).line([U(*STRAP_P1), U(*STRAP_P2)], fill=255, width=int(0.058 * S))
+    band_mask = Image.composite(strap, Image.new("L", (hi, hi), 0), mask)
+    band_layer = Image.new("RGBA", (hi, hi), STRAP_COLOR + (255,))
+    glyph.paste(band_layer, (0, 0), band_mask)
+
+    # watch center on the strap line
+    wx = STRAP_P1[0] + (STRAP_P2[0] - STRAP_P1[0]) * WATCH_T
+    wy = STRAP_P1[1] + (STRAP_P2[1] - STRAP_P1[1]) * WATCH_T
+    cxp, cyp = U(wx, wy)
+    rr = WATCH_RADIUS * S
+
+    # side button at ~1:30, a radial pill behind the case
+    ba = math.radians(-48)
+    bx, by = cxp + rr * 1.06 * math.cos(ba), cyp + rr * 1.06 * math.sin(ba)
+    ux, uy = math.cos(ba), math.sin(ba)
+    vx, vy = -uy, ux
+    L, T = 0.030 * S, 0.017 * S
+    d.polygon(
+        [(bx + ux * L + vx * T, by + uy * L + vy * T),
+         (bx + ux * L - vx * T, by + uy * L - vy * T),
+         (bx - ux * L - vx * T, by - uy * L - vy * T),
+         (bx - ux * L + vx * T, by - uy * L + vy * T)],
+        fill=CASE_COLOR,
     )
-    white_layer = Image.new("RGBA", (hi, hi), (255, 255, 255, 0))
-    white_layer.putalpha(Image.composite(highlight, Image.new("L", (hi, hi), 0), mask))
-    glyph = Image.alpha_composite(glyph, white_layer)
+
+    # slim case, dark screen
+    d.ellipse([cxp - rr, cyp - rr, cxp + rr, cyp + rr], fill=CASE_COLOR)
+    rs = rr * 0.90
+    d.ellipse([cxp - rs, cyp - rs, cxp + rs, cyp + rs], fill=SCREEN_COLOR)
+
+    # comic eye on the screen
+    ex = cxp + PUPIL_DIR[0] * rs * 0.14
+    ey = cyp + PUPIL_DIR[1] * rs * 0.14
+    re = rs * 0.60
+    d.ellipse([ex - re, ey - re, ex + re, ey + re], fill=SCLERA_COLOR)
+    ix = ex + PUPIL_DIR[0] * re * 0.40
+    iy = ey + PUPIL_DIR[1] * re * 0.40
+    ri = re * 0.52
+    d.ellipse([ix - ri, iy - ri, ix + ri, iy + ri], fill=JELLYFIN_BLUE)
+    rp = ri * 0.58
+    d.ellipse([ix - rp, iy - rp, ix + rp, iy + rp], fill=PUPIL_COLOR)
+    rg = rp * 0.42
+    gx, gy = ix - rp * 0.35, iy - rp * 0.40
+    d.ellipse([gx - rg, gy - rg, gx + rg, gy + rg], fill=(255, 255, 255))
+    # subtle screen reflection
+    d.arc([cxp - rs * 0.86, cyp - rs * 0.86, cxp + rs * 0.86, cyp + rs * 0.86],
+          start=200, end=245, fill=(75, 75, 85), width=int(0.012 * S))
 
     return glyph.resize((canvas_size, canvas_size), Image.LANCZOS)
 
@@ -117,7 +182,7 @@ def render_icon(size: int, padding_ratio: float) -> Image.Image:
     draw = ImageDraw.Draw(img)
     draw.ellipse([0, 0, size, size], fill=BG_COLOR)
     pad = size * padding_ratio
-    cx, cy = size / 2, size * 0.46
+    cx, cy = size / 2, size * 0.48
     r = (size - 2 * pad) / 2.3
     glyph = render_glyph(size, cx, cy, r)
     img = Image.alpha_composite(img, glyph)
@@ -126,7 +191,7 @@ def render_icon(size: int, padding_ratio: float) -> Image.Image:
 
 def render_foreground(size: int) -> Image.Image:
     """Transparent background, glyph only, sized for the adaptive safe zone."""
-    cx, cy = size / 2, size * 0.48
+    cx, cy = size / 2, size * 0.50
     r = size * 0.185
     return render_glyph(size, cx, cy, r)
 
