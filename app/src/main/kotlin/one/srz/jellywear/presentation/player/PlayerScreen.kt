@@ -71,6 +71,7 @@ import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.NowPlaying
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
+import one.srz.jellywear.presentation.MainActivity
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.audioApi
@@ -129,9 +130,21 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     var startPositionMs by rememberSaveable(itemId) { mutableStateOf(C.TIME_UNSET) }
     var controlsVisible by remember(itemId) { mutableStateOf(true) }
     var interactionTick by remember(itemId) { mutableStateOf(0) }
+    // Resume-route fallback (see the PLAYER_RESUME_ID effect below): true
+    // once the UI is fed from the connected controller's own metadata
+    // because the process-local PlaybackQueue came up empty.
+    var resumeFromController by remember(itemId) { mutableStateOf(false) }
+    var controllerMetadata by remember(itemId) { mutableStateOf<MediaMetadata?>(null) }
 
     val currentItem = queueItems.getOrNull(currentIndex)
-    val isVideo = currentItem?.mediaType == MediaType.VIDEO
+    // In controller-fallback resume mode there is no BaseItemDto to ask, so
+    // the video/audio decision comes from the mediaType each MediaItem's
+    // metadata was stamped with when the queue was handed to the controller.
+    val isVideo = if (currentItem != null) {
+        currentItem.mediaType == MediaType.VIDEO
+    } else {
+        controllerMetadata?.mediaType == MediaMetadata.MEDIA_TYPE_MOVIE
+    }
 
     // The global ring (drawn in JellywearApp) mirrors these so it can fade
     // in/out together with the video controls instead of always sitting on
@@ -228,7 +241,10 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             PLAYER_RESUME_ID -> {
                 queueItems = PlaybackQueue.items
                 hasSetMediaItems = true
-                NowPlaying.isActive = true
+                // Only claim an active session when there is actually one to
+                // show; the empty case is resolved by the fallback effect
+                // below once the controller has connected.
+                if (queueItems.isNotEmpty()) NowPlaying.isActive = true
             }
             else -> {
                 val api = session.api ?: return@LaunchedEffect
@@ -250,6 +266,35 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         }
     }
 
+    // Resume entry whose process-local queue is empty: the process died (or
+    // was otherwise reset) while the media notification / watch-face chip
+    // stayed visible, so PlaybackQueue has nothing although the entry point
+    // promised something playing. Previously this showed a spinner forever.
+    // Fall back to whatever the connected controller still carries; if that
+    // is empty too (the controller connection just started a fresh, empty
+    // service), leave for Home.
+    if (itemId == PLAYER_RESUME_ID) {
+        LaunchedEffect(controller, queueItems) {
+            val ctrl = controller ?: return@LaunchedEffect
+            if (queueItems.isNotEmpty() || resumeFromController) return@LaunchedEffect
+            if (ctrl.mediaItemCount > 0) {
+                resumeFromController = true
+                controllerMetadata = ctrl.mediaMetadata
+                NowPlaying.isActive = true
+            } else {
+                // PlayerScreen has no NavController to pop, so go Home by
+                // relaunching MainActivity without EXTRA_OPEN_NOW_PLAYING:
+                // CLEAR_TASK rebuilds the task on the normal Home start
+                // destination (this screen is usually the task's only entry
+                // here anyway, being the notification-tap start destination).
+                context.startActivity(
+                    Intent(context, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                )
+            }
+        }
+    }
+
     LaunchedEffect(queueItems, controller) {
         val api = session.api
         val ctrl = controller
@@ -263,6 +308,16 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(queueItem.name)
+                            // Lets a later controller-fallback resume (queue
+                            // lost to process death) still tell video from
+                            // audio without the BaseItemDto at hand.
+                            .setMediaType(
+                                if (queueItem.mediaType == MediaType.VIDEO) {
+                                    MediaMetadata.MEDIA_TYPE_MOVIE
+                                } else {
+                                    MediaMetadata.MEDIA_TYPE_MUSIC
+                                },
+                            )
                             .build(),
                     )
                     .build()
@@ -290,6 +345,13 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
                     NowPlaying.isPlaying = playing
+                }
+
+                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                    // Keeps the controller-fallback resume UI (title, video
+                    // detection) current across item transitions; harmless
+                    // otherwise, it's only read when the queue is empty.
+                    controllerMetadata = mediaMetadata
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
@@ -328,7 +390,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // timeout turn the screen off mid-load, which can tear down the
     // video surface before ExoPlayer ever gets to start playback.
     val view = LocalView.current
-    val keepScreenOn = currentItem == null || isVideo
+    val keepScreenOn = (currentItem == null && !resumeFromController) || isVideo
     DisposableEffect(keepScreenOn) {
         view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
@@ -372,7 +434,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp),
             )
-            queueItems.isEmpty() -> CircularProgressIndicator()
+            queueItems.isEmpty() && !resumeFromController -> CircularProgressIndicator()
             else -> {
                 if (!isVideo &&
                     preferences.coverArtMode == CoverArtMode.FOLDERS_AND_PLAYBACK &&
@@ -416,7 +478,9 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     ) {
                         if (!isVideo) {
                             Text(
-                                text = currentItem?.name ?: "",
+                                text = currentItem?.name
+                                    ?: controllerMetadata?.title?.toString()
+                                    ?: "",
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.title3,
                                 modifier = Modifier.padding(bottom = 8.dp),
