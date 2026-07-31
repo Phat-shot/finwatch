@@ -17,7 +17,7 @@ env:
   # comes out as v1.0 -- afterwards leave it alone forever (N must keep
   # increasing). play-publish.yml carries a copy that must be kept in sync.
   # See README "Versioning".
-  VERSION_NAME_OFFSET: 64
+  VERSION_NAME_OFFSET: 70
 
 concurrency:
   group: build-${{ github.ref }}
