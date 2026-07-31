@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -60,6 +62,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import coil.compose.AsyncImage
 import com.google.common.util.concurrent.ListenableFuture
+import java.io.IOException
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.delay
 import one.srz.jellywear.R
@@ -69,8 +72,12 @@ import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.NowPlaying
 import one.srz.jellywear.playback.PlaybackQueue
 import one.srz.jellywear.playback.PlaybackService
+import one.srz.jellywear.presentation.MainActivity
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.exception.ApiClientException
+import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.api.client.exception.SecureConnectionException
+import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.jellyfin.sdk.api.client.extensions.audioApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.api.client.extensions.videosApi
@@ -102,7 +109,9 @@ private val COMPATIBLE_AUDIO_CODECS = setOf("aac", "mp3", "flac", "opus", "vorbi
 fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: String) {
     val context = LocalContext.current
     var queueItems by remember(itemId) { mutableStateOf<List<BaseItemDto>>(emptyList()) }
-    var error by remember(itemId) { mutableStateOf<String?>(null) }
+    // String resource id, not a raw exception message -- the watch shows a
+    // short translated line, never technical text (see errorStringRes).
+    var errorRes by remember(itemId) { mutableStateOf<Int?>(null) }
     var isPlaying by remember(itemId) { mutableStateOf(true) }
     var controller by remember(itemId) { mutableStateOf<MediaController?>(null) }
     var positionMs by remember(itemId) { mutableStateOf(0L) }
@@ -117,11 +126,31 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // played, silently preventing every later item (audio or video) from
     // starting.
     var hasSetMediaItems by remember(itemId) { mutableStateOf(false) }
+    // Where to restart playback when the queue is handed to the controller
+    // again. stopIfVideo() (ON_STOP) tears the whole service down, so without
+    // this a backgrounded video always restarted at 0:00 on return.
+    // rememberSaveable so the position even survives the activity being
+    // recreated (or the process dying) while backgrounded. C.TIME_UNSET means
+    // "default position", i.e. an untouched fresh start.
+    var startMediaItemIndex by rememberSaveable(itemId) { mutableStateOf(0) }
+    var startPositionMs by rememberSaveable(itemId) { mutableStateOf(C.TIME_UNSET) }
     var controlsVisible by remember(itemId) { mutableStateOf(true) }
     var interactionTick by remember(itemId) { mutableStateOf(0) }
+    // Resume-route fallback (see the PLAYER_RESUME_ID effect below): true
+    // once the UI is fed from the connected controller's own metadata
+    // because the process-local PlaybackQueue came up empty.
+    var resumeFromController by remember(itemId) { mutableStateOf(false) }
+    var controllerMetadata by remember(itemId) { mutableStateOf<MediaMetadata?>(null) }
 
     val currentItem = queueItems.getOrNull(currentIndex)
-    val isVideo = currentItem?.mediaType == MediaType.VIDEO
+    // In controller-fallback resume mode there is no BaseItemDto to ask, so
+    // the video/audio decision comes from the mediaType each MediaItem's
+    // metadata was stamped with when the queue was handed to the controller.
+    val isVideo = if (currentItem != null) {
+        currentItem.mediaType == MediaType.VIDEO
+    } else {
+        controllerMetadata?.mediaType == MediaMetadata.MEDIA_TYPE_MOVIE
+    }
 
     // The global ring (drawn in JellywearApp) mirrors these so it can fade
     // in/out together with the video controls instead of always sitting on
@@ -174,6 +203,12 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         // (a fresh, empty service) reloads the queue instead of staying blank.
         fun stopIfVideo() {
             if (currentIsVideo.value) {
+                // Remember where the video was interrupted so the reload on
+                // the next ON_START resumes there instead of at 0:00.
+                controller?.let { ctrl ->
+                    startMediaItemIndex = ctrl.currentMediaItemIndex
+                    startPositionMs = ctrl.currentPosition
+                }
                 controller?.stop()
                 context.stopService(Intent(context, PlaybackService::class.java))
                 hasSetMediaItems = false
@@ -212,12 +247,25 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             PLAYER_RESUME_ID -> {
                 queueItems = PlaybackQueue.items
                 hasSetMediaItems = true
-                NowPlaying.isActive = true
+                // Only claim an active session when there is actually one to
+                // show; the empty case is resolved by the fallback effect
+                // below once the controller has connected.
+                if (queueItems.isNotEmpty()) NowPlaying.isActive = true
             }
             else -> {
                 val api = session.api ?: return@LaunchedEffect
+                // Today itemId is always an internally produced UUID, but a
+                // malformed one (e.g. a future deeplink) used to crash with
+                // an uncaught IllegalArgumentException -- degrade to the
+                // generic error state instead.
+                val itemUuid = try {
+                    itemId.toUUID()
+                } catch (e: IllegalArgumentException) {
+                    errorRes = R.string.error_generic
+                    return@LaunchedEffect
+                }
                 try {
-                    val item = api.userLibraryApi.getItem(itemId = itemId.toUUID(), userId = session.userId).content
+                    val item = api.userLibraryApi.getItem(itemId = itemUuid, userId = session.userId).content
                     queueItems = listOf(item)
                     // PLAYER_RESUME_ID (notification/watch-face tap, or
                     // reopening the app while this is playing) reattaches by
@@ -228,8 +276,37 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     // forever once backgrounded and reopened.
                     PlaybackQueue.items = listOf(item)
                 } catch (e: ApiClientException) {
-                    error = e.message
+                    errorRes = errorStringRes(e)
                 }
+            }
+        }
+    }
+
+    // Resume entry whose process-local queue is empty: the process died (or
+    // was otherwise reset) while the media notification / watch-face chip
+    // stayed visible, so PlaybackQueue has nothing although the entry point
+    // promised something playing. Previously this showed a spinner forever.
+    // Fall back to whatever the connected controller still carries; if that
+    // is empty too (the controller connection just started a fresh, empty
+    // service), leave for Home.
+    if (itemId == PLAYER_RESUME_ID) {
+        LaunchedEffect(controller, queueItems) {
+            val ctrl = controller ?: return@LaunchedEffect
+            if (queueItems.isNotEmpty() || resumeFromController) return@LaunchedEffect
+            if (ctrl.mediaItemCount > 0) {
+                resumeFromController = true
+                controllerMetadata = ctrl.mediaMetadata
+                NowPlaying.isActive = true
+            } else {
+                // PlayerScreen has no NavController to pop, so go Home by
+                // relaunching MainActivity without EXTRA_OPEN_NOW_PLAYING:
+                // CLEAR_TASK rebuilds the task on the normal Home start
+                // destination (this screen is usually the task's only entry
+                // here anyway, being the notification-tap start destination).
+                context.startActivity(
+                    Intent(context, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                )
             }
         }
     }
@@ -247,11 +324,27 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(queueItem.name)
+                            // Lets a later controller-fallback resume (queue
+                            // lost to process death) still tell video from
+                            // audio without the BaseItemDto at hand.
+                            .setMediaType(
+                                if (queueItem.mediaType == MediaType.VIDEO) {
+                                    MediaMetadata.MEDIA_TYPE_MOVIE
+                                } else {
+                                    MediaMetadata.MEDIA_TYPE_MUSIC
+                                },
+                            )
                             .build(),
                     )
                     .build()
             }
-            ctrl.setMediaItems(mediaItems)
+            // coerceIn guards against a stale saved index (e.g. the queue
+            // shrank to a single refetched item after process death).
+            ctrl.setMediaItems(
+                mediaItems,
+                startMediaItemIndex.coerceIn(0, mediaItems.lastIndex),
+                startPositionMs,
+            )
             ctrl.prepare()
             ctrl.playWhenReady = true
             hasSetMediaItems = true
@@ -270,8 +363,21 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     NowPlaying.isPlaying = playing
                 }
 
+                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                    // Keeps the controller-fallback resume UI (title, video
+                    // detection) current across item transitions; harmless
+                    // otherwise, it's only read when the queue is empty.
+                    controllerMetadata = mediaMetadata
+                }
+
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_IDLE) NowPlaying.isActive = false
+                    // STATE_ENDED too: when the queue simply finishes, the
+                    // global ring would otherwise sit at 100% over every
+                    // screen (and keep JellywearApp's ring controller bound
+                    // and polling) until the process dies.
+                    if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
+                        NowPlaying.isActive = false
+                    }
                 }
             }
             ctrl.addListener(listener)
@@ -300,7 +406,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
     // timeout turn the screen off mid-load, which can tear down the
     // video surface before ExoPlayer ever gets to start playback.
     val view = LocalView.current
-    val keepScreenOn = currentItem == null || isVideo
+    val keepScreenOn = (currentItem == null && !resumeFromController) || isVideo
     DisposableEffect(keepScreenOn) {
         view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
@@ -339,12 +445,12 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
         contentAlignment = Alignment.Center,
     ) {
         when {
-            error != null -> Text(
-                text = error ?: stringResource(R.string.login_error_generic),
+            errorRes != null -> Text(
+                text = stringResource(errorRes ?: R.string.error_generic),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp),
             )
-            queueItems.isEmpty() -> CircularProgressIndicator()
+            queueItems.isEmpty() && !resumeFromController -> CircularProgressIndicator()
             else -> {
                 if (!isVideo &&
                     preferences.coverArtMode == CoverArtMode.FOLDERS_AND_PLAYBACK &&
@@ -388,7 +494,9 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                     ) {
                         if (!isVideo) {
                             Text(
-                                text = currentItem?.name ?: "",
+                                text = currentItem?.name
+                                    ?: controllerMetadata?.title?.toString()
+                                    ?: "",
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.title3,
                                 modifier = Modifier.padding(bottom = 8.dp),
@@ -465,6 +573,20 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             }
         }
     }
+}
+
+// Maps SDK failures onto the shared error strings so the watch shows a short
+// translated line instead of a raw (technical, English-only) exception
+// message.
+private fun errorStringRes(e: ApiClientException): Int = when (e) {
+    // Host unreachable / network offline; TLS failures grouped in here too,
+    // as on the watch they almost always mean the connection path is broken.
+    is TimeoutException, is SecureConnectionException -> R.string.error_network
+    is InvalidStatusException -> when (e.status) {
+        401, 403 -> R.string.error_auth
+        else -> R.string.error_server
+    }
+    else -> if (e.cause is IOException) R.string.error_network else R.string.error_generic
 }
 
 private fun buildStreamUrl(api: ApiClient, item: BaseItemDto, transcode: Boolean): String {
