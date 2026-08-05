@@ -1,0 +1,8 @@
+Erstes stabiles Release von Finwatch, einem inoffiziellen Jellyfin-Client für Wear OS.
+
+- MPL-2.0-Lizenz und Third-Party-Hinweise
+- Release-Builds mit eigenem Release-Key signiert
+- Server-URLs werden zuerst per https probiert; nie stilles Downgrade auf http
+- Passwörter werden unverändert übergeben
+- Zugriffstoken aus Stream-/Bild-URLs in den Authorization-Header verlegt
+- Ordner-Auto-Drill auf 15 Ebenen begrenzt

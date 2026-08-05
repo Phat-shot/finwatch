@@ -1,0 +1,20 @@
+Finwatch bringt deine Jellyfin-Mediathek auf die Smartwatch: Musik, Hörbücher, Serien und Filme direkt von deinem eigenen Server – ganz ohne Handy in der Nähe (Standalone-Wear-OS-App).
+
+VORAUSSETZUNG: ein eigener, erreichbarer Jellyfin-Server. Finwatch ist nur der Client – die App stellt keine Inhalte bereit und funktioniert ohne Server nicht.
+
+Funktionen:
+
+- Anmeldung am Jellyfin-Server per Quick Connect (kurzer Code, kein Passwort-Tippen auf der Uhr) oder mit Server-URL, Benutzername und Passwort; das Zugriffstoken wird lokal mit dem Android-Keystore verschlüsselt gespeichert
+- Kompakter Startbildschirm mit konfigurierbaren Kategorien: Musik, Hörbücher, Serien, Filme, Favoriten, Playlists
+- Bibliotheken, Interpreten/Alben und Ordner durchstöbern – mit Shuffle-Wiedergabe auf jeder Ebene
+- Audio- und Videowiedergabe (ExoPlayer/Media3); Wiedergabe läuft im Hintergrund mit Systemsteuerung weiter, auch bei ausgeschaltetem Display
+- Automatische Wiederaufnahme nach kurzen Netzwerkaussetzern
+- Wiedergabe wahlweise über Bluetooth-Kopfhörer oder den Uhr-Lautsprecher
+- Optionales serverseitiges Transcoding für Video; Audio spielt direkt ab
+- Anpassbar: Dunkel/Hell, Akzent- und Schriftfarben, Cover-Anzeige; Sprachen: Deutsch, Englisch, Französisch, Spanisch, Arabisch
+
+Privatsphäre: kein Tracking, keine Analytics, keine Werbung. Deine Zugangsdaten gehen ausschließlich an den Server, den du selbst einträgst; der Entwickler erhält keinerlei Daten.
+
+Finwatch ist freie Software (MPL-2.0). Quellcode, Fehlerberichte und Mitarbeit: https://github.com/Phat-shot/finwatch
+
+Hinweis: Finwatch ist ein inoffizieller Client, steht in keiner Verbindung zum Jellyfin-Projekt und wird von diesem weder unterstützt noch beworben. Jellyfin ist eine Marke des Jellyfin-Projekts.
