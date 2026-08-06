@@ -40,7 +40,7 @@ class JellyfinSession private constructor(context: Context) {
 
     private val jellyfin: Jellyfin = createJellyfin {
         this.context = context.applicationContext
-        clientInfo = ClientInfo(name = "jellywear", version = BuildConfig.VERSION_NAME)
+        clientInfo = ClientInfo(name = "Finwatch", version = BuildConfig.VERSION_NAME)
     }
 
     var api: ApiClient? = null
