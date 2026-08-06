@@ -9,6 +9,7 @@
     <string name="login_error_generic">Couldn\'t sign in</string>
     <string name="login_retry_hint">Tap to retry</string>
     <string name="login_quick_connect_hint">Enter this code on your phone or computer, in Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_fallback">Sign in with password instead</string>
     <string name="login_quick_connect_timeout">Quick Connect timed out</string>
 
     <string name="http_warning_title">Unencrypted connection</string>
@@ -16,6 +17,7 @@
     <string name="http_warning_continue">Connect anyway</string>
     <string name="http_warning_cancel">Cancel</string>
 
+    <string name="error_not_jellyfin">No Jellyfin API at this address. Check the URL path.</string>
     <string name="error_network">Network error. Check your connection.</string>
     <string name="error_auth">Access denied. Check your credentials.</string>
     <string name="error_server">Server error. Try again later.</string>
