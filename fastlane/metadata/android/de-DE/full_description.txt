@@ -18,3 +18,5 @@ Privatsphäre: kein Tracking, keine Analytics, keine Werbung. Deine Zugangsdaten
 Finwatch ist freie Software (MPL-2.0). Quellcode, Fehlerberichte und Mitarbeit: https://github.com/Phat-shot/finwatch
 
 Hinweis: Finwatch ist ein inoffizieller Client, steht in keiner Verbindung zum Jellyfin-Projekt und wird von diesem weder unterstützt noch beworben. Jellyfin ist eine Marke des Jellyfin-Projekts.
+
+Die Screenshots zeigen die Blender-Foundation-Open-Movies Big Buck Bunny, Sintel und Tears of Steel — (CC) Blender Foundation, blender.org.
