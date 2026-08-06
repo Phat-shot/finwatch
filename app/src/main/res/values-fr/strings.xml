@@ -7,6 +7,7 @@
     <string name="login_error_generic">Échec de la connexion</string>
     <string name="login_retry_hint">Appuyez pour réessayer</string>
     <string name="login_quick_connect_hint">Entrez ce code sur votre téléphone ou ordinateur, dans Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_fallback">Se connecter avec un mot de passe</string>
     <string name="login_quick_connect_timeout">Délai Quick Connect dépassé</string>
 
     <string name="http_warning_title">Connexion non chiffrée</string>

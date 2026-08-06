@@ -59,7 +59,9 @@ erlaubt).
 > To publish on Google Play, new personal developer accounts need a closed
 > test with at least 12 testers opted in for 14 days — so I'm looking for a
 > few people with a Wear OS 3+ watch and their own Jellyfin server who'd like
-> to try it and share feedback.
+> to try it and share feedback. No server? The public demo works too: use
+> `demo.jellyfin.org/stable` as the server URL, tap "Sign in with password
+> instead", user `demo`, leave the password empty.
 >
 > How to join: send me your Google account email / join the Google Group
 > [LINK], then install via the opt-in link [LINK]. Staying opted in for the

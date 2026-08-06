@@ -122,11 +122,14 @@ Review-Team hinterlegen.
 
 **Option B — öffentlicher Jellyfin-Demo-Server (nur Notlösung):**
 `https://demo.jellyfin.org/stable` mit Benutzer `demo` und **leerem Passwort**
-funktioniert grundsätzlich als Jellyfin-Instanz. Für das Play-Review aber
+funktioniert als Jellyfin-Instanz (mit der App verifiziert; der Pfad
+`/stable` muss mit in die Server-URL). Da der Demo-Server Quick Connect
+anbietet, zeigt die App zuerst den Quick-Connect-Code — über den Button
+„Stattdessen mit Passwort anmelden" geht es zum normalen Login
+(`demo`, Passwort leer lassen). Für das Play-Review trotzdem
 **nicht empfohlen**: Der Server gehört dem Jellyfin-Projekt (Drittanbieter,
-keine Verfügbarkeits-Garantie), es gab wiederholt Berichte über nicht
-funktionierende Demo-Logins/Ausfälle, und ein leeres Passwort passt evtl.
-nicht durch den Login-Flow der App. Wenn überhaupt, dann nur zusätzlich als
+keine Verfügbarkeits-Garantie), und es gab wiederholt Berichte über
+Demo-Ausfälle. Wenn überhaupt, dann nur zusätzlich als
 Fallback in den Instructions nennen — die Hauptzugangsdaten sollten auf einen
 selbst kontrollierten Server zeigen.
 

@@ -7,6 +7,7 @@
     <string name="login_error_generic">No se pudo iniciar sesión</string>
     <string name="login_retry_hint">Toca para reintentar</string>
     <string name="login_quick_connect_hint">Introduce este código en tu teléfono u ordenador, en Jellyfin → Quick Connect</string>
+    <string name="login_quick_connect_fallback">Iniciar sesión con contraseña</string>
     <string name="login_quick_connect_timeout">Quick Connect ha expirado</string>
 
     <string name="http_warning_title">Conexión sin cifrar</string>
