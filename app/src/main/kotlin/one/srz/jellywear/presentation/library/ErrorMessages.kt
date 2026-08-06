@@ -3,6 +3,7 @@ package one.srz.jellywear.presentation.library
 import androidx.annotation.StringRes
 import java.io.IOException
 import one.srz.jellywear.R
+import org.jellyfin.sdk.api.client.exception.InvalidContentException
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.api.client.exception.SecureConnectionException
 import org.jellyfin.sdk.api.client.exception.TimeoutException
@@ -25,6 +26,11 @@ fun errorMessageRes(error: Throwable): Int {
     var depth = 0
     while (current != null && depth < MAX_CAUSE_DEPTH) {
         when (current) {
+            // The server answered 200 but with something that isn't the
+            // Jellyfin API's JSON -- typically a web page, because the URL
+            // points at a site's root instead of the Jellyfin base path
+            // (e.g. demo.jellyfin.org instead of demo.jellyfin.org/stable).
+            is InvalidContentException -> return R.string.error_not_jellyfin
             is TimeoutException -> return R.string.error_network
             is SecureConnectionException -> return R.string.error_network
             is IOException -> return R.string.error_network

@@ -14,6 +14,7 @@
     <string name="http_warning_continue">الاتصال على أي حال</string>
     <string name="http_warning_cancel">إلغاء</string>
 
+    <string name="error_not_jellyfin">لا توجد واجهة Jellyfin على هذا العنوان. تحقق من مسار الرابط.</string>
     <string name="error_network">خطأ في الشبكة. تحقق من اتصالك.</string>
     <string name="error_auth">تم رفض الوصول. تحقق من بيانات تسجيل الدخول.</string>
     <string name="error_server">خطأ في الخادم. حاول مرة أخرى لاحقًا.</string>
