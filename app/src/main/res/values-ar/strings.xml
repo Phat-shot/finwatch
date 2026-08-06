@@ -7,6 +7,7 @@
     <string name="login_error_generic">تعذر تسجيل الدخول</string>
     <string name="login_retry_hint">اضغط للمحاولة مرة أخرى</string>
     <string name="login_quick_connect_hint">أدخل هذا الرمز على هاتفك أو حاسوبك، في Jellyfin ← Quick Connect</string>
+    <string name="login_quick_connect_fallback">تسجيل الدخول بكلمة المرور بدلاً من ذلك</string>
     <string name="login_quick_connect_timeout">انتهت مهلة Quick Connect</string>
 
     <string name="http_warning_title">اتصال غير مشفّر</string>

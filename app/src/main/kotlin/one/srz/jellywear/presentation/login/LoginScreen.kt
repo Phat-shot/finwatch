@@ -30,6 +30,7 @@ import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
+import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -265,6 +266,16 @@ fun LoginScreen(
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.caption2,
                     modifier = Modifier.padding(top = 8.dp),
+                )
+                // Escape hatch for servers where confirming the code from
+                // another device is impractical (e.g. the public demo
+                // server): fall through to the username/password flow.
+                // Changing the step cancels the polling LaunchedEffect.
+                CompactChip(
+                    label = { Text(text = stringResource(R.string.login_quick_connect_fallback)) },
+                    onClick = { step = LoginStep.USERNAME },
+                    colors = ChipDefaults.secondaryChipColors(),
+                    modifier = Modifier.padding(top = 10.dp),
                 )
             }
             LoginStep.ERROR -> {
