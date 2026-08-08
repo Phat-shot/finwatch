@@ -1,0 +1,8 @@
+Korrekturen bei der Anmeldung und zuverlässigerer Watchface-Chip.
+
+- Quick Connect bietet jetzt „Stattdessen mit Passwort anmelden"
+- Server mit Pfad (z. B. demo.jellyfin.org/stable) melden klar, wenn die URL auf eine Webseite statt auf die API zeigt
+- Ausdrückliche Bestätigung vor unverschlüsselten http://-Verbindungen
+- Lokalisierte Fehlermeldungen für Netzwerk-, Anmelde- und Serverfehler
+- Verschlüsseltes Sitzungstoken von Auto-Backup und Geräteübertragung ausgenommen
+- Wiedergabe-Chip auf dem Zifferblatt bleibt während der Wiedergabe sichtbar

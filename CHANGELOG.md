@@ -12,7 +12,13 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+## [1.11] - 2026-08-06
+
 ### Added
+- "Sign in with password instead" on the Quick Connect screen: servers with
+  Quick Connect enabled previously offered no way to reach the
+  username/password flow, which made them unusable when confirming the code
+  from another device isn't practical (e.g. the public Jellyfin demo server).
 - Explicit consent step in the login flow before connecting over cleartext
   `http://` (shown when the https-first probe falls back to http or an
   `http://` URL is entered explicitly): password and media would travel
@@ -29,6 +35,12 @@ numbers such as "jellywear v173") is not itemized here.
   be decrypted anyway — after a restore the app now starts with a clean
   sign-in instead of a half-restored session. App settings (theme, colors,
   playback, libraries) remain backed up.
+
+### Fixed
+- A server answering with a web page instead of the API — what happens when
+  the base path is missing from the server URL, e.g. `demo.jellyfin.org`
+  instead of `demo.jellyfin.org/stable` — reported a misleading generic
+  failure. It now says the address carries no Jellyfin API.
 
 ## [1.3] - 2026-07-31
 

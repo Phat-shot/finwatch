@@ -1,0 +1,40 @@
+# Draft metadata for the F-Droid main repo (gitlab.com/fdroid/fdroiddata).
+# Copy to metadata/one.srz.finwatch.yml in an fdroiddata checkout, then
+# validate with `fdroid lint one.srz.finwatch` and `fdroid build -v -l
+# one.srz.finwatch` before opening the merge request. Summary, description,
+# icon and screenshots are NOT repeated here on purpose: fdroidserver reads
+# them from fastlane/metadata/android/ in this repo.
+
+Categories:
+  - Multimedia
+License: MPL-2.0
+AuthorName: Philipp Schwarz
+AuthorEmail: philipp@srz.one
+SourceCode: https://github.com/Phat-shot/finwatch
+IssueTracker: https://github.com/Phat-shot/finwatch/issues
+Changelog: https://github.com/Phat-shot/finwatch/blob/main/CHANGELOG.md
+
+RepoType: git
+Repo: https://github.com/Phat-shot/finwatch.git
+
+Builds:
+  - versionName: '1.11'
+    versionCode: 81
+    commit: v1.11
+    subdir: app
+    gradle:
+      - prod
+    # The version normally comes from the CI run number via -PappVersionCode
+    # (see README "Versioning"); a plain checkout of the tag would build as
+    # versionCode 1. Until the build derives its version from the git tag,
+    # every release needs these two values updated by hand -- which is also
+    # why AutoUpdateMode has to stay off: auto-generated build entries would
+    # copy these literals and ship the wrong versionCode.
+    gradleprops:
+      - appVersionCode=81
+      - versionNameOffset=70
+
+AutoUpdateMode: None
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+$
+CurrentVersion: '1.11'
+CurrentVersionCode: 81

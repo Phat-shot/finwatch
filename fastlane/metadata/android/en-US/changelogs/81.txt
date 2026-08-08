@@ -1,0 +1,8 @@
+Sign-in fixes and a more reliable watch-face chip.
+
+- Quick Connect screens now offer "Sign in with password instead"
+- Servers reachable under a path (e.g. demo.jellyfin.org/stable) report a clear error when the URL points at a web page instead of the API
+- Explicit consent before connecting over cleartext http://
+- Localized error messages for network, authentication and server failures
+- Encrypted session token excluded from Auto Backup and device transfer
+- Watch-face playback chip stays visible while playback runs
