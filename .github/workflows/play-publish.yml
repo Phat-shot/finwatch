@@ -22,12 +22,6 @@
 # strictly increasing and in sync.
 name: Play Store upload
 
-env:
-  # Copy of the constant in build.yml -- MUST be kept in sync, so the AAB
-  # built here carries the same "1.N" versionName as the corresponding
-  # GitHub release. See README "Versioning".
-  VERSION_NAME_OFFSET: 70
-
 on:
   workflow_dispatch:
     inputs:
@@ -98,7 +92,7 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew bundleProdRelease -PappVersionCode=${{ inputs.versionCode }} -PversionNameOffset=$VERSION_NAME_OFFSET --no-daemon
+          ./gradlew bundleProdRelease -PappVersionCode=${{ inputs.versionCode }} --no-daemon
 
       - name: Upload to Google Play
         if: steps.check.outputs.configured == 'true'

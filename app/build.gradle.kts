@@ -4,6 +4,41 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+/**
+ * The versionCode implied by the nearest release tag ("v1.N" -> N + [offset]),
+ * or null if there is no usable tag -- no git, no tags fetched, or the
+ * checkout sits before the first release.
+ *
+ * This is the fallback for builds that don't get -PappVersionCode: chiefly
+ * F-Droid, which builds a plain checkout of the tag from source and would
+ * otherwise ship versionCode 1 for every release. Beta tags ("v1.N-test")
+ * are excluded -- they are pre-releases of the same counter, and a prod
+ * build must never inherit their number.
+ */
+fun releaseTagVersionCode(offset: Int): Int? {
+    val tag = runCatching {
+        val git = providers.exec {
+            workingDir = rootDir
+            commandLine(
+                // Only "v1.N" release tags: "*-test" are beta pre-releases,
+                // and tags from the app's jellywear era are raw run numbers
+                // ("v55") that would resolve to a nonsense version.
+                "git", "describe", "--tags", "--abbrev=0",
+                "--match", "v1.[0-9]*", "--exclude", "*-test",
+            )
+            // A checkout without tags is an expected case, not a build failure.
+            isIgnoreExitValue = true
+        }
+        if (git.result.get().exitValue != 0) null else git.standardOutput.asText.get().trim()
+    }.getOrNull()
+    // Anchored on "v1." because the visible version is a plain 1.N counter.
+    val minor = tag?.let { Regex("""^v1\.(\d+)$""").find(it) }
+        ?.groupValues?.get(1)
+        ?.toIntOrNull()
+        ?: return null
+    return minor + offset
+}
+
 android {
     namespace = "one.srz.jellywear"
     compileSdk = 36
@@ -27,19 +62,21 @@ android {
         // since targetSdk 34 are already declared in the manifest.
         targetSdk = 36
 
-        // versionCode: the technical, strictly increasing counter Play and
-        // devices compare -- CI passes github.run_number as -PappVersionCode,
-        // local builds fall back to 1. See README "Versioning".
-        val ciVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
-        versionCode = ciVersionCode ?: 1
-        // versionName: user-facing "1.N" where N = versionCode minus a fixed
-        // offset, so the visible counter starts near 1.0 instead of leaking
-        // historical CI run numbers. Plain counter, not semver: 1.9 -> 1.10.
-        // The offset constant lives in .github/workflows/build.yml
-        // (VERSION_NAME_OFFSET, passed as -PversionNameOffset); without it
-        // (local builds) the offset is 0 and the name is "1.<versionCode>".
+        // The offset that turns the technical versionCode into the visible
+        // "1.N" -- defined once in gradle.properties, overridable with
+        // -PversionNameOffset. See README "Versioning".
         val versionNameOffset = (project.findProperty("versionNameOffset") as String?)?.toIntOrNull() ?: 0
-        versionName = "1.${maxOf(0, (ciVersionCode ?: 1) - versionNameOffset)}"
+        // versionCode: the strictly increasing counter Play and devices
+        // compare. CI passes github.run_number as -PappVersionCode; without
+        // it the nearest release tag decides, and only a checkout with
+        // neither falls back to 1.
+        val ciVersionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull()
+        val resolvedVersionCode = ciVersionCode ?: releaseTagVersionCode(versionNameOffset) ?: 1
+        versionCode = resolvedVersionCode
+        // versionName: user-facing "1.N", so the visible counter starts at
+        // 1.0 instead of leaking historical CI run numbers. Plain counter,
+        // not semver: 1.9 -> 1.10.
+        versionName = "1.${maxOf(0, resolvedVersionCode - versionNameOffset)}"
     }
 
     signingConfigs {

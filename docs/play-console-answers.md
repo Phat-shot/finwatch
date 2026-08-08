@@ -135,7 +135,44 @@ selbst kontrollierten Server zeigen.
 
 ---
 
-## 6. Übrige "App content"-Erklärungen (Kurzüberblick)
+## 6. Wear-OS-Formfaktor und der richtige Track
+
+**Symptom:** Beim Erstellen eines Releases meldet die Console
+*"Für dieses APK oder Bundle ist die Wear OS-Systemfunktion
+android.hardware.type.watch erforderlich. Entferne dieses Artefakt, um
+diesen Release im aktuellen Track zu veröffentlichen."*
+
+**Ursache:** Kein Fehler am Artefakt. `AndroidManifest.xml` deklariert
+`<uses-feature android:name="android.hardware.type.watch" />` — das
+**muss** so sein, sonst ist es keine Wear-OS-App. Play lehnt das Bundle
+nur deshalb ab, weil der Release gerade in einem **Handy-Track** angelegt
+wird. Wear-Artefakte gehören in den Wear-OS-Track.
+
+**Reihenfolge (die ersten beiden Schritte sind Voraussetzung für den dritten):**
+
+1. **Aktuellen Entwurf verwerfen** — im Handy-Track oben rechts
+   "Release verwerfen". Er wird nie veröffentlichbar.
+2. **Wear-Screenshots ins Store-Listing** — Store-Eintrag → Grafiken →
+   Abschnitt **Wear OS**, die vier Bilder aus
+   `fastlane/metadata/android/en-US/images/phoneScreenshots/` hochladen
+   (426 × 426 px, über Plays Minimum von 384 px). Ohne sie lässt sich der
+   Formfaktor nicht deklarieren.
+3. **Formfaktor deklarieren** — Test und Veröffentlichung → **Erweiterte
+   Einstellungen** → Tab **Formfaktoren** → "Formfaktor hinzufügen" →
+   **Wear OS** → Deklaration bestätigen.
+4. **Release im Wear-OS-Track anlegen** — erst jetzt erscheint in
+   Testing/Produktion die Formfaktor-Auswahl bzw. der Wear-OS-Track. Das
+   AAB dort **nicht neu hochladen**, sondern über "Aus der Bibliothek
+   hinzufügen" den bereits hochgeladenen Versionscode auswählen (ein
+   zweiter Upload desselben Codes wird mit "Versionscode bereits
+   verwendet" abgelehnt).
+
+Der Wear-Opt-in zieht ein zusätzliches Review gegen die
+Wear-OS-Qualitätsrichtlinien nach sich — dafür Zeit einplanen (Issue #15).
+
+---
+
+## 7. Übrige "App content"-Erklärungen (Kurzüberblick)
 
 | Formular | Antwort |
 |---|---|
@@ -145,4 +182,4 @@ selbst kontrollierten Server zeigen.
 | News-App | Nein |
 | COVID-19-Tracing/-Status | Nein |
 | Datenschutz-/Gesundheitsdaten, Finanz-Features, staatliche App | jeweils Nein |
-| Wear-OS-Formfaktor | Opt-in setzen (App content → Formfaktoren); zusätzliches Wear-Quality-Review einplanen (Issue #15) |
+| Wear-OS-Formfaktor | Siehe Abschnitt 6 — Opt-in **vor** dem Anlegen des Testreleases, sonst wird das Bundle abgelehnt |
