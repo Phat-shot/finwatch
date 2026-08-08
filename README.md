@@ -115,19 +115,26 @@ Two counters, one source:
   run number of the shared `build.yml` workflow, passed to Gradle as
   `-PappVersionCode`. Pushes to `test` and `main` draw from the *same*
   counter, so every CI build — beta or prod — gets a strictly increasing
-  code. Local builds fall back to `versionCode 1`.
+  code.
 - **`versionName`** (what users see) is `1.N` with
-  `N = run_number − VERSION_NAME_OFFSET`, clamped at 0. It is a plain
+  `N = versionCode − versionNameOffset`, clamped at 0. It is a plain
   release counter, not semver: `1.9 → 1.10 → 1.11`. Git tags and release
   names follow it (`v1.N`, `v1.N-test`, "Finwatch v1.N").
 
-`VERSION_NAME_OFFSET` is a single constant defined at the top of
-`.github/workflows/build.yml` (with a copy in `play-publish.yml` that must
-be kept in sync) and passed to Gradle as `-PversionNameOffset`. Adjust it
-**once**, right before cutting the first `main` release, so that release
-comes out as `v1.0` (offset = that run's number); after that it must never
-change, or `N` would jump or regress. Builds without the property (local)
-show `1.<versionCode>`.
+`versionNameOffset` is defined **once**, in `gradle.properties`. Gradle
+reads it from there, and both workflows do too (`build.yml` greps it to
+build tag and release names) — there is no second copy to keep in sync. It
+was set right before the first `main` release so that release came out as
+`v1.0` (offset = that run's number, 70); it must never change now, or `N`
+would jump or regress.
+
+**Builds without `-PappVersionCode`** — a plain checkout, notably
+F-Droid building a tag from source — derive the version from the nearest
+`v1.N` release tag instead (`N + versionNameOffset`), so a tagged build
+carries the same version as the corresponding CI release. Beta tags
+(`v1.N-test`) and the pre-rename `v<run>` tags are ignored. Only a
+checkout with no such tag in its history at all falls back to
+`versionCode 1`.
 
 **Play uploads:** `play-publish.yml` asks for an explicit `versionCode`.
 Always enter the run number of the `main` build being published (visible

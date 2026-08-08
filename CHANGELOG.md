@@ -12,6 +12,13 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+### Changed
+- Builds without `-PappVersionCode` (a plain checkout — notably F-Droid
+  building a tag from source) now derive their version from the nearest
+  `v1.N` release tag instead of falling back to `versionCode 1`.
+  `versionNameOffset` moved to `gradle.properties` as its single source of
+  truth; both workflows read it from there.
+
 ## [1.11] - 2026-08-06
 
 ### Added

@@ -18,23 +18,25 @@ RepoType: git
 Repo: https://github.com/Phat-shot/finwatch.git
 
 Builds:
-  - versionName: '1.11'
-    versionCode: 81
-    commit: v1.11
+  # No gradleprops needed: without -PappVersionCode the build derives its
+  # version from the nearest "v1.N" release tag (versionCode = N + 70, the
+  # offset in gradle.properties), so a checkout of the tag builds exactly
+  # the version declared here. That is also what lets AutoUpdateMode work --
+  # generated entries stay correct without hand-edited literals.
+  #
+  # TODO before opening the merge request: point this at the first release
+  # tag that CONTAINS the tag-derived versioning (v1.12 or later, whatever
+  # the next main build produces) and set both numbers to that release.
+  # v1.11 and everything before it predate the change and would build as
+  # versionCode 1.
+  - versionName: '1.12'
+    versionCode: 82
+    commit: v1.12
     subdir: app
     gradle:
       - prod
-    # The version normally comes from the CI run number via -PappVersionCode
-    # (see README "Versioning"); a plain checkout of the tag would build as
-    # versionCode 1. Until the build derives its version from the git tag,
-    # every release needs these two values updated by hand -- which is also
-    # why AutoUpdateMode has to stay off: auto-generated build entries would
-    # copy these literals and ship the wrong versionCode.
-    gradleprops:
-      - appVersionCode=81
-      - versionNameOffset=70
 
-AutoUpdateMode: None
+AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+$
-CurrentVersion: '1.11'
-CurrentVersionCode: 81
+CurrentVersion: '1.12'
+CurrentVersionCode: 82

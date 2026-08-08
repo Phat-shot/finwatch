@@ -10,7 +10,7 @@ sehr unterschiedlichem Aufwand:
 | Signatur | unser Release-Key (identisch mit GitHub) | F-Droid-Key → **andere Signatur**, kein Update über GitHub-Installationen hinweg (außer per Reproducible Build) |
 | Aufwand | ein GitLab-Issue | Merge Request mit Build-Metadaten, muss auf deren Buildserver bauen |
 | Dauer | Tage bis wenige Wochen | Wochen bis Monate |
-| Status | **einreichbar, alles vorbereitet** | ein Blocker offen (siehe unten) |
+| Status | **einreichbar, alles vorbereitet** | **einreichbar**, sobald v1.12 getaggt ist |
 
 Empfehlung: **erst IzzyOnDroid** (sofort möglich, erreicht die
 F-Droid-Nutzerschaft schon weitgehend), Hauptrepo als zweiter Schritt.
@@ -40,32 +40,29 @@ Changelogs). Einzige laufende Pflicht danach: `changelogs/<versionCode>.txt`
 - Metadaten-Entwurf liegt fertig unter
   `docs/fdroid-metadata/one.srz.finwatch.yml`.
 
-### Der offene Blocker: woher kommt die Versionsnummer?
+### Versionsnummer aus dem Git-Tag (erledigt)
 
-`versionCode` stammt heute aus der GitHub-Actions-Run-Nummer
-(`-PappVersionCode`), `versionName` wird daraus abgeleitet. F-Droid baut
-aber einen nackten Checkout des Tags — ohne diese Property fällt der Build
-auf `versionCode 1` / `1.1` zurück.
+Der frühere Blocker: `versionCode` stammt aus der GitHub-Actions-Run-Nummer
+(`-PappVersionCode`); F-Droid baut aber einen nackten Checkout des Tags und
+wäre so bei `versionCode 1` gelandet.
 
-Zwei Auswege:
+Gelöst in `app/build.gradle.kts`: Fehlt `-PappVersionCode`, ermittelt der
+Build den nächstgelegenen Release-Tag (`git describe --match 'v1.[0-9]*'
+--exclude '*-test'`) und rechnet `versionCode = N + versionNameOffset`.
+Verifiziert gegen die echte Tag-Historie: `v1.0` → 70, `v1.11` → 81 —
+identisch mit den tatsächlich veröffentlichten Versionen. CI-Builds ändern
+sich nicht (die Property gewinnt weiterhin). Der Offset liegt jetzt in
+`gradle.properties` statt doppelt in beiden Workflow-Dateien.
 
-1. **Werte in den Build-Metadaten hart eintragen** (`gradleprops`, so im
-   Entwurf). Funktioniert sofort, aber `AutoUpdateMode` muss aus bleiben,
-   d. h. **jedes** Release braucht einen neuen Merge Request bei
-   fdroiddata — dauerhafte Handarbeit, und bei uns erzeugt jeder
-   `main`-Merge ein Release.
-2. **Version aus dem Git-Tag ableiten** (empfohlen): Wenn
-   `-PappVersionCode` fehlt, liest `build.gradle.kts` den nächstgelegenen
-   Tag `v1.N` und rechnet `versionCode = N + Offset`. CI-Builds bleiben
-   unverändert (die Property gewinnt weiterhin), lokale Builds bekommen
-   endlich sinnvolle Nummern, und F-Droid kann auf `AutoUpdateMode:
-   Version` laufen — neue Releases landen dann ohne Zutun im Repo. Dazu
-   sollte `VERSION_NAME_OFFSET` aus den beiden Workflow-Dateien in die
-   `gradle.properties` wandern (heute doppelt gepflegt, siehe README).
+Folgen für F-Droid: keine `gradleprops` in den Metadaten nötig, und
+`AutoUpdateMode: Version v%v` funktioniert — neue Releases landen ohne
+weiteren Merge Request im Repo.
 
-Solange das nicht entschieden ist, sollte der Merge Request warten —
-Variante 1 einzureichen bedeutet, sich die Handarbeit dauerhaft
-einzuhandeln.
+**Wichtig:** Die Änderung wirkt erst ab dem Tag, der sie enthält. Der
+Metadaten-Entwurf zeigt noch auf `v1.11` (davor gebaut) — vor dem Merge
+Request auf den ersten Tag **mit** dieser Änderung umstellen (v1.12 oder
+später), sonst baut F-Droid `versionCode 1` und bricht mit einer
+Versionscode-Abweichung ab.
 
 ### Einreichungsweg (wenn der Blocker weg ist)
 
