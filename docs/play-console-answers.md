@@ -135,7 +135,70 @@ selbst kontrollierten Server zeigen.
 
 ---
 
-## 6. Übrige "App content"-Erklärungen (Kurzüberblick)
+## 6. Wear-OS-Formfaktor und der richtige Track
+
+**Symptom:** Beim Erstellen eines Releases meldet die Console
+*"Für dieses APK oder Bundle ist die Wear OS-Systemfunktion
+android.hardware.type.watch erforderlich. Entferne dieses Artefakt, um
+diesen Release im aktuellen Track zu veröffentlichen."*
+
+**Ursache:** Kein Fehler am Artefakt. `AndroidManifest.xml` deklariert
+`<uses-feature android:name="android.hardware.type.watch" />` — das
+**muss** so sein, sonst ist es keine Wear-OS-App. Play lehnt das Bundle
+nur deshalb ab, weil der Release gerade in einem **Handy-Track** angelegt
+wird. Wear-Artefakte gehören in den Wear-OS-Track.
+
+**Reihenfolge (die ersten beiden Schritte sind Voraussetzung für den dritten):**
+
+1. **Aktuellen Entwurf verwerfen** — im Handy-Track oben rechts
+   "Release verwerfen". Er wird nie veröffentlichbar.
+2. **Wear-Screenshots ins Store-Listing** — Store-Eintrag → Grafiken →
+   Abschnitt **Wear OS**, die vier Bilder aus
+   `fastlane/metadata/android/en-US/images/phoneScreenshots/` hochladen
+   (426 × 426 px, über Plays Minimum von 384 px). Ohne sie lässt sich der
+   Formfaktor nicht deklarieren.
+3. **Formfaktor deklarieren** — Test und Veröffentlichung → **Erweiterte
+   Einstellungen** → Tab **Formfaktoren** → "Formfaktor hinzufügen" →
+   **Wear OS** → Deklaration bestätigen.
+4. **Release im Wear-OS-Track anlegen** — erst jetzt erscheint in
+   Testing/Produktion die Formfaktor-Auswahl bzw. der Wear-OS-Track. Das
+   AAB dort **nicht neu hochladen**, sondern über "Aus der Bibliothek
+   hinzufügen" den bereits hochgeladenen Versionscode auswählen (ein
+   zweiter Upload desselben Codes wird mit "Versionscode bereits
+   verwendet" abgelehnt).
+
+Der Wear-Opt-in zieht ein zusätzliches Review gegen die
+Wear-OS-Qualitätsrichtlinien nach sich — dafür Zeit einplanen (Issue #15).
+
+### Test-Tracks nie unter dem Produktions-versionCode lassen
+
+Play liefert jedem Nutzer den Build aus dem **höchstpriorisierten Track**,
+in dem er eingetragen ist: intern > geschlossen > offen > Produktion — und
+zwar unabhängig vom versionCode. Wer als interner Tester eingetragen ist,
+bekommt also den internen Build, auch wenn Produktion längst weiter ist.
+
+Zwei sichtbare Symptome, beide harmlos, aber verwirrend:
+
+- Das Listing trägt für Tester den Zusatz **„(Internal Beta)"** plus den
+  Hinweis „You're an internal tester". Ohne Account (privater Tab) fehlt
+  beides — das ist der schnellste Test, ob die öffentliche Version steht.
+- Tester hängen auf einem **alten Build** fest, wenn der Test-Track einen
+  niedrigeren versionCode hat als Produktion.
+
+Deshalb bei jedem Release entweder die Test-Tracks mitziehen (Bundle aus
+der Bibliothek, interne Tests brauchen keine Review) oder sie leeren. Wer
+nur die öffentliche Version will, tritt über den Opt-in-Link aus dem
+Programm aus.
+
+**Nicht auf die Console-Labels verlassen.** Bei einer Wear-only-App zeigt
+die Track-Seite auch dann „Inaktiv" / „Nicht bei Google Play verfügbar"
+und der Release „Not live", wenn die App längst öffentlich ausgeliefert
+wird. Verlässlich sind nur die **Inbox** und der Aufruf der Store-URL
+ohne Account.
+
+---
+
+## 7. Übrige "App content"-Erklärungen (Kurzüberblick)
 
 | Formular | Antwort |
 |---|---|
@@ -145,4 +208,4 @@ selbst kontrollierten Server zeigen.
 | News-App | Nein |
 | COVID-19-Tracing/-Status | Nein |
 | Datenschutz-/Gesundheitsdaten, Finanz-Features, staatliche App | jeweils Nein |
-| Wear-OS-Formfaktor | Opt-in setzen (App content → Formfaktoren); zusätzliches Wear-Quality-Review einplanen (Issue #15) |
+| Wear-OS-Formfaktor | Siehe Abschnitt 6 — Opt-in **vor** dem Anlegen des Testreleases, sonst wird das Bundle abgelehnt |

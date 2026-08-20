@@ -1,0 +1,42 @@
+# Draft metadata for the F-Droid main repo (gitlab.com/fdroid/fdroiddata).
+# Copy to metadata/one.srz.finwatch.yml in an fdroiddata checkout, then
+# validate with `fdroid lint one.srz.finwatch` and `fdroid build -v -l
+# one.srz.finwatch` before opening the merge request. Summary, description,
+# icon and screenshots are NOT repeated here on purpose: fdroidserver reads
+# them from fastlane/metadata/android/ in this repo.
+
+Categories:
+  - Multimedia
+License: MPL-2.0
+AuthorName: Philipp Schwarz
+AuthorEmail: philipp@srz.one
+SourceCode: https://github.com/Phat-shot/finwatch
+IssueTracker: https://github.com/Phat-shot/finwatch/issues
+Changelog: https://github.com/Phat-shot/finwatch/blob/main/CHANGELOG.md
+
+RepoType: git
+Repo: https://github.com/Phat-shot/finwatch.git
+
+Builds:
+  # No gradleprops needed: without -PappVersionCode the build derives its
+  # version from the nearest "v1.N" release tag (versionCode = N + 70, the
+  # offset in gradle.properties), so a checkout of the tag builds exactly
+  # the version declared here. That is also what lets AutoUpdateMode work --
+  # generated entries stay correct without hand-edited literals.
+  #
+  # TODO before opening the merge request: point this at the first release
+  # tag that CONTAINS the tag-derived versioning (v1.12 or later, whatever
+  # the next main build produces) and set both numbers to that release.
+  # v1.11 and everything before it predate the change and would build as
+  # versionCode 1.
+  - versionName: '1.12'
+    versionCode: 82
+    commit: v1.12
+    subdir: app
+    gradle:
+      - prod
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+$
+CurrentVersion: '1.12'
+CurrentVersionCode: 82

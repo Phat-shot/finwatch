@@ -5,6 +5,13 @@ wurden, gilt: **mindestens 12 Tester, durchgehend über die letzten 14 Tage
 opted-in**, bevor Produktionszugriff beantragt werden kann (ursprünglich 20,
 seit 11.12.2024 auf 12 gesenkt; Organisationskonten sind ausgenommen).
 
+> **Diese ganze Checkliste entfällt, sobald das Konto ein
+> Organisationskonto ist.** Der Umstieg „Privat" → „Organisation" (neues
+> Zahlungsprofil + D-U-N-S-Nummer, von Google geprüft) hebt die
+> 12-Tester-/14-Tage-Pflicht auf; die Produktionsfreigabe kann dann direkt
+> beantragt werden. Vor dem Anwerben von Testern also erst klären, ob der
+> Umstieg durch ist.
+
 ## Schrittfolge in der Play Console
 
 1. **App anlegen** (Name "Finwatch", App/Spiel, kostenlos) und alle

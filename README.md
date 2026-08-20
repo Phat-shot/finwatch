@@ -6,8 +6,15 @@ Media3. Not affiliated with or endorsed by the Jellyfin project.
 
 ## Install
 
-Finwatch requires a Wear OS watch and your own, reachable
+Finwatch requires **Wear OS 3.0 or newer** and your own, reachable
 [Jellyfin](https://jellyfin.org) server — the app is only a client.
+
+`minSdk` is 28, but Wear OS never shipped API 28 or 29: Wear OS 2 is
+API 26/27 and Wear OS 3 jumps straight to API 30, so Wear OS 3.0 is the
+effective floor. That covers Galaxy Watch 4 and newer, every Pixel
+Watch, TicWatch Pro 3/5 and Fossil Gen 6 — but not Wear OS 2 watches,
+and not Samsung's Tizen watches (Galaxy Watch 3 and older), which
+aren't Wear OS at all.
 
 - **GitHub Releases** —
   [github.com/Phat-shot/finwatch/releases](https://github.com/Phat-shot/finwatch/releases):
@@ -22,16 +29,20 @@ Finwatch requires a Wear OS watch and your own, reachable
   Obtainium with the repo URL `https://github.com/Phat-shot/finwatch`.
   Obtainium then tracks new GitHub releases automatically (enable
   "Include prereleases" only if you want the beta channel).
-- **Coming soon** — Google Play (closed beta first, testers welcome —
-  see the issue tracker) and, once accepted, the
-  [IzzyOnDroid](https://apt.izzysoft.de/fdroid/) F-Droid repo.
+- **Google Play** —
+  [play.google.com/store/apps/details?id=one.srz.finwatch](https://play.google.com/store/apps/details?id=one.srz.finwatch):
+  install straight from the Play Store on the watch (search "Finwatch"),
+  or push it to the watch from the web listing via "Install on more
+  devices". Updates arrive automatically.
+- **Coming soon** — the [IzzyOnDroid](https://apt.izzysoft.de/fdroid/)
+  F-Droid repo, once accepted.
 
 **Signing note:** APKs from GitHub Releases (and later IzzyOnDroid) are
 signed with the developer's release key (certificate SHA-256 starting
-`99:4D:DA:1D`). The future Google Play version will be re-signed by Play
-App Signing and therefore carries a *different* signature — Android will
-refuse to update one over the other. Pick one install source per watch;
-switching later means uninstall + reinstall.
+`99:4D:DA:1D`). The Google Play version is re-signed by Play App Signing
+and therefore carries a *different* signature — Android will refuse to
+update one over the other. Pick one install source per watch; switching
+later means uninstall + reinstall.
 
 ## License
 
@@ -115,19 +126,26 @@ Two counters, one source:
   run number of the shared `build.yml` workflow, passed to Gradle as
   `-PappVersionCode`. Pushes to `test` and `main` draw from the *same*
   counter, so every CI build — beta or prod — gets a strictly increasing
-  code. Local builds fall back to `versionCode 1`.
+  code.
 - **`versionName`** (what users see) is `1.N` with
-  `N = run_number − VERSION_NAME_OFFSET`, clamped at 0. It is a plain
+  `N = versionCode − versionNameOffset`, clamped at 0. It is a plain
   release counter, not semver: `1.9 → 1.10 → 1.11`. Git tags and release
   names follow it (`v1.N`, `v1.N-test`, "Finwatch v1.N").
 
-`VERSION_NAME_OFFSET` is a single constant defined at the top of
-`.github/workflows/build.yml` (with a copy in `play-publish.yml` that must
-be kept in sync) and passed to Gradle as `-PversionNameOffset`. Adjust it
-**once**, right before cutting the first `main` release, so that release
-comes out as `v1.0` (offset = that run's number); after that it must never
-change, or `N` would jump or regress. Builds without the property (local)
-show `1.<versionCode>`.
+`versionNameOffset` is defined **once**, in `gradle.properties`. Gradle
+reads it from there, and both workflows do too (`build.yml` greps it to
+build tag and release names) — there is no second copy to keep in sync. It
+was set right before the first `main` release so that release came out as
+`v1.0` (offset = that run's number, 70); it must never change now, or `N`
+would jump or regress.
+
+**Builds without `-PappVersionCode`** — a plain checkout, notably
+F-Droid building a tag from source — derive the version from the nearest
+`v1.N` release tag instead (`N + versionNameOffset`), so a tagged build
+carries the same version as the corresponding CI release. Beta tags
+(`v1.N-test`) and the pre-rename `v<run>` tags are ignored. Only a
+checkout with no such tag in its history at all falls back to
+`versionCode 1`.
 
 **Play uploads:** `play-publish.yml` asks for an explicit `versionCode`.
 Always enter the run number of the `main` build being published (visible
@@ -205,15 +223,11 @@ python3 scripts/generate_launcher_icons.py
 
 - No seek control — playback shows a position/duration progress bar but
   it isn't scrubbable yet.
-- No real release keystore yet — the signing *mechanics* (secrets +
-  debug fallback, see "Release signing" above) are in place, but the
-  keystore itself still has to be generated and its secrets configured
-  before a store release.
 - The toolchain is on the last AGP 8.x/Gradle 8.x line by design; the
   AGP 9 + Gradle 9 + Kotlin 2.4 (and possibly Coil 3) migration is a
   separate follow-up (see issue #21). Playback lifecycle around
   pause/task-removal should be re-tested on a watch after the Media3
   1.4 -> 1.10 jump.
-- No CHANGELOG or CONTRIBUTING yet; release notes only exist as GitHub
-  Release entries.
-- No privacy policy URL yet — Google Play requires one for every app.
+- Not in the F-Droid main repo yet — see `docs/fdroid-submission.md`;
+  the metadata draft needs to point at a release tag that contains the
+  tag-derived versioning (v1.12 or later).

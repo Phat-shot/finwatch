@@ -22,16 +22,22 @@ Aufnahme wird als **Issue im GitLab-Repo `IzzyOnDroid/repo`** beantragt:
 
 Voraussetzungen, die vor dem Absenden erfüllt sein müssen:
 
-- [ ] Repo öffentlich, LICENSE (MPL-2.0) vorhanden — ✓
-- [ ] GitHub-Release **v1.0** mit `finwatch-v1.0.apk` ist veröffentlicht
-      (Izzy holt die APKs aus GitHub Releases; Beta-Releases `v1.N-test`
-      sind als Pre-Release markiert und sollen nicht gescannt werden)
-- [ ] APK mit echtem Release-Key signiert, nicht `debuggable`/`testOnly` — ✓
+- [x] Repo öffentlich, LICENSE (MPL-2.0) vorhanden
+- [x] GitHub-Release mit `finwatch-v1.N.apk` ist veröffentlicht (aktuell
+      **v1.11**, versionCode 81). Izzy holt die APKs aus GitHub Releases;
+      Beta-Releases `v1.N-test` sind als Pre-Release markiert und sollen
+      nicht gescannt werden
+- [x] APK mit echtem Release-Key signiert, nicht `debuggable`/`testOnly`
       (SHA-256 des Zertifikats beginnt `99:4D:DA:1D`)
-- [ ] Fastlane-Metadaten im Repo (`fastlane/metadata/android/en-US/` +
-      `de-DE/`) inkl. `images/icon.png` und mindestens ein Screenshot
-      unter `images/wearScreenshots/` [ZU PRÜFEN: Screenshots noch
-      ergänzen — icon.png aus `docs/store-assets/icon-512.png` kopieren]
+- [x] Fastlane-Metadaten im Repo (`fastlane/metadata/android/en-US/` +
+      `de-DE/`) inkl. `images/icon.png`, vier echte Screenshots unter
+      `images/wearScreenshots/` (und identisch unter `phoneScreenshots/`,
+      weil viele Clients nur diese rendern) sowie
+      `changelogs/<versionCode>.txt`
+
+**Damit ist der Antrag einreichbar.** Der Text unten nennt v1.0 als
+Beispiel-Release — vor dem Absenden auf die dann aktuelle Version
+anpassen.
 
 ## Antragstext (Englisch, zum Einfügen ins GitLab-Issue)
 
@@ -97,5 +103,6 @@ for running the repo!
   pflegen (Izzy liest die Metadaten zum Release-Stand; max. 500 Zeichen
   pro Datei).
 - Optional später: Reproducible Builds anstreben (Izzy verifiziert und
-  kennzeichnet die App dann entsprechend), F-Droid-Hauptrepo als
-  separater Schritt (RFP-Issue bzw. Merge Request ans fdroiddata-Repo).
+  kennzeichnet die App dann entsprechend).
+- F-Droid-Hauptrepo ist ein eigener Weg mit eigenen Voraussetzungen —
+  siehe `docs/fdroid-submission.md`.
