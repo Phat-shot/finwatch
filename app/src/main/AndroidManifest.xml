@@ -28,8 +28,8 @@
              this is a hard Play compatibility filter, and every watch that
              does not ship the legacy Wearable Support Library is served
              "incompatible" (observed on a OnePlus Watch 3, Wear OS 5). The
-             app never touches that library -- all Wear APIs come from
-             AndroidX -- so nothing here may depend on it. -->
+             app never touches that library (all Wear APIs come from
+             AndroidX), so nothing here may depend on it. -->
         <uses-library
             android:name="com.google.android.wearable"
             android:required="false" />
