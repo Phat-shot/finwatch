@@ -12,6 +12,13 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+### Fixed
+- Google Play reported the app as incompatible on watches that do not ship
+  the legacy Wearable Support Library (seen on a OnePlus Watch 3, Wear OS
+  5), because the manifest declared `com.google.android.wearable` as a
+  *required* shared library — a hard Play compatibility filter. The app
+  never used that library; it is now declared optional.
+
 ### Changed
 - Builds without `-PappVersionCode` (a plain checkout — notably F-Droid
   building a tag from source) now derive their version from the nearest
