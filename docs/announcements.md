@@ -60,14 +60,13 @@ audio and video straight from your own server on the watch.
 - Source (MPL-2.0): https://github.com/Phat-shot/finwatch
 - Releases (APK, sideload/Obtainium):
   https://github.com/Phat-shot/finwatch/releases
+- Google Play: https://play.google.com/store/apps/details?id=one.srz.finwatch
 
-**Google Play beta — testers wanted!** A Play release is in preparation.
-Play requires new personal developer accounts to run a closed test with
-at least 12 testers for 14 days before an app can go to production — so
-if you have a Wear OS watch and a Jellyfin server and would like to help
-(and get the Play beta), please reply here or open an issue on GitHub
-and I'll add you to the closed test. GitHub releases will keep working
-regardless. I'll update this thread once the Play beta link is live.
+Install it straight from the Play Store on the watch (search
+"Finwatch"), or keep sideloading the GitHub APKs — both channels stay
+supported. Note that the Play build is signed by Play App Signing and
+the GitHub APKs by my own key, so pick one source per watch; switching
+means uninstall + reinstall.
 
 To be clear: Finwatch is a third-party project — not affiliated with or
 endorsed by the Jellyfin project. You need your own Jellyfin server; the
@@ -155,7 +154,7 @@ sign in via Quick Connect, output to Bluetooth headphones or the watch
 speaker. No tracking, no ads; you obviously need your own Jellyfin
 server.
 
+On Google Play: https://play.google.com/store/apps/details?id=one.srz.finwatch
 Source + APKs (sideload or Obtainium):
-https://github.com/Phat-shot/finwatch — a Google Play beta is in
-preparation (testers welcome, see the repo). Not affiliated with the
+https://github.com/Phat-shot/finwatch — not affiliated with the
 Jellyfin project. Feedback and bug reports very welcome!
