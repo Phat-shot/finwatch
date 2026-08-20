@@ -170,6 +170,32 @@ wird. Wear-Artefakte gehören in den Wear-OS-Track.
 Der Wear-Opt-in zieht ein zusätzliches Review gegen die
 Wear-OS-Qualitätsrichtlinien nach sich — dafür Zeit einplanen (Issue #15).
 
+### Test-Tracks nie unter dem Produktions-versionCode lassen
+
+Play liefert jedem Nutzer den Build aus dem **höchstpriorisierten Track**,
+in dem er eingetragen ist: intern > geschlossen > offen > Produktion — und
+zwar unabhängig vom versionCode. Wer als interner Tester eingetragen ist,
+bekommt also den internen Build, auch wenn Produktion längst weiter ist.
+
+Zwei sichtbare Symptome, beide harmlos, aber verwirrend:
+
+- Das Listing trägt für Tester den Zusatz **„(Internal Beta)"** plus den
+  Hinweis „You're an internal tester". Ohne Account (privater Tab) fehlt
+  beides — das ist der schnellste Test, ob die öffentliche Version steht.
+- Tester hängen auf einem **alten Build** fest, wenn der Test-Track einen
+  niedrigeren versionCode hat als Produktion.
+
+Deshalb bei jedem Release entweder die Test-Tracks mitziehen (Bundle aus
+der Bibliothek, interne Tests brauchen keine Review) oder sie leeren. Wer
+nur die öffentliche Version will, tritt über den Opt-in-Link aus dem
+Programm aus.
+
+**Nicht auf die Console-Labels verlassen.** Bei einer Wear-only-App zeigt
+die Track-Seite auch dann „Inaktiv" / „Nicht bei Google Play verfügbar"
+und der Release „Not live", wenn die App längst öffentlich ausgeliefert
+wird. Verlässlich sind nur die **Inbox** und der Aufruf der Store-URL
+ohne Account.
+
 ---
 
 ## 7. Übrige "App content"-Erklärungen (Kurzüberblick)
