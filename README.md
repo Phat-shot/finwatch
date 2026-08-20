@@ -22,16 +22,20 @@ Finwatch requires a Wear OS watch and your own, reachable
   Obtainium with the repo URL `https://github.com/Phat-shot/finwatch`.
   Obtainium then tracks new GitHub releases automatically (enable
   "Include prereleases" only if you want the beta channel).
-- **Coming soon** — Google Play (closed beta first, testers welcome —
-  see the issue tracker) and, once accepted, the
-  [IzzyOnDroid](https://apt.izzysoft.de/fdroid/) F-Droid repo.
+- **Google Play** —
+  [play.google.com/store/apps/details?id=one.srz.finwatch](https://play.google.com/store/apps/details?id=one.srz.finwatch):
+  install straight from the Play Store on the watch (search "Finwatch"),
+  or push it to the watch from the web listing via "Install on more
+  devices". Updates arrive automatically.
+- **Coming soon** — the [IzzyOnDroid](https://apt.izzysoft.de/fdroid/)
+  F-Droid repo, once accepted.
 
 **Signing note:** APKs from GitHub Releases (and later IzzyOnDroid) are
 signed with the developer's release key (certificate SHA-256 starting
-`99:4D:DA:1D`). The future Google Play version will be re-signed by Play
-App Signing and therefore carries a *different* signature — Android will
-refuse to update one over the other. Pick one install source per watch;
-switching later means uninstall + reinstall.
+`99:4D:DA:1D`). The Google Play version is re-signed by Play App Signing
+and therefore carries a *different* signature — Android will refuse to
+update one over the other. Pick one install source per watch; switching
+later means uninstall + reinstall.
 
 ## License
 
@@ -212,15 +216,11 @@ python3 scripts/generate_launcher_icons.py
 
 - No seek control — playback shows a position/duration progress bar but
   it isn't scrubbable yet.
-- No real release keystore yet — the signing *mechanics* (secrets +
-  debug fallback, see "Release signing" above) are in place, but the
-  keystore itself still has to be generated and its secrets configured
-  before a store release.
 - The toolchain is on the last AGP 8.x/Gradle 8.x line by design; the
   AGP 9 + Gradle 9 + Kotlin 2.4 (and possibly Coil 3) migration is a
   separate follow-up (see issue #21). Playback lifecycle around
   pause/task-removal should be re-tested on a watch after the Media3
   1.4 -> 1.10 jump.
-- No CHANGELOG or CONTRIBUTING yet; release notes only exist as GitHub
-  Release entries.
-- No privacy policy URL yet — Google Play requires one for every app.
+- Not in the F-Droid main repo yet — see `docs/fdroid-submission.md`;
+  the metadata draft needs to point at a release tag that contains the
+  tag-derived versioning (v1.12 or later).
