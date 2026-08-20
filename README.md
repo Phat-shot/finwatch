@@ -6,8 +6,15 @@ Media3. Not affiliated with or endorsed by the Jellyfin project.
 
 ## Install
 
-Finwatch requires a Wear OS watch and your own, reachable
+Finwatch requires **Wear OS 3.0 or newer** and your own, reachable
 [Jellyfin](https://jellyfin.org) server — the app is only a client.
+
+`minSdk` is 28, but Wear OS never shipped API 28 or 29: Wear OS 2 is
+API 26/27 and Wear OS 3 jumps straight to API 30, so Wear OS 3.0 is the
+effective floor. That covers Galaxy Watch 4 and newer, every Pixel
+Watch, TicWatch Pro 3/5 and Fossil Gen 6 — but not Wear OS 2 watches,
+and not Samsung's Tizen watches (Galaxy Watch 3 and older), which
+aren't Wear OS at all.
 
 - **GitHub Releases** —
   [github.com/Phat-shot/finwatch/releases](https://github.com/Phat-shot/finwatch/releases):
