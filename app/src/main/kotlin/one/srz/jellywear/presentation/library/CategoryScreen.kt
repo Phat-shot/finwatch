@@ -69,9 +69,10 @@ fun CategoryScreen(
                 Category.FAVORITES -> session.fetchFavoriteMusic()
                 // Artists live behind their own endpoint -- the same one
                 // the Jellyfin web UI's "Artists" tab uses. Asking /Items
-                // for MUSIC_ARTIST returned nothing on servers whose
-                // artists exist only as track artists, leaving the whole
-                // Music category empty even though the album was there.
+                // for MUSIC_ARTIST is unreliable: on at least one server it
+                // returned nothing while the web UI listed the artist, its
+                // album artist and the album just fine, leaving the whole
+                // Music category empty.
                 Category.MUSIC -> api.artistsApi.getArtists(
                     userId = session.userId,
                     sortBy = listOf(ItemSortBy.SORT_NAME),
