@@ -23,6 +23,7 @@ import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
 import org.jellyfin.sdk.api.client.exception.ApiClientException
+import org.jellyfin.sdk.api.client.extensions.artistsApi
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
@@ -66,6 +67,16 @@ fun CategoryScreen(
             val result = when (category) {
                 Category.AUDIO -> session.fetchAudiobooks()
                 Category.FAVORITES -> session.fetchFavoriteMusic()
+                // Artists live behind their own endpoint -- the same one
+                // the Jellyfin web UI's "Artists" tab uses. Asking /Items
+                // for MUSIC_ARTIST is unreliable: on at least one server it
+                // returned nothing while the web UI listed the artist, its
+                // album artist and the album just fine, leaving the whole
+                // Music category empty.
+                Category.MUSIC -> api.artistsApi.getArtists(
+                    userId = session.userId,
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                ).content.items
                 else -> api.itemsApi.getItems(
                     GetItemsRequest(
                         userId = session.userId,

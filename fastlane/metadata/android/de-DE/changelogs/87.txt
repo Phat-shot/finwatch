@@ -1,0 +1,1 @@
+Kompatibilität mit weiteren Wear-OS-Uhren korrigiert.

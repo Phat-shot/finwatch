@@ -170,6 +170,26 @@ wird. Wear-Artefakte gehören in den Wear-OS-Track.
 Der Wear-Opt-in zieht ein zusätzliches Review gegen die
 Wear-OS-Qualitätsrichtlinien nach sich — dafür Zeit einplanen (Issue #15).
 
+> **Der Formfaktor-Opt-in muss eingereicht werden — Setzen allein reicht
+> nicht.** Er ist eine Änderung wie jede andere und landet im Stapel
+> „Änderungen noch nicht zur Überprüfung eingereicht". Bis er eingereicht
+> und freigegeben ist, liefert Play **an keine einzige Uhr** aus, auch
+> wenn im Wear-OS-Track ein vollständig ausgerollter Release liegt.
+>
+> Das Fehlerbild ist heimtückisch, weil nichts davon nach der wahren
+> Ursache aussieht: Die Store-Seite ist öffentlich erreichbar, der Track
+> meldet „Inaktiv", jeder Release meldet „Nicht bei Google Play
+> verfügbar", der Gerätekatalog zeigt **0 ausgeschlossene Geräte**, das
+> Bundle ist einwandfrei — und auf echten Uhren steht „Diese App ist
+> nicht mit deinem Gerät kompatibel", quer über Hersteller hinweg. Der
+> interne Test funktioniert derweil normal weiter und verdeckt das
+> Problem zusätzlich.
+>
+> Prüfpunkt: **Veröffentlichungen – Übersicht → Aktivität bei der
+> Einreichung**. Wenn dort keine Einreichung den Eintrag „Formfaktor
+> ‚Wear OS by Google' … auf ‚Angemeldet' gesetzt" enthält, ist der
+> Opt-in nie wirksam geworden.
+
 ### Test-Tracks nie unter dem Produktions-versionCode lassen
 
 Play liefert jedem Nutzer den Build aus dem **höchstpriorisierten Track**,

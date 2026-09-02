@@ -31,7 +31,7 @@ import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
-/** Albums by one artist, found via the artistIds filter (not folder parentage). */
+/** Albums by one artist, found via the artist filters (not folder parentage). */
 @Composable
 fun ArtistAlbumsScreen(
     session: JellyfinSession,
@@ -53,7 +53,23 @@ fun ArtistAlbumsScreen(
         val api = session.api ?: return@LaunchedEffect
         val id = artistId.toUUIDOrNull() ?: return@LaunchedEffect
         try {
-            val result = api.itemsApi.getItems(
+            // Jellyfin keeps the *track* artist and the *album* artist as
+            // separate filters, and real tags disagree between them more
+            // often than not -- classical releases in particular credit the
+            // composer as album artist and the performer on the tracks. A
+            // query on artistIds alone therefore hides albums that
+            // Jellyfin's own web UI lists under exactly this artist, so
+            // both filters are asked for and the results merged.
+            val byAlbumArtist = api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = session.userId,
+                    recursive = true,
+                    albumArtistIds = listOf(id),
+                    includeItemTypes = listOf(BaseItemKind.MUSIC_ALBUM),
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                ),
+            ).content.items
+            val byTrackArtist = api.itemsApi.getItems(
                 GetItemsRequest(
                     userId = session.userId,
                     recursive = true,
@@ -62,6 +78,9 @@ fun ArtistAlbumsScreen(
                     sortBy = listOf(ItemSortBy.SORT_NAME),
                 ),
             ).content.items
+            val result = (byAlbumArtist + byTrackArtist)
+                .distinctBy { it.id }
+                .sortedBy { it.name.orEmpty().lowercase() }
             // An artist with only one album: skip straight into it instead
             // of showing a pick-list of one, same as CategoryScreen/ItemBrowserScreen.
             val onlyAlbum = result.singleOrNull()

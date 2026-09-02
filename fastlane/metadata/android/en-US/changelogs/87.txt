@@ -1,0 +1,1 @@
+Fixes a compatibility problem that made the app show as incompatible on some Wear OS watches.
