@@ -13,6 +13,11 @@ numbers such as "jellywear v173") is not itemized here.
 ## [Unreleased]
 
 ### Fixed
+- The Music category could come up empty ("No libraries found") on servers
+  whose artists Jellyfin only knows as *track* artists: artists were asked
+  for through `/Items`, which does not return them reliably. The app now
+  uses the dedicated artists endpoint — the same one the Jellyfin web UI's
+  "Artists" tab uses.
 - Albums were missing from an artist's screen when the album's *album
   artist* differed from its *track* artists — Jellyfin keeps those as
   separate filters, and classical releases in particular credit the
