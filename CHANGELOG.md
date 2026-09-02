@@ -13,6 +13,11 @@ numbers such as "jellywear v173") is not itemized here.
 ## [Unreleased]
 
 ### Fixed
+- Albums were missing from an artist's screen when the album's *album
+  artist* differed from its *track* artists — Jellyfin keeps those as
+  separate filters, and classical releases in particular credit the
+  composer as album artist and the performer on the tracks. Both filters
+  are now queried and merged, matching what Jellyfin's own web UI shows.
 - Google Play reported the app as incompatible on watches that do not ship
   the legacy Wearable Support Library (seen on a OnePlus Watch 3, Wear OS
   5), because the manifest declared `com.google.android.wearable` as a
