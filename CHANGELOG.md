@@ -12,6 +12,8 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+## [1.21] - 2026-09-02
+
 ### Fixed
 - The Music category could come up empty ("No libraries found") even when
   Jellyfin's own web UI listed the artist, its album artist and the album
