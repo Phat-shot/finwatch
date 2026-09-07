@@ -18,6 +18,7 @@ import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.ThemeMode
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 
 fun ThemeMode.labelRes(): Int = when (this) {
     ThemeMode.DARK -> R.string.theme_mode_dark
@@ -29,35 +30,37 @@ fun ThemeMode.labelRes(): Int = when (this) {
 fun ThemeModeScreen(preferences: AppPreferences, onDone: () -> Unit) {
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_theme_mode))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_theme_mode))
+                }
             }
-        }
-        items(ThemeMode.entries) { mode ->
-            val selected = preferences.themeMode == mode
-            Chip(
-                onClick = {
-                    preferences.updateThemeMode(mode)
-                    onDone()
-                },
-                label = { Text(text = stringResource(mode.labelRes())) },
-                icon = if (selected) {
-                    // The check mark is the only thing distinguishing the
-                    // active choice, so it needs a label for TalkBack (read
-                    // merged with the chip's text as "Selected, <option>").
-                    { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
-                } else {
-                    null
-                },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            items(ThemeMode.entries) { mode ->
+                val selected = preferences.themeMode == mode
+                Chip(
+                    onClick = {
+                        preferences.updateThemeMode(mode)
+                        onDone()
+                    },
+                    label = { Text(text = stringResource(mode.labelRes())) },
+                    icon = if (selected) {
+                        // The check mark is the only thing distinguishing the
+                        // active choice, so it needs a label for TalkBack (read
+                        // merged with the chip's text as "Selected, <option>").
+                        { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
+                    } else {
+                        null
+                    },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

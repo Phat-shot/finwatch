@@ -28,6 +28,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import one.srz.jellywear.presentation.theme.AccentColorPresets
 import one.srz.jellywear.presentation.theme.FontColorPresets
 
@@ -55,47 +56,49 @@ fun ColorPickerScreen(
     }
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(titleRes))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(titleRes))
+                }
             }
-        }
-        items(presets) { (argb, nameRes) ->
-            val selected = if (target == ColorPickerTarget.ACCENT) {
-                preferences.accentColorArgb == argb
-            } else {
-                preferences.fontColorArgb == argb
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clickable {
-                        if (target == ColorPickerTarget.ACCENT) {
-                            preferences.setAccentColor(argb)
-                        } else {
-                            preferences.setFontColor(argb)
-                        }
-                        onDone()
-                    }
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
+            items(presets) { (argb, nameRes) ->
+                val selected = if (target == ColorPickerTarget.ACCENT) {
+                    preferences.accentColorArgb == argb
+                } else {
+                    preferences.fontColorArgb == argb
+                }
+                Row(
                     modifier = Modifier
-                        .size(24.dp)
-                        .background(Color(argb), CircleShape),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = stringResource(nameRes))
-                if (selected) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected))
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clickable {
+                            if (target == ColorPickerTarget.ACCENT) {
+                                preferences.setAccentColor(argb)
+                            } else {
+                                preferences.setFontColor(argb)
+                            }
+                            onDone()
+                        }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(Color(argb), CircleShape),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = stringResource(nameRes))
+                    if (selected) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected))
+                    }
                 }
             }
         }

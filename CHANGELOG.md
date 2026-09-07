@@ -12,6 +12,13 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+### Fixed
+- Every scrollable screen now shows the scroll position indicator Wear OS
+  expects along the right edge. Its absence is a Google Play policy
+  violation ("Wear app quality: scrollbar missing") and got release 1.21
+  blocked. All thirteen list screens go through the new
+  `ScrollIndicatorScaffold`, so a screen cannot be added without one.
+
 ## [1.21] - 2026-09-02
 
 ### Fixed

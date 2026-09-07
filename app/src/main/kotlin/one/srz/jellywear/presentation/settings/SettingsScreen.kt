@@ -14,6 +14,7 @@ import androidx.wear.compose.material.Text
 import one.srz.jellywear.BuildConfig
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 
 @Composable
 fun SettingsScreen(
@@ -25,68 +26,70 @@ fun SettingsScreen(
 ) {
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_title))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_title))
+                }
             }
-        }
-        item {
-            Chip(
-                onClick = onOpenAppearance,
-                label = { Text(text = stringResource(R.string.settings_appearance)) },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Chip(
-                onClick = onOpenPlayback,
-                label = { Text(text = stringResource(R.string.settings_playback)) },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Chip(
-                onClick = onOpenLibraries,
-                label = { Text(text = stringResource(R.string.settings_libraries)) },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Chip(
-                onClick = {
-                    session.logout()
-                    onLoggedOut()
-                },
-                label = { Text(text = stringResource(R.string.settings_logout)) },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_server, session.serverUrl ?: "-"),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_account, session.username ?: "-"),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            item {
+                Chip(
+                    onClick = onOpenAppearance,
+                    label = { Text(text = stringResource(R.string.settings_appearance)) },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Chip(
+                    onClick = onOpenPlayback,
+                    label = { Text(text = stringResource(R.string.settings_playback)) },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Chip(
+                    onClick = onOpenLibraries,
+                    label = { Text(text = stringResource(R.string.settings_libraries)) },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Chip(
+                    onClick = {
+                        session.logout()
+                        onLoggedOut()
+                    },
+                    label = { Text(text = stringResource(R.string.settings_logout)) },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.settings_server, session.serverUrl ?: "-"),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.settings_account, session.username ?: "-"),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
