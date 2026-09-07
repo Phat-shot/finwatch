@@ -15,6 +15,7 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 
 @Composable
 fun PlaybackSettingsScreen(preferences: AppPreferences) {
@@ -22,34 +23,36 @@ fun PlaybackSettingsScreen(preferences: AppPreferences) {
     val listState = rememberScalingLazyListState()
     val hasBuiltInSpeaker = remember { AppPreferences.hasBuiltInSpeaker(context) }
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_playback))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_playback))
+                }
             }
-        }
-        item {
-            ToggleChip(
-                label = { Text(text = stringResource(R.string.settings_transcode)) },
-                checked = preferences.transcodeEnabled,
-                toggleControl = { Switch(checked = preferences.transcodeEnabled) },
-                onCheckedChange = { preferences.updateTranscodeEnabled(it) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (hasBuiltInSpeaker) {
             item {
                 ToggleChip(
-                    label = { Text(text = stringResource(R.string.settings_speaker_output)) },
-                    checked = preferences.speakerOutputEnabled,
-                    toggleControl = { Switch(checked = preferences.speakerOutputEnabled) },
-                    onCheckedChange = { preferences.updateSpeakerOutputEnabled(it) },
+                    label = { Text(text = stringResource(R.string.settings_transcode)) },
+                    checked = preferences.transcodeEnabled,
+                    toggleControl = { Switch(checked = preferences.transcodeEnabled) },
+                    onCheckedChange = { preferences.updateTranscodeEnabled(it) },
                     modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            if (hasBuiltInSpeaker) {
+                item {
+                    ToggleChip(
+                        label = { Text(text = stringResource(R.string.settings_speaker_output)) },
+                        checked = preferences.speakerOutputEnabled,
+                        toggleControl = { Switch(checked = preferences.speakerOutputEnabled) },
+                        onCheckedChange = { preferences.updateSpeakerOutputEnabled(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }

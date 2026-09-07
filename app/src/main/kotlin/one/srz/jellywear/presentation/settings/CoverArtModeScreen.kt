@@ -18,6 +18,7 @@ import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.CoverArtMode
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 
 fun CoverArtMode.labelRes(): Int = when (this) {
     CoverArtMode.OFF -> R.string.cover_art_mode_off
@@ -29,32 +30,34 @@ fun CoverArtMode.labelRes(): Int = when (this) {
 fun CoverArtModeScreen(preferences: AppPreferences, onDone: () -> Unit) {
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_cover_art))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_cover_art))
+                }
             }
-        }
-        items(CoverArtMode.entries) { mode ->
-            val selected = preferences.coverArtMode == mode
-            Chip(
-                onClick = {
-                    preferences.updateCoverArtMode(mode)
-                    onDone()
-                },
-                label = { Text(text = stringResource(mode.labelRes())) },
-                icon = if (selected) {
-                    { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
-                } else {
-                    null
-                },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            items(CoverArtMode.entries) { mode ->
+                val selected = preferences.coverArtMode == mode
+                Chip(
+                    onClick = {
+                        preferences.updateCoverArtMode(mode)
+                        onDone()
+                    },
+                    label = { Text(text = stringResource(mode.labelRes())) },
+                    icon = if (selected) {
+                        { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
+                    } else {
+                        null
+                    },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

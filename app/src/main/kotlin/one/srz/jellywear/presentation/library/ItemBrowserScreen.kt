@@ -22,6 +22,7 @@ import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
@@ -81,51 +82,53 @@ fun ItemBrowserScreen(
         }
     }
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.library_title))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.library_title))
+                }
             }
-        }
-        when {
-            errorRes != null -> item {
-                Text(text = stringResource(errorRes ?: R.string.error_generic))
-            }
-            children == null -> item {
-                Text(text = stringResource(R.string.library_loading))
-            }
-            children.orEmpty().isEmpty() -> item {
-                Text(text = stringResource(R.string.library_empty))
-            }
-            else -> items(children.orEmpty()) { child ->
-                val id = child.id.toString()
-                ShuffleableChip(
-                    text = child.name ?: "?",
-                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(child.id) else null,
-                    onClick = {
-                        if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
-                    },
-                    onLongClick = {
-                        scope.launch {
-                            val queue = session.fetchShuffledQueue(
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    parentId = child.id,
-                                    recursive = true,
-                                    mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
-                                ),
-                            )
-                            if (queue != null) {
-                                PlaybackQueue.items = queue
-                                onShufflePlay()
+            when {
+                errorRes != null -> item {
+                    Text(text = stringResource(errorRes ?: R.string.error_generic))
+                }
+                children == null -> item {
+                    Text(text = stringResource(R.string.library_loading))
+                }
+                children.orEmpty().isEmpty() -> item {
+                    Text(text = stringResource(R.string.library_empty))
+                }
+                else -> items(children.orEmpty()) { child ->
+                    val id = child.id.toString()
+                    ShuffleableChip(
+                        text = child.name ?: "?",
+                        imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(child.id) else null,
+                        onClick = {
+                            if (child.isFolder == true) onOpenFolder(id) else onPlayItem(id)
+                        },
+                        onLongClick = {
+                            scope.launch {
+                                val queue = session.fetchShuffledQueue(
+                                    GetItemsRequest(
+                                        userId = session.userId,
+                                        parentId = child.id,
+                                        recursive = true,
+                                        mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
+                                    ),
+                                )
+                                if (queue != null) {
+                                    PlaybackQueue.items = queue
+                                    onShufflePlay()
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

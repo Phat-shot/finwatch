@@ -41,6 +41,7 @@ import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import one.srz.jellywear.presentation.library.Category
 import one.srz.jellywear.presentation.theme.JellyfinBlue
 import one.srz.jellywear.presentation.theme.JellyfinPurple
@@ -122,40 +123,42 @@ fun HomeScreen(
     // once that preset is actually in effect (accent == Jellyfin blue).
     val showBrandRing = preferences.accentColorArgb == JellyfinBlue.toArgb()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        verticalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterVertically),
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        items(visibleCategories.chunked(2)) { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterHorizontally),
-            ) {
-                row.forEach { category ->
-                    CompactIconTile(
-                        icon = category.icon(),
-                        contentDescription = stringResource(category.titleRes),
-                        showBrandRing = showBrandRing,
-                        onClick = { onOpenCategory(category) },
-                        onLongClick = { shufflePlay(category) },
-                    )
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterVertically),
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            items(visibleCategories.chunked(2)) { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(tileGap, Alignment.CenterHorizontally),
+                ) {
+                    row.forEach { category ->
+                        CompactIconTile(
+                            icon = category.icon(),
+                            contentDescription = stringResource(category.titleRes),
+                            showBrandRing = showBrandRing,
+                            onClick = { onOpenCategory(category) },
+                            onLongClick = { shufflePlay(category) },
+                        )
+                    }
                 }
             }
-        }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                CompactIconTile(
-                    icon = Icons.Filled.Settings,
-                    contentDescription = stringResource(R.string.settings_tile),
-                    showBrandRing = showBrandRing,
-                    onClick = onOpenSettings,
-                    onLongClick = { },
-                )
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CompactIconTile(
+                        icon = Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.settings_tile),
+                        showBrandRing = showBrandRing,
+                        onClick = onOpenSettings,
+                        onLongClick = { },
+                    )
+                }
             }
         }
     }

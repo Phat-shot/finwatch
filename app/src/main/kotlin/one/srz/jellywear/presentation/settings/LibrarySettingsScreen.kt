@@ -14,31 +14,34 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import one.srz.jellywear.presentation.library.Category
 
 @Composable
 fun LibrarySettingsScreen(preferences: AppPreferences) {
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_libraries))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_libraries))
+                }
             }
-        }
-        items(Category.entries) { category ->
-            val visible = preferences.isCategoryVisible(category)
-            ToggleChip(
-                label = { Text(text = stringResource(category.titleRes)) },
-                checked = visible,
-                toggleControl = { Switch(checked = visible) },
-                onCheckedChange = { preferences.updateCategoryVisibility(category, it) },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            items(Category.entries) { category ->
+                val visible = preferences.isCategoryVisible(category)
+                ToggleChip(
+                    label = { Text(text = stringResource(category.titleRes)) },
+                    checked = visible,
+                    toggleControl = { Switch(checked = visible) },
+                    onCheckedChange = { preferences.updateCategoryVisibility(category, it) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

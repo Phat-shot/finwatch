@@ -18,6 +18,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import one.srz.jellywear.R
 import one.srz.jellywear.data.AppPreferences
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 
 data class LanguageOption(val tag: String?, val nativeName: String)
 
@@ -44,34 +45,36 @@ fun LanguageScreen(preferences: AppPreferences) {
     val listState = rememberScalingLazyListState()
     val activity = LocalActivity.current
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(R.string.settings_language))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(R.string.settings_language))
+                }
             }
-        }
-        items(SupportedLanguages) { option ->
-            val selected = preferences.languageTag == option.tag
-            Chip(
-                onClick = {
-                    preferences.updateLanguageTag(option.tag)
-                    // Locale is applied in attachBaseContext, which only runs
-                    // once at Activity creation -- recreate to pick it up now.
-                    activity?.recreate()
-                },
-                label = { Text(text = languageDisplayName(option.tag)) },
-                icon = if (selected) {
-                    { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
-                } else {
-                    null
-                },
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            items(SupportedLanguages) { option ->
+                val selected = preferences.languageTag == option.tag
+                Chip(
+                    onClick = {
+                        preferences.updateLanguageTag(option.tag)
+                        // Locale is applied in attachBaseContext, which only runs
+                        // once at Activity creation -- recreate to pick it up now.
+                        activity?.recreate()
+                    },
+                    label = { Text(text = languageDisplayName(option.tag)) },
+                    icon = if (selected) {
+                        { Icon(imageVector = Icons.Filled.Check, contentDescription = stringResource(R.string.selected)) }
+                    } else {
+                        null
+                    },
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
