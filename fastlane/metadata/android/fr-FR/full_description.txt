@@ -1,0 +1,22 @@
+Finwatch met votre médiathèque Jellyfin sur votre montre : musique, livres audio, séries et films directement depuis votre propre serveur — sans téléphone à proximité (application Wear OS autonome).
+
+PRÉREQUIS : votre propre serveur Jellyfin, accessible depuis la montre. Finwatch n'est que le client — l'application ne fournit aucun contenu et ne fonctionne pas sans serveur.
+
+Fonctionnalités :
+
+- Connexion à votre serveur Jellyfin via Quick Connect (code court, aucun mot de passe à saisir sur la montre) ou avec l'URL du serveur, le nom d'utilisateur et le mot de passe ; le jeton d'accès est stocké localement, chiffré avec l'Android Keystore
+- Écran d'accueil compact avec catégories configurables : Musique, Livres audio, Séries, Films, Favoris, Listes de lecture
+- Parcourez les bibliothèques, artistes/albums et dossiers — avec lecture aléatoire sur chaque écran
+- Lecture audio et vidéo (ExoPlayer/Media3) ; la lecture continue en arrière-plan avec les commandes multimédias du système, même écran éteint
+- Reprise automatique après une brève coupure réseau
+- Écoute via un casque Bluetooth ou le haut-parleur intégré de la montre
+- Transcodage côté serveur optionnel pour la vidéo ; l'audio est toujours lu directement
+- Personnalisable : thème sombre/clair, couleurs d'accent et de police, affichage des pochettes ; langues : anglais, allemand, français, espagnol, arabe
+
+Confidentialité : aucun pistage, aucune analyse, aucune publicité. Vos identifiants ne sont transmis qu'au serveur que vous configurez vous-même ; le développeur ne reçoit aucune donnée.
+
+Finwatch est un logiciel libre (MPL-2.0). Code source, rapports de bugs et contributions : https://github.com/Phat-shot/finwatch
+
+Remarque : Finwatch est un client non officiel. Il n'est ni affilié, ni approuvé, ni soutenu par le projet Jellyfin. Jellyfin est une marque du projet Jellyfin.
+
+Les captures d'écran montrent l'application connectée au serveur de démonstration public de Jellyfin (demo.jellyfin.org) et à ses contenus d'exemple sous licence libre.
