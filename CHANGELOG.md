@@ -12,6 +12,8 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+## [1.26] - 2026-09-09
+
 ### Removed
 - The light theme, and with it the theme picker in Settings > Appearance.
   Wear OS app quality requirement WO-V13 demands a black background for

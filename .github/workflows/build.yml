@@ -201,6 +201,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.variant.outputs.tag }}
+          # Without this the action creates the tag on the repo's default
+          # branch (test) rather than on the commit that was actually built,
+          # so a main release tag could land on a newer test commit. F-Droid
+          # builds exactly the tagged commit, so the tag must be the build.
+          target_commitish: ${{ github.sha }}
           name: ${{ steps.variant.outputs.release_name }}
           prerelease: ${{ steps.variant.outputs.prerelease }}
           files: |
