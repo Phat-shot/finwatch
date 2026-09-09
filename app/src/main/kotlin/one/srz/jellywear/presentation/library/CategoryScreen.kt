@@ -22,6 +22,7 @@ import one.srz.jellywear.data.AppPreferences
 import one.srz.jellywear.data.CoverArtMode
 import one.srz.jellywear.data.JellyfinSession
 import one.srz.jellywear.playback.PlaybackQueue
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.artistsApi
 import org.jellyfin.sdk.api.client.extensions.itemsApi
@@ -105,63 +106,65 @@ fun CategoryScreen(
         }
     }
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
-                Text(text = stringResource(category.titleRes))
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(text = stringResource(category.titleRes))
+                }
             }
-        }
-        when {
-            errorRes != null -> item {
-                Text(text = stringResource(errorRes ?: R.string.error_generic))
-            }
-            elements == null -> item {
-                Text(text = stringResource(R.string.library_loading))
-            }
-            elements.orEmpty().isEmpty() -> item {
-                Text(text = stringResource(R.string.library_empty))
-            }
-            else -> items(elements.orEmpty()) { element ->
-                val id = element.id.toString()
-                ShuffleableChip(
-                    text = element.name ?: "?",
-                    imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(element.id) else null,
-                    onClick = {
-                        when {
-                            category == Category.MUSIC -> onOpenArtist(id)
-                            element.isFolder == true -> onOpenFolder(id)
-                            else -> onPlayItem(id)
-                        }
-                    },
-                    onLongClick = {
-                        scope.launch {
-                            val request = if (category == Category.MUSIC) {
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    artistIds = listOf(element.id),
-                                    recursive = true,
-                                    includeItemTypes = listOf(BaseItemKind.AUDIO),
-                                )
-                            } else {
-                                GetItemsRequest(
-                                    userId = session.userId,
-                                    parentId = id.toUUIDOrNull(),
-                                    recursive = true,
-                                    mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
-                                )
+            when {
+                errorRes != null -> item {
+                    Text(text = stringResource(errorRes ?: R.string.error_generic))
+                }
+                elements == null -> item {
+                    Text(text = stringResource(R.string.library_loading))
+                }
+                elements.orEmpty().isEmpty() -> item {
+                    Text(text = stringResource(R.string.library_empty))
+                }
+                else -> items(elements.orEmpty()) { element ->
+                    val id = element.id.toString()
+                    ShuffleableChip(
+                        text = element.name ?: "?",
+                        imageUrl = if (preferences.coverArtMode != CoverArtMode.OFF) session.imageUrl(element.id) else null,
+                        onClick = {
+                            when {
+                                category == Category.MUSIC -> onOpenArtist(id)
+                                element.isFolder == true -> onOpenFolder(id)
+                                else -> onPlayItem(id)
                             }
-                            val queue = session.fetchShuffledQueue(request)
-                            if (queue != null) {
-                                PlaybackQueue.items = queue
-                                onShufflePlay()
+                        },
+                        onLongClick = {
+                            scope.launch {
+                                val request = if (category == Category.MUSIC) {
+                                    GetItemsRequest(
+                                        userId = session.userId,
+                                        artistIds = listOf(element.id),
+                                        recursive = true,
+                                        includeItemTypes = listOf(BaseItemKind.AUDIO),
+                                    )
+                                } else {
+                                    GetItemsRequest(
+                                        userId = session.userId,
+                                        parentId = id.toUUIDOrNull(),
+                                        recursive = true,
+                                        mediaTypes = listOf(MediaType.AUDIO, MediaType.VIDEO),
+                                    )
+                                }
+                                val queue = session.fetchShuffledQueue(request)
+                                if (queue != null) {
+                                    PlaybackQueue.items = queue
+                                    onShufflePlay()
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

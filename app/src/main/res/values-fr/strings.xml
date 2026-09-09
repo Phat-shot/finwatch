@@ -47,19 +47,15 @@
     <string name="settings_appearance">Apparence</string>
     <string name="settings_playback">Lecture</string>
     <string name="settings_libraries">Bibliothèques</string>
-    <string name="settings_theme_mode">Thème</string>
     <string name="settings_cover_art">Pochettes</string>
     <string name="settings_accent_color">Couleur d\'accent</string>
     <string name="settings_font_color">Couleur du texte</string>
     <string name="settings_language">Langue</string>
+    <string name="language_system">Système</string>
     <string name="settings_jellyfin_theme">Thème Jellyfin</string>
     <string name="settings_transcode">Transcodage (vidéo)</string>
     <string name="settings_speaker_output">Haut-parleur de la montre</string>
     <string name="settings_logout">Déconnexion</string>
-
-    <string name="theme_mode_dark">Sombre</string>
-    <string name="theme_mode_light">Clair</string>
-    <string name="theme_mode_system">Système</string>
 
     <string name="cover_art_mode_off">Désactivé</string>
     <string name="cover_art_mode_folders">Dossiers</string>

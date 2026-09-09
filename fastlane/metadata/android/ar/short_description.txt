@@ -1,0 +1,1 @@
+عميل Jellyfin غير رسمي لنظام Wear OS. يتطلب خادم Jellyfin خاصًا بك.

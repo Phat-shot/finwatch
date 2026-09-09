@@ -24,16 +24,16 @@ Builds:
   # the version declared here. That is also what lets AutoUpdateMode work --
   # generated entries stay correct without hand-edited literals.
   #
-  # v1.17 is the first release tag that contains the tag-derived
+  # v1.17 was the first release tag containing the tag-derived
   # versioning; anything earlier would build as versionCode 1.
-  - versionName: '1.17'
-    versionCode: 87
-    commit: v1.17
+  - versionName: '1.21'
+    versionCode: 91
+    commit: v1.21
     subdir: app
     gradle:
       - prod
 
 AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+$
-CurrentVersion: '1.17'
-CurrentVersionCode: 87
+CurrentVersion: '1.21'
+CurrentVersionCode: 91

@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import one.srz.jellywear.R
 import one.srz.jellywear.data.JellyfinSession
+import one.srz.jellywear.presentation.ScrollIndicatorScaffold
 import one.srz.jellywear.presentation.library.errorMessageRes
 import org.jellyfin.sdk.api.client.ApiClient
 
@@ -320,46 +321,48 @@ private fun HttpWarning(
     onCancel: () -> Unit,
 ) {
     val listState = rememberScalingLazyListState()
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        state = listState,
-        rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
-    ) {
-        item {
-            ListHeader {
+    ScrollIndicatorScaffold(state = listState) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            rotaryScrollableBehavior = RotaryScrollableDefaults.behavior(scrollableState = listState),
+        ) {
+            item {
+                ListHeader {
+                    Text(
+                        text = stringResource(R.string.http_warning_title),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+            item {
                 Text(
-                    text = stringResource(R.string.http_warning_title),
+                    text = stringResource(R.string.http_warning_text),
                     textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.body2,
+                    modifier = Modifier.padding(horizontal = 12.dp),
                 )
             }
-        }
-        item {
-            Text(
-                text = stringResource(R.string.http_warning_text),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.body2,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-        }
-        item {
-            Chip(
-                label = { Text(text = stringResource(R.string.http_warning_cancel)) },
-                onClick = onCancel,
-                colors = ChipDefaults.primaryChipColors(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-            )
-        }
-        item {
-            Chip(
-                label = { Text(text = stringResource(R.string.http_warning_continue)) },
-                onClick = onContinue,
-                colors = ChipDefaults.secondaryChipColors(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            )
+            item {
+                Chip(
+                    label = { Text(text = stringResource(R.string.http_warning_cancel)) },
+                    onClick = onCancel,
+                    colors = ChipDefaults.primaryChipColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                )
+            }
+            item {
+                Chip(
+                    label = { Text(text = stringResource(R.string.http_warning_continue)) },
+                    onClick = onContinue,
+                    colors = ChipDefaults.secondaryChipColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                )
+            }
         }
     }
 }

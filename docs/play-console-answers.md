@@ -170,6 +170,13 @@ wird. Wear-Artefakte gehören in den Wear-OS-Track.
 Der Wear-Opt-in zieht ein zusätzliches Review gegen die
 Wear-OS-Qualitätsrichtlinien nach sich — dafür Zeit einplanen (Issue #15).
 
+Diese Qualitätsprüfung greift auch **nach** der Veröffentlichung: Version
+1.21 wurde mit *„Qualitätsrichtlinien für Wear-Apps: Bildlaufleiste fehlt"*
+beanstandet, weil scrollbare Ansichten keine Scroll-Positionsanzeige
+zeigten. In Wear Compose leistet das `Scaffold(positionIndicator = …)`;
+im Code kapselt das `presentation/ScrollIndicatorScaffold.kt`, durch das
+**jeder** Screen mit Liste laufen muss.
+
 > **Der Formfaktor-Opt-in muss eingereicht werden — Setzen allein reicht
 > nicht.** Er ist eine Änderung wie jede andere und landet im Stapel
 > „Änderungen noch nicht zur Überprüfung eingereicht". Bis er eingereicht

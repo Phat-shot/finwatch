@@ -1,0 +1,2 @@
+Kompatibilität mit weiteren Wear-OS-Uhren korrigiert.
+Musik-Bibliothek: Interpreten und Alben werden jetzt zuverlässig gefunden, auch wenn Track- und Album-Interpret voneinander abweichen.

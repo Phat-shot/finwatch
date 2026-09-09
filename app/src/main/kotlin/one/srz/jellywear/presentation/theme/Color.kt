@@ -9,9 +9,6 @@ val Background = Color(0xFF000000)
 // stays legible on top of it (the accent is reserved for icon glyphs).
 val Surface = Color(0xFF161616)
 
-val BackgroundLight = Color(0xFFFFFFFF)
-val SurfaceLight = Color(0xFFEAEAEA)
-
 val OnAccent = Color(0xFF000000)
 
 // Jellyfin's own brand colors -- used by the opt-in "Jellyfin theme" preset

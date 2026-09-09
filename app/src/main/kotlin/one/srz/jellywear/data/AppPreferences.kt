@@ -11,8 +11,6 @@ import androidx.core.content.edit
 import androidx.core.content.getSystemService
 import one.srz.jellywear.presentation.library.Category
 
-enum class ThemeMode { DARK, LIGHT, SYSTEM }
-
 enum class CoverArtMode { OFF, FOLDERS, FOLDERS_AND_PLAYBACK }
 
 /**
@@ -22,11 +20,6 @@ enum class CoverArtMode { OFF, FOLDERS, FOLDERS_AND_PLAYBACK }
  */
 class AppPreferences private constructor(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    var themeMode by mutableStateOf(
-        ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME_MODE, ThemeMode.DARK.ordinal)) { ThemeMode.DARK },
-    )
-        private set
 
     var accentColorArgb by mutableStateOf(prefs.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT))
         private set
@@ -61,15 +54,6 @@ class AppPreferences private constructor(context: Context) {
      */
     var visibleCategories by mutableStateOf(loadVisibleCategories(prefs))
         private set
-
-    // Named update* rather than set* -- a `var themeMode ... private set`
-    // property already compiles to a JVM setThemeMode(...) accessor, so a
-    // same-named function here is a platform signature clash even though
-    // the generated one is private.
-    fun updateThemeMode(mode: ThemeMode) {
-        themeMode = mode
-        prefs.edit { putInt(KEY_THEME_MODE, mode.ordinal) }
-    }
 
     fun setAccentColor(argb: Int) {
         accentColorArgb = argb
@@ -116,7 +100,6 @@ class AppPreferences private constructor(context: Context) {
         const val PREFS_NAME = "app_preferences"
         const val KEY_SPEAKER_OUTPUT = "speaker_output_enabled"
 
-        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FONT_COLOR = "font_color"
         private const val KEY_COVER_ART_MODE = "cover_art_mode"
