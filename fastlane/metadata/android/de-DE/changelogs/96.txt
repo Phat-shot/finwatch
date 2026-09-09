@@ -1,0 +1,2 @@
+Scroll-Positionsanzeige auf allen Listen-Ansichten (Wear-OS-Qualitätsrichtlinie).
+Heller Modus entfernt — Wear OS verlangt einen schwarzen Hintergrund; Akzent- und Schriftfarbe bleiben wählbar.

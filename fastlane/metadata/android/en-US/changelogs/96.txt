@@ -1,0 +1,2 @@
+Scroll position indicator on every list screen (Wear OS quality guideline).
+Light theme removed — Wear OS requires a black background; accent and font colors stay configurable.
