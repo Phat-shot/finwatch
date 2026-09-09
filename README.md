@@ -93,7 +93,7 @@ prerequisites, and PR expectations. Notable changes are tracked in
     just backgrounding it (screen off, navigating away) keeps audio
     going.
 - **Settings** (`presentation/settings`):
-  - *Appearance* — theme mode (dark/light/system), accent and font
+  - *Appearance* — accent and font
     color pickers, cover art display mode, and app language (English,
     German, French, Spanish, Arabic, or follow system).
   - *Playback* — server-side transcode toggle (video only; audio always

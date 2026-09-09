@@ -21,7 +21,6 @@ import one.srz.jellywear.presentation.theme.LightGray
 @Composable
 fun AppearanceSettingsScreen(
     preferences: AppPreferences,
-    onOpenThemeModePicker: () -> Unit,
     onOpenCoverArtModePicker: () -> Unit,
     onOpenAccentColorPicker: () -> Unit,
     onOpenFontColorPicker: () -> Unit,
@@ -39,15 +38,6 @@ fun AppearanceSettingsScreen(
                 ListHeader {
                     Text(text = stringResource(R.string.settings_appearance))
                 }
-            }
-            item {
-                Chip(
-                    onClick = onOpenThemeModePicker,
-                    label = { Text(text = stringResource(R.string.settings_theme_mode)) },
-                    secondaryLabel = { Text(text = stringResource(preferences.themeMode.labelRes())) },
-                    colors = ChipDefaults.primaryChipColors(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
             }
             item {
                 Chip(

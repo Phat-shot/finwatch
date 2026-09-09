@@ -49,19 +49,15 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_playback">Playback</string>
     <string name="settings_libraries">Libraries</string>
-    <string name="settings_theme_mode">Theme</string>
     <string name="settings_cover_art">Cover art</string>
     <string name="settings_accent_color">Accent color</string>
     <string name="settings_font_color">Font color</string>
     <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
     <string name="settings_jellyfin_theme">Jellyfin theme</string>
     <string name="settings_transcode">Transcode (Video)</string>
     <string name="settings_speaker_output">Watch speaker</string>
     <string name="settings_logout">Log out</string>
-
-    <string name="theme_mode_dark">Dark</string>
-    <string name="theme_mode_light">Light</string>
-    <string name="theme_mode_system">System</string>
 
     <string name="cover_art_mode_off">Off</string>
     <string name="cover_art_mode_folders">Folders</string>

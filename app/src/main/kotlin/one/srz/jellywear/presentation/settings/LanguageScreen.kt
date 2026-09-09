@@ -36,7 +36,7 @@ val SupportedLanguages = listOf(
 
 @Composable
 fun languageDisplayName(tag: String?): String {
-    if (tag == null) return stringResource(R.string.theme_mode_system)
+    if (tag == null) return stringResource(R.string.language_system)
     return SupportedLanguages.firstOrNull { it.tag == tag }?.nativeName ?: tag
 }
 
