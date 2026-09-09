@@ -47,19 +47,15 @@
     <string name="settings_appearance">المظهر</string>
     <string name="settings_playback">التشغيل</string>
     <string name="settings_libraries">المكتبات</string>
-    <string name="settings_theme_mode">السمة</string>
     <string name="settings_cover_art">أغلفة الألبومات</string>
     <string name="settings_accent_color">لون التمييز</string>
     <string name="settings_font_color">لون الخط</string>
     <string name="settings_language">اللغة</string>
+    <string name="language_system">النظام</string>
     <string name="settings_jellyfin_theme">سمة Jellyfin</string>
     <string name="settings_transcode">إعادة الترميز (الفيديو)</string>
     <string name="settings_speaker_output">مكبر صوت الساعة</string>
     <string name="settings_logout">تسجيل الخروج</string>
-
-    <string name="theme_mode_dark">داكن</string>
-    <string name="theme_mode_light">فاتح</string>
-    <string name="theme_mode_system">النظام</string>
 
     <string name="cover_art_mode_off">إيقاف</string>
     <string name="cover_art_mode_folders">المجلدات</string>

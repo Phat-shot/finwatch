@@ -57,7 +57,6 @@ import one.srz.jellywear.presentation.settings.LanguageScreen
 import one.srz.jellywear.presentation.settings.LibrarySettingsScreen
 import one.srz.jellywear.presentation.settings.PlaybackSettingsScreen
 import one.srz.jellywear.presentation.settings.SettingsScreen
-import one.srz.jellywear.presentation.settings.ThemeModeScreen
 import one.srz.jellywear.presentation.theme.JellywearTheme
 
 private const val ROUTE_LOGIN = "login"
@@ -71,7 +70,6 @@ private const val ROUTE_SETTINGS_APPEARANCE = "settings/appearance"
 private const val ROUTE_SETTINGS_PLAYBACK = "settings/playback"
 private const val ROUTE_SETTINGS_LIBRARIES = "settings/libraries"
 private const val ROUTE_COLOR_PICKER = "colorpicker/{target}"
-private const val ROUTE_THEME_MODE = "thememode"
 private const val ROUTE_COVER_ART_MODE = "coverartmode"
 private const val ROUTE_LANGUAGE = "language"
 
@@ -309,7 +307,6 @@ fun JellywearApp(
                 composable(ROUTE_SETTINGS_APPEARANCE) {
                     AppearanceSettingsScreen(
                         preferences = preferences,
-                        onOpenThemeModePicker = { navController.navigate(ROUTE_THEME_MODE) },
                         onOpenCoverArtModePicker = { navController.navigate(ROUTE_COVER_ART_MODE) },
                         onOpenAccentColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.ACCENT.route}") },
                         onOpenFontColorPicker = { navController.navigate("colorpicker/${ColorPickerTarget.FONT.route}") },
@@ -331,12 +328,6 @@ fun JellywearApp(
                             onDone = { navController.popBackStack() },
                         )
                     }
-                }
-                composable(ROUTE_THEME_MODE) {
-                    ThemeModeScreen(
-                        preferences = preferences,
-                        onDone = { navController.popBackStack() },
-                    )
                 }
                 composable(ROUTE_COVER_ART_MODE) {
                     CoverArtModeScreen(

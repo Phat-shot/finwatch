@@ -4,14 +4,14 @@ REQUISITO: tu propio servidor Jellyfin, accesible desde el reloj. Finwatch es so
 
 Funciones:
 
-- Inicio de sesión en tu servidor Jellyfin mediante Quick Connect (código corto, sin escribir contraseñas en el reloj) o con URL del servidor, usuario y contraseña; el token de acceso se guarda localmente, cifrado con el Android Keystore
+- Inicio de sesión en tu servidor Jellyfin mediante Quick Connect: el reloj muestra un código corto que confirmas en tu teléfono u ordenador, sin escribir contraseñas en el reloj. El token de acceso se guarda localmente, cifrado con el Android Keystore
 - Pantalla de inicio compacta con categorías configurables: Música, Audiolibros, Series, Películas, Favoritos, Listas de reproducción
 - Navega por bibliotecas, artistas/álbumes y carpetas, con reproducción aleatoria en cada pantalla
 - Reproducción de audio y vídeo (ExoPlayer/Media3); la reproducción continúa en segundo plano con los controles multimedia del sistema, incluso con la pantalla apagada
 - Recuperación automática tras cortes breves de red
 - Reproduce con auriculares Bluetooth o con el altavoz integrado del reloj
 - Transcodificación opcional en el servidor para vídeo; el audio siempre se reproduce directamente
-- Personalizable: tema oscuro/claro, colores de acento y de fuente, visualización de carátulas; idiomas: inglés, alemán, francés, español, árabe
+- Personalizable: colores de acento y de fuente, visualización de carátulas; idiomas: inglés, alemán, francés, español, árabe
 
 Privacidad: sin rastreo, sin analíticas, sin publicidad. Tus credenciales se envían únicamente al servidor que tú mismo configuras; el desarrollador no recibe ningún dato.
 

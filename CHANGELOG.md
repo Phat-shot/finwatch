@@ -12,6 +12,12 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+### Removed
+- The light theme, and with it the theme picker in Settings > Appearance.
+  Wear OS app quality requirement WO-V13 demands a black background for
+  every app; a white one was one review toggle away from the next policy
+  violation. Accent and font color pickers stay.
+
 ### Fixed
 - Every scrollable screen now shows the scroll position indicator Wear OS
   expects along the right edge. Its absence is a Google Play policy

@@ -4,14 +4,14 @@ PRÉREQUIS : votre propre serveur Jellyfin, accessible depuis la montre. Finwatc
 
 Fonctionnalités :
 
-- Connexion à votre serveur Jellyfin via Quick Connect (code court, aucun mot de passe à saisir sur la montre) ou avec l'URL du serveur, le nom d'utilisateur et le mot de passe ; le jeton d'accès est stocké localement, chiffré avec l'Android Keystore
+- Connexion à votre serveur Jellyfin via Quick Connect : la montre affiche un code court que vous confirmez sur votre téléphone ou ordinateur — aucun mot de passe à saisir sur la montre. Le jeton d'accès est stocké localement, chiffré avec l'Android Keystore
 - Écran d'accueil compact avec catégories configurables : Musique, Livres audio, Séries, Films, Favoris, Listes de lecture
 - Parcourez les bibliothèques, artistes/albums et dossiers — avec lecture aléatoire sur chaque écran
 - Lecture audio et vidéo (ExoPlayer/Media3) ; la lecture continue en arrière-plan avec les commandes multimédias du système, même écran éteint
 - Reprise automatique après une brève coupure réseau
 - Écoute via un casque Bluetooth ou le haut-parleur intégré de la montre
 - Transcodage côté serveur optionnel pour la vidéo ; l'audio est toujours lu directement
-- Personnalisable : thème sombre/clair, couleurs d'accent et de police, affichage des pochettes ; langues : anglais, allemand, français, espagnol, arabe
+- Personnalisable : couleurs d'accent et de police, affichage des pochettes ; langues : anglais, allemand, français, espagnol, arabe
 
 Confidentialité : aucun pistage, aucune analyse, aucune publicité. Vos identifiants ne sont transmis qu'au serveur que vous configurez vous-même ; le développeur ne reçoit aucune donnée.
 
