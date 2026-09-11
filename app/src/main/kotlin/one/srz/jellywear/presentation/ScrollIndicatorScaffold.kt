@@ -1,5 +1,6 @@
 package one.srz.jellywear.presentation
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.material.PositionIndicator
@@ -22,6 +23,24 @@ fun ScrollIndicatorScaffold(
     content: @Composable () -> Unit,
 ) {
     Scaffold(positionIndicator = { PositionIndicator(scalingLazyListState = state) }) {
+        content()
+    }
+}
+
+/**
+ * Same contract for a plain Column made scrollable with
+ * Modifier.verticalScroll -- used where a list is the wrong shape (the
+ * login flow's centered status screens). Making such screens scrollable
+ * at all is itself a quality requirement: at the largest system font a
+ * fixed, centered Column overflows the round display and its text is
+ * cut off at the top and bottom.
+ */
+@Composable
+fun ScrollIndicatorScaffold(
+    state: ScrollState,
+    content: @Composable () -> Unit,
+) {
+    Scaffold(positionIndicator = { PositionIndicator(scrollState = state) }) {
         content()
     }
 }

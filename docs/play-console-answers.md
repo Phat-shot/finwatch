@@ -177,6 +177,16 @@ zeigten. In Wear Compose leistet das `Scaffold(positionIndicator = …)`;
 im Code kapselt das `presentation/ScrollIndicatorScaffold.kt`, durch das
 **jeder** Screen mit Liste laufen muss.
 
+Zweite Beanstandung derselben Prüfung (v1.26): *„Text wird nicht
+abgeschnitten, wenn eine große Schriftart ausgewählt wird."* Play testet
+mit der größten Systemschrift. Drei Muster fallen dabei durch: Container
+mit **fester Höhe** um Text (`Modifier.height(52.dp)` → `heightIn(min =
+…)` plus vertikales Padding), **nicht scrollbare** zentrierte `Column`s
+mit mehreren Texten (→ `verticalScroll` + Positionsanzeige), und
+**unbegrenzte Titel** in Layouts fester Größe (→ `maxLines` +
+`Ellipsis`). Vor jedem Release einmal mit maximaler Schriftgröße durch
+alle Screens tippen.
+
 > **Der Formfaktor-Opt-in muss eingereicht werden — Setzen allein reicht
 > nicht.** Er ist eine Änderung wie jede andere und landet im Stapel
 > „Änderungen noch nicht zur Überprüfung eingereicht". Bis er eingereicht
