@@ -1,0 +1,1 @@
+Text wird bei großer Systemschrift nicht mehr abgeschnitten: Listenzeilen wachsen mit, der Anmelde-Screen ist scrollbar, der Titel im Player ist auf zwei Zeilen begrenzt.

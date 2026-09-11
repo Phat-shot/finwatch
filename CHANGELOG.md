@@ -12,6 +12,8 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+## [1.29] - 2026-09-11
+
 ### Fixed
 - Text no longer gets cut off at large system font sizes (Play flagged
   this as a Wear app quality violation): list rows and color-picker rows

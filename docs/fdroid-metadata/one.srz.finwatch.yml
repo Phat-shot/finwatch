@@ -26,14 +26,14 @@ Builds:
   #
   # v1.17 was the first release tag containing the tag-derived
   # versioning; anything earlier would build as versionCode 1.
-  - versionName: '1.26'
-    versionCode: 96
-    commit: v1.26
+  - versionName: '1.29'
+    versionCode: 99
+    commit: v1.29
     subdir: app
     gradle:
       - prod
 
 AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+$
-CurrentVersion: '1.26'
-CurrentVersionCode: 96
+CurrentVersion: '1.29'
+CurrentVersionCode: 99
