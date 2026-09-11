@@ -6,7 +6,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -40,10 +41,12 @@ fun ShuffleableChip(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            // Minimum, not fixed: at large system font sizes the label wraps
+            // and a fixed 52dp row clipped it (Play flagged exactly that).
+            .heightIn(min = 52.dp)
             .background(MaterialTheme.colors.surface, RoundedCornerShape(50))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (imageUrl != null) {
@@ -64,6 +67,8 @@ fun ShuffleableChip(
             text = text,
             style = MaterialTheme.typography.button,
             color = MaterialTheme.colors.onSurface,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

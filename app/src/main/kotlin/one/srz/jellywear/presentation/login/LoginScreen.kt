@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -247,64 +249,72 @@ fun LoginScreen(
         return
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        when (step) {
-            LoginStep.CONNECTING, LoginStep.CHECKING, LoginStep.SIGNING_IN -> CircularProgressIndicator()
-            LoginStep.QUICK_CONNECT -> {
-                Text(
-                    text = quickConnectCode ?: "",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.display2,
-                )
-                Text(
-                    text = stringResource(R.string.login_quick_connect_hint),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.caption2,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-                // Escape hatch for servers where confirming the code from
-                // another device is impractical (e.g. the public demo
-                // server): fall through to the username/password flow.
-                // Changing the step cancels the polling LaunchedEffect.
-                CompactChip(
-                    label = { Text(text = stringResource(R.string.login_quick_connect_fallback)) },
-                    onClick = { step = LoginStep.USERNAME },
-                    colors = ChipDefaults.secondaryChipColors(),
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-            }
-            LoginStep.ERROR -> {
-                Column(
-                    modifier = Modifier.clickable { step = LoginStep.SERVER },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+    // Scrollable so that at large system font sizes the centered status
+    // texts (Quick Connect code + hint, error + retry hint) can exceed the
+    // round display without being cut off. With content shorter than the
+    // screen, fillMaxSize keeps Arrangement.Center in effect.
+    val scrollState = rememberScrollState()
+    ScrollIndicatorScaffold(state = scrollState) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            when (step) {
+                LoginStep.CONNECTING, LoginStep.CHECKING, LoginStep.SIGNING_IN -> CircularProgressIndicator()
+                LoginStep.QUICK_CONNECT -> {
                     Text(
-                        text = stringResource(errorRes ?: R.string.login_error_generic),
+                        text = quickConnectCode ?: "",
                         textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.body2,
+                        style = MaterialTheme.typography.display2,
                     )
                     Text(
-                        text = stringResource(R.string.login_retry_hint),
+                        text = stringResource(R.string.login_quick_connect_hint),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.caption2,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                    // Escape hatch for servers where confirming the code from
+                    // another device is impractical (e.g. the public demo
+                    // server): fall through to the username/password flow.
+                    // Changing the step cancels the polling LaunchedEffect.
+                    CompactChip(
+                        label = { Text(text = stringResource(R.string.login_quick_connect_fallback)) },
+                        onClick = { step = LoginStep.USERNAME },
+                        colors = ChipDefaults.secondaryChipColors(),
+                        modifier = Modifier.padding(top = 10.dp),
                     )
                 }
+                LoginStep.ERROR -> {
+                    Column(
+                        modifier = Modifier.clickable { step = LoginStep.SERVER },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(errorRes ?: R.string.login_error_generic),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.body2,
+                        )
+                        Text(
+                            text = stringResource(R.string.login_retry_hint),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.caption2,
+                        )
+                    }
+                }
+                LoginStep.SERVER, LoginStep.USERNAME, LoginStep.PASSWORD -> {
+                    Text(
+                        text = stringResource(R.string.login_title),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.title3,
+                    )
+                }
+                // Rendered by the early return above, never reaches this Column.
+                LoginStep.HTTP_WARNING -> Unit
             }
-            LoginStep.SERVER, LoginStep.USERNAME, LoginStep.PASSWORD -> {
-                Text(
-                    text = stringResource(R.string.login_title),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.title3,
-                )
-            }
-            // Rendered by the early return above, never reaches this Column.
-            LoginStep.HTTP_WARNING -> Unit
         }
     }
 }

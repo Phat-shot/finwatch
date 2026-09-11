@@ -12,6 +12,16 @@ numbers such as "jellywear v173") is not itemized here.
 
 ## [Unreleased]
 
+### Fixed
+- Text no longer gets cut off at large system font sizes (Play flagged
+  this as a Wear app quality violation): list rows and color-picker rows
+  now grow with their label instead of clipping it at a fixed height, the
+  login/Quick Connect status screen scrolls instead of overflowing the
+  round display, and the now-playing title is bounded to two lines so it
+  cannot push the controls off screen.
+
+## [1.26] - 2026-09-09
+
 ### Removed
 - The light theme, and with it the theme picker in Settings > Appearance.
   Wear OS app quality requirement WO-V13 demands a black background for

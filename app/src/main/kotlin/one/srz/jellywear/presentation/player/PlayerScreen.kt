@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -499,6 +500,11 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                                     ?: "",
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.title3,
+                                // Two lines at most: a long title at a large
+                                // system font otherwise pushes the controls
+                                // off the round display.
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
                         }
