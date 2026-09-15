@@ -187,6 +187,14 @@ mit mehreren Texten (→ `verticalScroll` + Positionsanzeige), und
 `Ellipsis`). Vor jedem Release einmal mit maximaler Schriftgröße durch
 alle Screens tippen.
 
+Dritte Beanstandung (v1.29), *„Smartwatch-Formen"*: Text oder
+Steuerelemente werden vom **runden Bildschirmrand** abgeschnitten. Beweisbild
+war der Player-Titel, der die volle Breite nutzte. Regel: Alles außerhalb
+einer `ScalingLazyColumn` braucht einen seitlichen Abstand — auf einem
+192-dp-Display reichen 24 dp je Seite, damit ein zweizeiliger Text auch
+oberhalb der Mitte im Kreis bleibt. Beim Test auf der Uhr auf lange Titel
+achten, nicht nur auf große Schrift.
+
 > **Der Formfaktor-Opt-in muss eingereicht werden — Setzen allein reicht
 > nicht.** Er ist eine Änderung wie jede andere und landet im Stapel
 > „Änderungen noch nicht zur Überprüfung eingereicht". Bis er eingereicht
