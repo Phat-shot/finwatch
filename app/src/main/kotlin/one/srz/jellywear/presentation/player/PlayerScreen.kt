@@ -449,7 +449,7 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
             errorRes != null -> Text(
                 text = stringResource(errorRes ?: R.string.error_generic),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
             )
             queueItems.isEmpty() && !resumeFromController -> CircularProgressIndicator()
             else -> {
@@ -491,7 +491,14 @@ fun PlayerScreen(session: JellyfinSession, preferences: AppPreferences, itemId: 
                 if (!isVideo || controlsVisible) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth(),
+                        // Round-display inset: at full width the title's
+                        // corners sit outside the circle and get clipped
+                        // (Play's 'smartwatch shapes' violation on 1.29).
+                        // 24dp each side keeps a two-line title inside the
+                        // circle even on a 192dp display.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
                     ) {
                         if (!isVideo) {
                             Text(
