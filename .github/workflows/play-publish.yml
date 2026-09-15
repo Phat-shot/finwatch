@@ -75,6 +75,11 @@ jobs:
       - name: Set up Android SDK
         if: steps.check.outputs.configured == 'true'
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default also installs the legacy 'tools' package,
+          # which Google removed from the SDK repository -- every run failed
+          # in sdkmanager before Gradle even started (2026-09-15).
+          packages: platform-tools
 
       - name: Prepare release keystore from secrets
         if: steps.check.outputs.configured == 'true'
