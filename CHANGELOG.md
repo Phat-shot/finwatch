@@ -10,13 +10,18 @@ don't map 1:1 onto individual CI build numbers. History before that (the
 app's earlier life as "jellywear", with releases named after raw CI run
 numbers such as "jellywear v173") is not itemized here.
 
-## [Unreleased]
+## [1.33] - 2026-10-02
 
 ### Fixed
 - The now-playing title and the player's error text no longer run into
   the edge of round displays: both are inset from the sides, so their
   corners stay inside the circle (Play's "smartwatch shapes" quality
   violation on 1.29).
+
+### Changed
+- CI no longer asks the Android SDK manager for the legacy `tools` package,
+  which Google removed from the SDK repository; every build had started
+  failing before Gradle even ran.
 
 ## [1.29] - 2026-09-11
 

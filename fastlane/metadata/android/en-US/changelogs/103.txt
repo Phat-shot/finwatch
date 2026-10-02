@@ -1,0 +1,1 @@
+The now-playing title and the player error text keep clear of the round display edge (Wear OS "watch shapes" quality guideline).
