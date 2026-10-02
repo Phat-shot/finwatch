@@ -13,6 +13,14 @@ numbers such as "jellywear v173") is not itemized here.
 ## [Unreleased]
 
 ### Fixed
+- The now-playing title and the player's error text no longer run into
+  the edge of round displays: both are inset from the sides, so their
+  corners stay inside the circle (Play's "smartwatch shapes" quality
+  violation on 1.29).
+
+## [1.29] - 2026-09-11
+
+### Fixed
 - Text no longer gets cut off at large system font sizes (Play flagged
   this as a Wear app quality violation): list rows and color-picker rows
   now grow with their label instead of clipping it at a fixed height, the
