@@ -1,0 +1,1 @@
+Titel und Fehlertext im Player halten Abstand zum runden Displayrand (Wear-OS-Qualitätsrichtlinie "Smartwatch-Formen").
