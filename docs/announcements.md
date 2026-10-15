@@ -1,7 +1,12 @@
 # Ankündigungstexte (Entwürfe — noch NICHT veröffentlicht)
 
-Stand: 2026-07-31. Drei fertige Texte (Englisch) für die Ankündigung von
-Finwatch v1.0. Vor dem Posten Platzhalter prüfen. Refs #18.
+Stand: 2026-10-15 (App ist seit v1.33 in Google Play live). Vier fertige
+Texte (Englisch). Vor dem Posten Platzhalter prüfen. Refs #18.
+
+Reihenfolge-Empfehlung: erst (b) awesome-jellyfin (dauerhafte Sichtbarkeit,
+kein Timing nötig), dann (a) Jellyfin-Forum, dann mit ein paar Tagen
+Abstand (c) r/selfhosted und (d) r/WearOS — nie alles am selben Tag,
+und nach jedem Post 1–2 Tage Kommentare beantworten.
 
 Verifizierter Stand der Kanäle:
 
@@ -51,8 +56,8 @@ audio and video straight from your own server on the watch.
   system media controls, auto-recovery after short network drops
 - Output to Bluetooth headphones or the watch speaker; optional
   server-side transcoding for video (audio always direct-plays)
-- Theming (dark/light, accent + font colors), five languages (EN, DE,
-  FR, ES, AR)
+- Always-dark UI with accent + font color pickers, five languages (EN,
+  DE, FR, ES, AR)
 - No tracking, no analytics, no ads
 
 **Links**
@@ -62,9 +67,9 @@ audio and video straight from your own server on the watch.
   https://github.com/Phat-shot/finwatch/releases
 - Google Play: https://play.google.com/store/apps/details?id=one.srz.finwatch
 
-Install it straight from the Play Store on the watch (search
-"Finwatch"), or keep sideloading the GitHub APKs — both channels stay
-supported. Note that the Play build is signed by Play App Signing and
+The easiest install is the Play Store directly on the watch (search
+"Finwatch") or "Install on more devices" from the web listing; the
+GitHub APKs stay available for sideloading. Note that the Play build is signed by Play App Signing and
 the GitHub APKs by my own key, so pick one source per watch; switching
 means uninstall + reinstall.
 
@@ -103,8 +108,8 @@ Hinweise:
   PR ein neues Target `WearOS` vorschlagen oder vorerst unter `Android`
   einsortieren und "Wear OS" im PR-Text erwähnen. [ZU PRÜFEN: exakte
   Syntax des `github`-Download-Typs mit einem bestehenden Eintrag
-  abgleichen; nach IzzyOnDroid-Aufnahme einen `shield`-Download mit dem
-  Izzy-Link ergänzen, wie bei Findroid.]
+  und des Play-Typs mit einem bestehenden Eintrag (z. B. Finamp)
+  abgleichen.]
 - `types: [Music]` ist optional (Badge "🎵 Music Client"); Finwatch
   spielt auch Video — ggf. weglassen, wenn das Badge irreführend wirkt.
 
@@ -158,3 +163,34 @@ On Google Play: https://play.google.com/store/apps/details?id=one.srz.finwatch
 Source + APKs (sideload or Obtainium):
 https://github.com/Phat-shot/finwatch — not affiliated with the
 Jellyfin project. Feedback and bug reports very welcome!
+
+---
+
+## (d) Reddit — r/WearOS (Wear-OS-Nutzer, nicht nur Selfhoster)
+
+Vor dem Posten: Subreddit-Regeln zu Self-Promotion/App-Vorstellungen
+prüfen; Flair "App" o. ä. Zielgruppe hat eine Wear-OS-Uhr, kennt
+Jellyfin aber oft nicht — deshalb ein Satz mehr dazu, was Jellyfin ist.
+Einen Screenshot (Player-Screen) als Bildpost anhängen zieht deutlich
+mehr als ein reiner Textpost.
+
+**Titel:**
+
+> Finwatch: play music, audiobooks and video from your own Jellyfin server on your watch (open source, on Google Play)
+
+**Text:**
+
+If you run a Jellyfin server (the free, self-hosted media server) and
+have a Wear OS 3+ watch: Finwatch is a standalone watch client I built
+— no phone needed, the watch talks to your server directly. Browse
+music/audiobooks/shows/movies, background playback with system media
+controls, Bluetooth headphones or the watch speaker, Quick Connect
+sign-in so you don't type a password on the watch. Open source
+(MPL-2.0), no tracking, no ads.
+
+Play Store: https://play.google.com/store/apps/details?id=one.srz.finwatch
+Source/APKs: https://github.com/Phat-shot/finwatch
+
+You need your own Jellyfin server — the app has no content of its own.
+Unofficial project, not affiliated with Jellyfin. Happy to hear what
+breaks on your watch model!
