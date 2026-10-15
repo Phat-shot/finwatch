@@ -1,12 +1,12 @@
 # Ankündigungstexte (Entwürfe — noch NICHT veröffentlicht)
 
-Stand: 2026-10-15 (App ist seit v1.33 in Google Play live). Vier fertige
+Stand: 2026-10-15 (App ist seit v1.33 in Google Play live). Fünf fertige
 Texte (Englisch). Vor dem Posten Platzhalter prüfen. Refs #18.
 
 Reihenfolge-Empfehlung: erst (b) awesome-jellyfin (dauerhafte Sichtbarkeit,
-kein Timing nötig), dann (a) Jellyfin-Forum, dann mit ein paar Tagen
-Abstand (c) r/selfhosted und (d) r/WearOS — nie alles am selben Tag,
-und nach jedem Post 1–2 Tage Kommentare beantworten.
+kein Timing nötig), dann (a) Jellyfin-Forum und (e) r/jellyfin, dann mit
+ein paar Tagen Abstand (c) r/selfhosted und (d) r/WearOS — nie alles am
+selben Tag, und nach jedem Post 1–2 Tage Kommentare beantworten.
 
 Verifizierter Stand der Kanäle:
 
@@ -21,10 +21,12 @@ Verifizierter Stand der Kanäle:
   **`github.com/awesome-jellyfin/awesome-jellyfin`** überführt.
   Client-Einträge werden **nicht** in `CLIENTS.md` editiert (die Datei
   ist generiert), sondern in **`assets/clients/clients.yaml`**.
-- **r/jellyfin**: seit Juni 2023 read-only (Team ist zu
-  forum.jellyfin.org umgezogen; Stand Juli 2026 unverändert). Alternative
-  für Reddit: **r/selfhosted** (Regeln/Flair vor dem Posten im Sidebar
-  prüfen).
+- **r/jellyfin**: vom Jellyfin-Team 2023 eingefroren und seitdem nicht
+  mehr offiziell betreut; Suchtreffer aus 2026 zeigen aber wieder neue
+  Posts, das Subreddit scheint also (community-moderiert) offen zu sein.
+  Vor dem Posten direkt prüfen: "Create Post" verfügbar, Regeln und
+  Flairs in der Sidebar. Wenn offen, ist es der beste Reddit-Kanal
+  (Text (e)); **r/selfhosted** (c) und **r/WearOS** (d) zusätzlich.
 
 ---
 
@@ -148,8 +150,7 @@ in r/selfhosted üblich, aber gekennzeichnet und sparsam). Flair z. B.
 
 **Text:**
 
-Since r/jellyfin has been read-only for a while, posting here: I've
-released **Finwatch**, an unofficial, open-source (MPL-2.0) Jellyfin
+I've released **Finwatch**, an unofficial, open-source (MPL-2.0) Jellyfin
 client for Wear OS.
 
 It's fully standalone — the watch talks directly to your Jellyfin
@@ -194,3 +195,36 @@ Source/APKs: https://github.com/Phat-shot/finwatch
 You need your own Jellyfin server — the app has no content of its own.
 Unofficial project, not affiliated with Jellyfin. Happy to hear what
 breaks on your watch model!
+
+---
+
+## (e) Reddit — r/jellyfin (Kernzielgruppe: kennt Jellyfin, sucht Clients)
+
+Vor dem Posten: Sidebar-Regeln und Flairs prüfen (das Subreddit wird
+nicht mehr vom Jellyfin-Team betreut, die Community-Regeln können
+abweichen). Kein Jellyfin-Erklärsatz nötig. Bildpost mit dem
+Player-Screenshot, Text in den ersten Kommentar oder als Bild+Text-Post.
+
+**Titel:**
+
+> Finwatch — open-source Jellyfin client for Wear OS, now on Google Play (standalone: music, audiobooks, video straight from your server)
+
+**Text:**
+
+I've released **Finwatch**, an unofficial, open-source (MPL-2.0)
+Jellyfin client for Wear OS 3+ watches (Galaxy Watch 4+, Pixel Watch,
+TicWatch Pro 3/5, Fossil Gen 6 …).
+
+It's fully standalone — the watch talks to your server directly, no
+phone needed: browse music, audiobooks, shows and movies, shuffle on
+every screen, background playback with system media controls,
+Bluetooth headphones or the watch speaker, optional server-side
+transcoding for video (audio always direct-plays). Sign-in via Quick
+Connect, so no password typing on the watch. No tracking, no ads.
+
+Google Play: https://play.google.com/store/apps/details?id=one.srz.finwatch
+Source + APKs: https://github.com/Phat-shot/finwatch
+
+Not affiliated with the Jellyfin project. Bug reports from watch models
+I don't own are especially welcome — open an issue on GitHub or reply
+here.
